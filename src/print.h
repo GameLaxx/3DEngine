@@ -1,14 +1,14 @@
-/* draw.h
- * date : 05/09/2024 (dd/mm/yy)
+/* print.h
+ * date : $$DAY$$/$$MONTH$$/$$YEAR$$ (dd/mm/yy)
  * author : tboisse
 */
-#ifndef DRAW_H
-#define DRAW_H
+#ifndef PRINT_H
+#define PRINT_H
 //-----------------------------------------------------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
-#include <SDL2/SDL.h>
-#include <stdint.h>
+#include "draw.h"
+#include "raytracing.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------------------------------------------------
@@ -16,17 +16,11 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------------------------------------------------
-typedef struct rgba_s rgba_t;
-typedef int (*rectangleFunction)(SDL_Renderer*, const SDL_Rect*);
+
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
 //-----------------------------------------------------------------------------------------------------------------------
-struct rgba_s{
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-    uint8_t alpha;
-};
+
 //-----------------------------------------------------------------------------------------------------------------------
 // Enums
 //-----------------------------------------------------------------------------------------------------------------------
@@ -34,23 +28,16 @@ struct rgba_s{
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
-extern SDL_Renderer* g_renderer;
-extern int windowWidth;
-extern int windowHeight;
-extern rgba_t g_whiteColor;
+
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
-int DRAW_initSDL(int windowWidth, int windowHeight);
-int DRAW_showRenderer();
-int DRAW_clearRenderer();
-int DRAW_cleanRenderer();
+void printCoo(point_t* point_ptr);
 
-int DRAW_moveOrigin(int x, int y);
-int DRAW_invertYAxis();
+void printRGBA(rgba_t* color_ptr);
 
-int DRAW_line(int x1, int y1, int x2, int y2, rgba_t* color_ptr);
-int DRAW_rectangleOutline(int x, int y, int width, int height, rgba_t* color_ptr);
-int DRAW_rectangleFill(int x, int y, int width, int height, rgba_t* color_ptr);
-int DRAW_pixel(int x, int y, rgba_t* color_ptr);
-#endif
+void printSphere(sphere_t* sphere_ptr);
+
+void printContext();
+
+#endif /* PRINT_H */

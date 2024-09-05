@@ -1,31 +1,46 @@
-/* draw.h
+/* raytracing.h
  * date : 05/09/2024 (dd/mm/yy)
  * author : tboisse
 */
-#ifndef DRAW_H
-#define DRAW_H
+#ifndef RAYTRACING_H
+#define RAYTRACING_H
 //-----------------------------------------------------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
-#include <SDL2/SDL.h>
-#include <stdint.h>
+#include "draw.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------------------------------------------------
-
+#define MAX_SPHERES 5
 //-----------------------------------------------------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------------------------------------------------
-typedef struct rgba_s rgba_t;
-typedef int (*rectangleFunction)(SDL_Renderer*, const SDL_Rect*);
+typedef struct coordinate_s vector_t;
+typedef struct coordinate_s point_t;
+typedef struct sphere_s sphere_t;
+typedef struct sceneContext_s sceneContext_t;
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
 //-----------------------------------------------------------------------------------------------------------------------
-struct rgba_s{
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-    uint8_t alpha;
+struct coordinate_s{
+    float x;
+    float y;
+    float z;
+};
+
+struct sphere_s{
+    point_t center;
+    int radius;
+    rgba_t color;
+};
+
+struct sceneContext_s{
+    point_t origin;
+    int viewportWidth;
+    int viewportHeight;
+    int viewportDistance;
+    sphere_t spheres[MAX_SPHERES];
+    int numSpheres; 
 };
 //-----------------------------------------------------------------------------------------------------------------------
 // Enums
@@ -34,23 +49,12 @@ struct rgba_s{
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
-extern SDL_Renderer* g_renderer;
-extern int windowWidth;
-extern int windowHeight;
-extern rgba_t g_whiteColor;
+extern sceneContext_t g_context;
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
-int DRAW_initSDL(int windowWidth, int windowHeight);
-int DRAW_showRenderer();
-int DRAW_clearRenderer();
-int DRAW_cleanRenderer();
+int RT_initScene(point_t* origin, int vW, int vH, int vD);
+int RT_addSphere(sphere_t* sphere);
+int RT_drawScene();
 
-int DRAW_moveOrigin(int x, int y);
-int DRAW_invertYAxis();
-
-int DRAW_line(int x1, int y1, int x2, int y2, rgba_t* color_ptr);
-int DRAW_rectangleOutline(int x, int y, int width, int height, rgba_t* color_ptr);
-int DRAW_rectangleFill(int x, int y, int width, int height, rgba_t* color_ptr);
-int DRAW_pixel(int x, int y, rgba_t* color_ptr);
-#endif
+#endif /* RAYTRACING_H */
