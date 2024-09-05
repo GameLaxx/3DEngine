@@ -13,6 +13,7 @@
 // Typedef
 //-----------------------------------------------------------------------------------------------------------------------
 typedef struct rgba_s rgba_t;
+typedef int (*rectangleFunction)(SDL_Renderer*, const SDL_Rect*);
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
 //-----------------------------------------------------------------------------------------------------------------------
@@ -30,8 +31,20 @@ struct rgba_s{
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
 extern SDL_Renderer* g_renderer;
+extern rgba_t g_whiteColor;
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
+int DRAW_initSDL(int windowWidth, int windowHeight);
+int DRAW_showRenderer();
+int DRAW_clearRenderer();
+int DRAW_cleanRenderer();
 
+int DRAW_moveOrigin(int x, int y);
+int DRAW_invertYAxis();
+
+int DRAW_line(int x1, int y1, int x2, int y2, rgba_t* color_ptr);
+int DRAW_rectangleOutline(int x, int y, int width, int height, rgba_t* color_ptr);
+int DRAW_rectangleFill(int x, int y, int width, int height, rgba_t* color_ptr);
+int DRAW_pixel(int x, int y, rgba_t* color_ptr);
 #endif

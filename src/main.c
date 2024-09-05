@@ -1,46 +1,32 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
+#include "draw.h"
 
+//-----------------------------------------------------------------------------------------------------------------------
+// Variables
+//-----------------------------------------------------------------------------------------------------------------------
+SDL_Renderer* g_renderer;
+//-----------------------------------------------------------------------------------------------------------------------
+// Local Functions
+//-----------------------------------------------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------------------------------
+// Global Functions
+//-----------------------------------------------------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
-    // Initialisation de la SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        printf("Erreur d'initialisation de la SDL: %s\n", SDL_GetError());
-        return 1;
-    }
-
-    // Création d'une fenêtre
-    SDL_Window* window = SDL_CreateWindow(
-        "Canvas SDL",                     // Titre de la fenêtre
-        SDL_WINDOWPOS_UNDEFINED,          // Position X de la fenêtre
-        SDL_WINDOWPOS_UNDEFINED,          // Position Y de la fenêtre
-        800, 800,                         // Largeur et hauteur de la fenêtre
-        SDL_WINDOW_SHOWN                 // Option pour montrer la fenêtre
-    );
-
-    if (window == NULL) {
-        printf("Erreur lors de la création de la fenêtre: %s\n", SDL_GetError());
-        SDL_Quit();
-        return 1;
-    }
-
-    // Création d'un renderer pour dessiner
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (renderer == NULL) {
-        printf("Erreur lors de la création du renderer: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-
-    // Couleur du canvas (blanc)
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
-    // Remplir le canvas avec la couleur définie
-    SDL_RenderClear(renderer);
-
+    //init
+    DRAW_initSDL(800, 800);
+    rgba_t black = {0,0,0,255};
     // Afficher le canvas
-    SDL_RenderPresent(renderer);
-
+    DRAW_clearRenderer();
+    DRAW_line(0,400,800,400, &black);
+    DRAW_line(400,0,400,800, &black);
+    DRAW_rectangleFill(0,0,50,50, &black);
+    DRAW_invertYAxis();
+    DRAW_rectangleFill(0,0,50,50, &black);
+    DRAW_moveOrigin(400,400);
+    DRAW_rectangleFill(0,0,50,50, &black);
+    DRAW_showRenderer();
     // Boucle pour garder la fenêtre ouverte
     SDL_Event e;
     int quit = 0;
@@ -52,10 +38,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Nettoyage
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-
+    DRAW_cleanRenderer();
     return 0;
 }
