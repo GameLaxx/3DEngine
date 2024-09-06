@@ -12,3 +12,4 @@ print: src/draw.o src/raytracing.o src/print.h
 
 main: src/main.c src/draw.o src/raytracing.o src/print.o
 	gcc src/main.c src/draw.o src/raytracing.o src/print.o -o engine -lSDL2 -lm
+	./engine

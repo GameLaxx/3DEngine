@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     rgba_t red = {255,0,0,255};
     rgba_t blue = {0,0,255,255};
     rgba_t yellow = {255,0,255,255};
-    rgba_t black = {0,0,0,255};
+    rgba_t gray = {120,120,120,255};
     DRAW_invertYAxis();
     DRAW_moveOrigin(400,400);
     DRAW_clearRenderer();
@@ -38,12 +38,25 @@ int main(int argc, char* argv[]) {
     sphere_t sphere3 = {.center = center3, .color = blue, .radius = 1};
     // sphere 4
     point_t center4 = {0,-5001,0};
-    sphere_t sphere4 = {.center = center4, .color = black, .radius = 5000};
-    RT_initScene(&origin, 1, 1, 1);
+    sphere_t sphere4 = {.center = center4, .color = gray, .radius = 5000};
+
+    // light 1
+    point_t pos1 = {1,4,4};
+    lightSource_t light1 = {.type=LT_directional, .intensity=0.2, .carac=pos1};
+    // light 2
+    lightSource_t light2 = {.type=LT_ambiant, .intensity=0.2};
+    // light 3
+    point_t pos3 = {2,1,0};
+    lightSource_t light3 = {.type=LT_point, .intensity=0.6, .carac=pos3};
+    RT_initScene(&origin, 2, 2, 1);
     RT_addSphere(&sphere1);
     RT_addSphere(&sphere2);
     RT_addSphere(&sphere3);
     RT_addSphere(&sphere4);
+    RT_addLight(&light1);
+    RT_addLight(&light2);
+    RT_addLight(&light3);
+    printContext();
     RT_drawScene();
     DRAW_showRenderer();
     // Boucle pour garder la fenêtre ouverte
