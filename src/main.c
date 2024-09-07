@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     rgba_t red = {255,0,0,255};
     rgba_t blue = {0,0,255,255};
     rgba_t green = {0,255,0,255};
-    rgba_t yellow = {0,255,255,255};
+    rgba_t yellow = {255,255,0,255};
     rgba_t gray = {120,120,120,255};
     DRAW_invertYAxis();
     DRAW_moveOrigin(800,400);
