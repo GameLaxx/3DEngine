@@ -8,7 +8,7 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
-rgba_t g_whiteColor = {.red = 255, .green = 255, .blue = 255, .alpha = 255};
+rgba_t g_backgroundColor = {.red = 255, .green = 255, .blue = 255, .alpha = 255};
 SDL_Window* window;
 
 int windowWidth;
@@ -80,7 +80,7 @@ int DRAW_showRenderer(){
 }
 
 int DRAW_clearRenderer(){
-    DRAW_setDrawColor(&g_whiteColor);
+    DRAW_setDrawColor(&g_backgroundColor);
     if(SDL_RenderClear(g_renderer) == -1){
         printf("Another fail..\n");
         return EXIT_FAILURE;
@@ -104,6 +104,14 @@ int DRAW_invertYAxis(){
     invertY = (1 + invertY) % 2;
 }
 /* Color functions */
+rgba_t* DRAW_initBackgroundColor(){
+    rgba_t* ret = calloc(1, sizeof(rgba_t));
+    ret->red = g_backgroundColor.red;
+    ret->green = g_backgroundColor.green;
+    ret->blue = g_backgroundColor.blue;
+    return ret;
+}
+
 rgba_t* DRAW_addIntensity(rgba_t* color_ptr, float intensity){
     rgba_t* ret = calloc(1, sizeof(rgba_t));
     float red = (float) color_ptr->red * intensity;
@@ -116,6 +124,13 @@ rgba_t* DRAW_addIntensity(rgba_t* color_ptr, float intensity){
     ret->blue = ((int) blue > 255) ? 255 : (int) blue;
     if(ret->blue < 0) ret->blue = 0;
     return ret;
+}
+
+void DRAW_computeReflection(rgba_t* localColor_ptr, rgba_t* recursiveColor_ptr, float reflection){
+    if(recursiveColor_ptr == NULL) return;
+    localColor_ptr->red = (int) (localColor_ptr->red * (1 - reflection) + recursiveColor_ptr->red * reflection);
+    localColor_ptr->green = (int) (localColor_ptr->green * (1 - reflection) + recursiveColor_ptr->green * reflection);
+    localColor_ptr->blue = (int) (localColor_ptr->blue * (1 - reflection) + recursiveColor_ptr->blue * reflection);
 }
 
 /* Drawing Functions */

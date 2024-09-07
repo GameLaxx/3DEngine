@@ -28,6 +28,7 @@ struct sphere_s{
     float radius;
     rgba_t color;
     int specular;
+    float reflective;
 };
 
 struct lightSource_s{

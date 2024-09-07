@@ -17,29 +17,29 @@ SDL_Renderer* g_renderer;
 //-----------------------------------------------------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
     //init
-    DRAW_initSDL(1600, 800);
+    DRAW_initSDL(800, 800);
     rgba_t red = {255,0,0,255};
     rgba_t blue = {0,0,255,255};
     rgba_t green = {0,255,0,255};
     rgba_t yellow = {255,255,0,255};
     rgba_t gray = {120,120,120,255};
     DRAW_invertYAxis();
-    DRAW_moveOrigin(800,400);
+    DRAW_moveOrigin(400,400);
     DRAW_clearRenderer();
     // Init context
     point_t origin = {0,0,0};
     // sphere 1
     point_t center1 = {0,-1,3};
-    sphere_t sphere1 = {.center = center1, .color = red, .radius = 1, .specular=500};
+    sphere_t sphere1 = {.center = center1, .color = red, .radius = 1, .specular=500, .reflective=0.2};
     // sphere 2
     point_t center2 = {2,0,4};
-    sphere_t sphere2 = {.center = center2, .color = blue, .radius = 1, .specular=500};
+    sphere_t sphere2 = {.center = center2, .color = blue, .radius = 1, .specular=500, .reflective=0.3};
     // sphere 3
     point_t center3 = {-2,0,4};
-    sphere_t sphere3 = {.center = center3, .color = green, .radius = 1, .specular=10};
+    sphere_t sphere3 = {.center = center3, .color = green, .radius = 1, .specular=10, .reflective=0.8};
     // sphere 4
-    point_t center4 = {0, -151,0};
-    sphere_t sphere4 = {.center = center4, .color = yellow, .radius = 150, .specular=1000};
+    point_t center4 = {0, -5001,0};
+    sphere_t sphere4 = {.center = center4, .color = yellow, .radius = 5000, .specular=1000, .reflective=0.1};
 
     // light 1
     point_t pos1 = {1,4,4};
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
     // light 3
     point_t pos3 = {2,1,0};
     lightSource_t light3 = {.type=LT_point, .intensity=0.6, .carac=pos3};
-    RT_initScene(&origin, 4, 2, 1);
+    RT_initScene(&origin, 2, 2, 1);
     RT_addSphere(&sphere1);
     RT_addSphere(&sphere2);
     RT_addSphere(&sphere3);

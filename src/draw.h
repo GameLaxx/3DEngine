@@ -49,7 +49,9 @@ int DRAW_cleanRenderer();
 int DRAW_moveOrigin(int x, int y);
 int DRAW_invertYAxis();
 
+rgba_t* DRAW_initBackgroundColor();
 rgba_t* DRAW_addIntensity(rgba_t* color_ptr, float intensity);
+void DRAW_computeReflection(rgba_t* localColor_ptr, rgba_t* recursiveColor_ptr, float reflection);
 
 int DRAW_line(int x1, int y1, int x2, int y2, rgba_t* color_ptr);
 int DRAW_rectangleOutline(int x, int y, int width, int height, rgba_t* color_ptr);

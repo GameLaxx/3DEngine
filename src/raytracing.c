@@ -108,7 +108,7 @@ int computeLight(point_t* pointOnSphere_ptr, vector_t* normal_ptr, vector_t* lea
         vector_t* reflectionVector_ptr = COO_linearTransformation(normal_ptr, 2 * COO_scalarProduct(normal_ptr, commingLightVector_ptr), commingLightVector_ptr, -1);
         float reflection = COO_scalarProduct(reflectionVector_ptr, leavingLightVector_ptr);
         if(reflection >= 0){
-            reflection /= sqrt(COO_scalarProduct(reflectionVector_ptr, reflectionVector_ptr) * COO_scalarProduct(leavingLightVector_ptr, leavingLightVector_ptr));
+            reflection /= sqrt(COO_scalarProduct(reflectionVector_ptr, reflectionVector_ptr));
             coeff += pow(reflection, specular);
         }
         // add to intensity
@@ -119,16 +119,13 @@ int computeLight(point_t* pointOnSphere_ptr, vector_t* normal_ptr, vector_t* lea
     }
 }
 
-rgba_t* getPixelColor(int x, int y, point_t* origin_ptr, double tmin, double tmax){
+rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin, double tmax, int recursiveDepth){
     float closestValue = tmax + 1;
-    rgba_t* ret = NULL;
-    // Vector that goes from one pixel on the canvas to one point of the view port. Named D.
-    vector_t* rayVector_ptr = canvasToViewport(x, y);
+    rgba_t* localRet = DRAW_initBackgroundColor();
     // get closest sphere
     sphere_t* closestSphere_ptr = intersectLineSphere(origin_ptr, rayVector_ptr, tmin, &closestValue);
     if(closestSphere_ptr == NULL || closestValue >= tmax){
-        free(rayVector_ptr);
-        return ret;
+        return localRet;
     }
     // point on the sphere that intersected the ray <=> point on the ray that intersected the sphere. Named P.
     point_t* pointOnSphere_ptr = COO_linearTransformation(origin_ptr, 1, rayVector_ptr, closestValue);
@@ -136,16 +133,24 @@ rgba_t* getPixelColor(int x, int y, point_t* origin_ptr, double tmin, double tma
     vector_t* normal_ptr = COO_vectorizePoints(pointOnSphere_ptr, &closestSphere_ptr->center);
     // Transform N into a unitary vector.
     COO_applyFactor(normal_ptr, sqrt(COO_scalarProduct(normal_ptr, normal_ptr)), FT_DIV);
-    // vector coming from P and going on the point of the viewport. Mainly -D. 
+    // vector coming from P and going on the point of the viewport. Mainly -D. Named V.
     vector_t* lightVector_ptr = COO_linearTransformation(rayVector_ptr, -1, NULL, 0);
+    // Transform V into a unitary vector.
+    COO_applyFactor(lightVector_ptr, sqrt(COO_scalarProduct(lightVector_ptr, lightVector_ptr)), FT_DIV);
     float intensity = 0;
     computeLight(pointOnSphere_ptr, normal_ptr, lightVector_ptr, closestSphere_ptr->specular, &intensity);
-    ret = DRAW_addIntensity(&closestSphere_ptr->color, intensity);
+    localRet = DRAW_addIntensity(&closestSphere_ptr->color, intensity);
+    if(recursiveDepth > 0 && closestSphere_ptr->reflective != 0){
+        vector_t* reflectionVector_ptr = COO_linearTransformation(normal_ptr, -2 * COO_scalarProduct(normal_ptr, rayVector_ptr), rayVector_ptr, 1);
+        rgba_t* recursiveRet_ptr = getPixelColor(pointOnSphere_ptr, reflectionVector_ptr, tmin, tmax, recursiveDepth - 1);
+        DRAW_computeReflection(localRet, recursiveRet_ptr, closestSphere_ptr->reflective);
+        free(reflectionVector_ptr);
+        free(recursiveRet_ptr);
+    }
     free(pointOnSphere_ptr);
     free(normal_ptr);
     free(lightVector_ptr);
-    free(rayVector_ptr);
-    return ret;
+    return localRet;
 }
 //-----------------------------------------------------------------------------------------------------------------------
 // Global Functions
@@ -192,7 +197,10 @@ int RT_addLight(lightSource_t* light){
 int RT_drawScene(){
     for(int x = -windowWidth / 2; x < windowWidth / 2; x++){
         for(int y = -windowWidth / 2; y < windowWidth / 2; y++){
-            rgba_t* color_ptr = getPixelColor(x, y, &g_context.origin, 1, 50);
+            // Vector that goes from one pixel on the canvas to one point of the view port. Named D.
+            vector_t* rayVector_ptr = canvasToViewport(x, y);
+            rgba_t* color_ptr = getPixelColor(&g_context.origin, rayVector_ptr, 0.0001, 50, 3);
+            free(rayVector_ptr);
             if(color_ptr == NULL){
                 continue;
             }
