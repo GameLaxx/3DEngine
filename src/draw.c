@@ -103,6 +103,20 @@ int DRAW_moveOrigin(int x, int y){
 int DRAW_invertYAxis(){
     invertY = (1 + invertY) % 2;
 }
+/* Color functions */
+rgba_t* DRAW_addIntensity(rgba_t* color_ptr, float intensity){
+    rgba_t* ret = calloc(1, sizeof(rgba_t));
+    float red = (float) color_ptr->red * intensity;
+    ret->red = ((int) red > 255) ? 255 : (int) red;
+    if(ret->red < 0) ret->red = 0;
+    float green = (float) color_ptr->green * intensity;
+    ret->green = ((int) green > 255) ? 255 : (int) green;
+    if(ret->green < 0) ret->green = 0;
+    float blue = (float) color_ptr->blue * intensity;
+    ret->blue = ((int) blue > 255) ? 255 : (int) blue;
+    if(ret->blue < 0) ret->blue = 0;
+    return ret;
+}
 
 /* Drawing Functions */
 int DRAW_line(int x1, int y1, int x2, int y2, rgba_t* color_ptr){
