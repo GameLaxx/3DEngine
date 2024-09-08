@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "raytracing.h"
+#include "objects.h"
 #include "print.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
@@ -20,51 +21,7 @@ point_t* canvasToViewport(int x, int y){
     return ret;
 }
 
-sphere_t* intersectLineSphere(point_t* origin_ptr, point_t* lightVector_ptr, int tmin, float* closestValue){
-    sphere_t* closestSphere_ptr = NULL;
-    for(int i = 0; i < MAX_ELEMENTS; i++){
-        // not a valid sphere
-        if(g_context.spheres[i].radius <= 0){
-            continue;
-        }
-        // value that determine where is the intersection between the ray and a sphere
-        
-        vector_t *vector = COO_vectorizePoints(&g_context.spheres[i].center, origin_ptr);
-        float a = COO_scalarProduct(lightVector_ptr, lightVector_ptr);
-        float b = 2 * COO_scalarProduct(vector, lightVector_ptr);
-        float c = COO_scalarProduct(vector, vector) - g_context.spheres[i].radius * g_context.spheres[i].radius;
-        free(vector);
-        float delta = b * b - 4 * a * c;
-        if(delta < 0){
-            continue;
-        }
-        double t1 = (- (float)b - sqrt(delta)) / (2.f * (float)a);
-        double t2 = (-(float)b + sqrt(delta)) / (2.f * (float)a);
-        // unvalid t values for the current sphere
-        if(t1 < tmin && t2 < tmin){
-            continue;
-        }
-        // not close enough t values
-        if(*closestValue < t1 && *closestValue < t2){
-            continue;
-        }
-        // t1 is the good value
-        if(tmin < t1 && t1 < *closestValue && t1 < t2){
-            *closestValue = t1;
-            closestSphere_ptr = &g_context.spheres[i];
-            continue;
-        }
-        // t2 is the good value
-        if(tmin < t2 && t2 < *closestValue && t2 < t1){
-            *closestValue = t2;
-            closestSphere_ptr = &g_context.spheres[i];
-            continue;
-        }
-    }
-    return closestSphere_ptr;
-}
-
-int computeLight(point_t* pointOnSphere_ptr, vector_t* normal_ptr, vector_t* leavingLightVector_ptr, int specular, float* intensity){
+int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* leavingLightVector_ptr, int specular, float* intensity){
     // leavingLightVector is the ray of light leaving the sphere and going to the camera. Named V.
     // commingLightVector is the ray of light comming from the source and going on the sphere. Named L.
     for(int i = 0; i < MAX_ELEMENTS; i++){
@@ -79,16 +36,32 @@ int computeLight(point_t* pointOnSphere_ptr, vector_t* normal_ptr, vector_t* lea
         if(g_context.lights[i].type == LT_directional){
             commingLightVector_ptr = COO_copyCoordinates(&g_context.lights[i].carac);
         }else if(g_context.lights[i].type == LT_point){
-            commingLightVector_ptr = COO_vectorizePoints(pointOnSphere_ptr, &g_context.lights[i].carac);
+            commingLightVector_ptr = COO_vectorizePoints(pointOnObject_ptr, &g_context.lights[i].carac);
         }else{
             continue;
         }
         // get for point if shadow or not
-        float tmin = 0.00001;
+        float tmin = 0.0003;
         float tmax = (g_context.lights[i].type == LT_directional) ? 1000000 : 1;
+        object_t* closestObject_ptr = NULL;
         float closestValue = tmax + 1;
-        sphere_t* closestSphere_ptr = intersectLineSphere(pointOnSphere_ptr, commingLightVector_ptr, tmin, &closestValue);
-        if(closestSphere_ptr != NULL && closestValue < tmax && closestValue > tmin){
+        float currentValue = tmax + 1;
+        
+        for(int i = 0; i < MAX_ELEMENTS; i++){
+            currentValue = tmax + 1;
+            switch (g_context.objects[i].type){
+                case OT_sphere:
+                    currentValue = OBJ_intersectObject(pointOnObject_ptr, commingLightVector_ptr, &g_context.objects[i], tmin, tmax);
+                    break;
+                default:
+                    break;
+            }
+            if(currentValue < closestValue){
+                closestObject_ptr = &g_context.objects[i];
+                closestValue = currentValue;
+            }
+        }
+        if(closestObject_ptr != NULL){
             continue;
         }
         // Transform L into a unitary vector.
@@ -121,16 +94,31 @@ int computeLight(point_t* pointOnSphere_ptr, vector_t* normal_ptr, vector_t* lea
 
 rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin, double tmax, int recursiveDepth){
     float closestValue = tmax + 1;
+    float currentValue = tmax + 1;
     rgba_t* localRet = DRAW_initBackgroundColor();
-    // get closest sphere
-    sphere_t* closestSphere_ptr = intersectLineSphere(origin_ptr, rayVector_ptr, tmin, &closestValue);
-    if(closestSphere_ptr == NULL || closestValue >= tmax){
+    object_t* closestObject_ptr = NULL;
+    // get closest object
+    for(int i = 0; i < MAX_ELEMENTS; i++){
+        switch (g_context.objects[i].type)
+        {
+        case OT_sphere:
+            currentValue = OBJ_intersectObject(origin_ptr, rayVector_ptr, &g_context.objects[i], tmin, tmax);
+            break;
+        default:
+            break;
+        }
+        if(currentValue < closestValue){
+            closestObject_ptr = &g_context.objects[i];
+            closestValue = currentValue;
+        }
+    }
+    if(closestObject_ptr == NULL || closestValue >= tmax){
         return localRet;
     }
-    // point on the sphere that intersected the ray <=> point on the ray that intersected the sphere. Named P.
-    point_t* pointOnSphere_ptr = COO_linearTransformation(origin_ptr, 1, rayVector_ptr, closestValue);
-    // normal vector for the point P. Named N. Be aware that N is non unitary.
-    vector_t* normal_ptr = COO_vectorizePoints(pointOnSphere_ptr, &closestSphere_ptr->center);
+    // point on the object that intersected the ray <=> point on the ray that intersected the object. Named P.
+    point_t* pointOnObject_ptr = COO_linearTransformation(origin_ptr, 1, rayVector_ptr, closestValue);
+    // normal vector for the point P. Named N.
+    vector_t* normal_ptr = OBJ_normalObject(closestObject_ptr, pointOnObject_ptr);
     // Transform N into a unitary vector.
     COO_applyFactor(normal_ptr, sqrt(COO_scalarProduct(normal_ptr, normal_ptr)), FT_DIV);
     // vector coming from P and going on the point of the viewport. Mainly -D. Named V.
@@ -138,16 +126,16 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
     // Transform V into a unitary vector.
     COO_applyFactor(lightVector_ptr, sqrt(COO_scalarProduct(lightVector_ptr, lightVector_ptr)), FT_DIV);
     float intensity = 0;
-    computeLight(pointOnSphere_ptr, normal_ptr, lightVector_ptr, closestSphere_ptr->specular, &intensity);
-    localRet = DRAW_addIntensity(&closestSphere_ptr->color, intensity);
-    if(recursiveDepth > 0 && closestSphere_ptr->reflective != 0){
+    computeLight(pointOnObject_ptr, normal_ptr, lightVector_ptr, closestObject_ptr->specular, &intensity);
+    localRet = DRAW_addIntensity(&closestObject_ptr->color, intensity);
+    if(recursiveDepth > 0 && closestObject_ptr->reflective != 0){
         vector_t* reflectionVector_ptr = COO_linearTransformation(normal_ptr, -2 * COO_scalarProduct(normal_ptr, rayVector_ptr), rayVector_ptr, 1);
-        rgba_t* recursiveRet_ptr = getPixelColor(pointOnSphere_ptr, reflectionVector_ptr, tmin, tmax, recursiveDepth - 1);
-        DRAW_computeReflection(localRet, recursiveRet_ptr, closestSphere_ptr->reflective);
+        rgba_t* recursiveRet_ptr = getPixelColor(pointOnObject_ptr, reflectionVector_ptr, tmin, tmax, recursiveDepth - 1);
+        DRAW_computeReflection(localRet, recursiveRet_ptr, closestObject_ptr->reflective);
         free(reflectionVector_ptr);
         free(recursiveRet_ptr);
     }
-    free(pointOnSphere_ptr);
+    free(pointOnObject_ptr);
     free(normal_ptr);
     free(lightVector_ptr);
     return localRet;
@@ -162,16 +150,16 @@ int RT_initScene(point_t* origin, int vW, int vH, int vD){
     g_context.viewportDistance = vD;
 }
 
-int RT_addSphere(sphere_t* sphere){
-    if(g_context.numSpheres == MAX_ELEMENTS) return EXIT_FAILURE;
-    if(sphere->radius <= 0) return EXIT_FAILURE;
+int RT_addObject(object_t* object_ptr){
+    if(g_context.numObjects == MAX_ELEMENTS) return EXIT_FAILURE;
+    if(object_ptr->type <= OT_NAO) return EXIT_FAILURE;
     for(int i = 0; i < MAX_ELEMENTS; i++){
-        if(g_context.spheres[i].radius <= 0){
-            g_context.spheres[i] = *sphere;
+        if(g_context.objects[i].type <= OT_NAO){
+            g_context.objects[i] = *object_ptr;
             break;
         }
     }
-    g_context.numSpheres += 1;
+    g_context.numObjects += 1;
 }
 
 int RT_addLight(lightSource_t* light){
@@ -199,8 +187,11 @@ int RT_drawScene(){
         for(int y = -windowWidth / 2; y < windowWidth / 2; y++){
             // Vector that goes from one pixel on the canvas to one point of the view port. Named D.
             vector_t* rayVector_ptr = canvasToViewport(x, y);
-            rgba_t* color_ptr = getPixelColor(&g_context.origin, rayVector_ptr, 0.0001, 50, 3);
+            float rotate[3][3] = {{1,0,0},{0,1,0},{0,0,1}};
+            vector_t* rotatedVector_ptr = COO_matrixVectorProduct(rotate, rayVector_ptr);
+            rgba_t* color_ptr = getPixelColor(&g_context.origin, rotatedVector_ptr, 0.01, 50, 3);
             free(rayVector_ptr);
+            free(rotatedVector_ptr);
             if(color_ptr == NULL){
                 continue;
             }

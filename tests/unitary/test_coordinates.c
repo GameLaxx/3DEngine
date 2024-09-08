@@ -7,11 +7,7 @@
 SDL_Renderer* g_renderer;
 
 int main(){
-    vector_t vec = {.x = 5, .y = 4, .z = 3};
-    vector_t* inv_ptr = COO_linearTransformation(NULL, 0, &vec, -1);
-    printCoo(inv_ptr);
-    rgba_t col1 = {.red = 255, .blue = 255, .green = 255};
-    rgba_t col2 = {.red = 0, .blue = 0, .green = 0};
-    DRAW_computeReflection(&col1, NULL, 0.0001);
-    printRGBA(&col1);
+    vector_t vec = {.x = 1, .y = 1, .z = 0};
+    float rotate[3][3] = {{0.99985,-0.01745,0},{0.01745,0.99985,0},{0,0,1}};
+    printCoo(COO_matrixVectorProduct(rotate, &vec));
 }

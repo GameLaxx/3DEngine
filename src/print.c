@@ -5,6 +5,7 @@
 #include "print.h"
 #include "draw.h"
 #include "raytracing.h"
+#include "objects.h"
 #include "coordinates.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
@@ -27,8 +28,13 @@ void printRGBA(rgba_t* color_ptr){
 
 void printSphere(sphere_t* sphere_ptr){
     printf("Sphere : %f\n", sphere_ptr->radius);
-    printRGBA(&sphere_ptr->color);
     printCoo(&sphere_ptr->center);
+}
+
+void printObject(object_t* object_ptr){
+    if(object_ptr->type == OT_sphere){
+        printSphere(object_ptr->content_ptr);
+    }
 }
 
 void printLight(lightSource_t* light_ptr){
@@ -37,13 +43,22 @@ void printLight(lightSource_t* light_ptr){
 }
 
 void printContext(){
-    printf("Context : %i %i %i, nSphere %i, nLights %i\n",
+    sphere_t* sphere_ptr = NULL;
+    printf("Context : %i %i %i, nObjects %i, nLights %i\n",
         g_context.viewportWidth, g_context.viewportHeight, g_context.viewportDistance,
-        g_context.numSpheres, g_context.numLights);
+        g_context.numObjects, g_context.numLights);
     printCoo(&g_context.origin);
-    printf("----- Spheres\n");
+    printf("----- Objects\n");
     for(int i = 0; i < MAX_ELEMENTS; i++){
-        if(g_context.spheres[i].radius > 0) printSphere(&g_context.spheres[i]);
+        switch (g_context.objects[i].type){
+        case OT_sphere:
+            sphere_ptr = (sphere_t*) g_context.objects[i].content_ptr;
+            printSphere(sphere_ptr);
+            break;
+        default:
+            printf("Unknown type : %i\n", g_context.objects[i].type);
+            break;
+        }
     }
     printf("----- Lights\n");
     for(int i = 0; i < MAX_ELEMENTS; i++){

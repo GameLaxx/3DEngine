@@ -84,5 +84,6 @@ vector_t* COO_vectorizePoints(point_t* p1_ptr, point_t* p2_ptr);
  */
 float COO_scalarProduct(coordinate_t* coo1_ptr, coordinate_t* coo2_ptr);
 
+vector_t* COO_matrixVectorProduct(float matrix[3][3], vector_t* vector_ptr);
 
 #endif /* COORDINATES_H */

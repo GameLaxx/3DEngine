@@ -38,6 +38,8 @@ void printRGBA(rgba_t* color_ptr);
 
 void printSphere(sphere_t* sphere_ptr);
 
+void printObject(object_t* object_ptr);
+
 void printContext();
 
 #endif /* PRINT_H */

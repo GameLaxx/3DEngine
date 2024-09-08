@@ -1,62 +1,62 @@
-/* raytracing.h
- * date : 05/09/2024 (dd/mm/yy)
+/* objects.h
+ * date : $$DAY$$/$$MONTH$$/$$YEAR$$ (dd/mm/yy)
  * author : tboisse
 */
-#ifndef RAYTRACING_H
-#define RAYTRACING_H
+#ifndef OBJECTS_H
+#define OBJECTS_H
 //-----------------------------------------------------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
-#include "draw.h"
 #include "coordinates.h"
-#include "objects.h"
+#include "draw.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------------------------------------------------
-#define MAX_ELEMENTS 5
+
 //-----------------------------------------------------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------------------------------------------------
-typedef struct lightSource_s lightSource_t;
-typedef struct sceneContext_s sceneContext_t;
-typedef enum lightType_e lightType;
+typedef struct sphere_s sphere_t;
+typedef struct cube_s cube_t;
+typedef struct object_s object_t;
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
 //-----------------------------------------------------------------------------------------------------------------------
-struct lightSource_s{
-    int type;
-    float intensity;
-    point_t carac; //<< could be position or direction
+struct sphere_s{
+    point_t center;
+    float radius;
 };
 
-struct sceneContext_s{
+struct cube_s{
     point_t origin;
-    int viewportWidth;
-    int viewportHeight;
-    int viewportDistance;
-    object_t objects[MAX_ELEMENTS];
-    lightSource_t lights[MAX_ELEMENTS];
-    int numObjects; 
-    int numLights; 
+    vector_t vectorMin;
+    vector_t vectorMax;
+};
+
+struct object_s{
+    void* content_ptr;
+    int type;
+    rgba_t color;
+    int specular;
+    float reflective;
 };
 //-----------------------------------------------------------------------------------------------------------------------
 // Enums
 //-----------------------------------------------------------------------------------------------------------------------
-enum lightType_e{
-    LT_ambiant = 0,
-    LT_point,
-    LT_directional
+enum OBJ_objectType_e{
+    OT_NAO = 0, // not an object
+    OT_sphere = 1,
+    OT_cube
 };
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
-extern sceneContext_t g_context;
+
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
-int RT_initScene(point_t* origin, int vW, int vH, int vD);
-int RT_addObject(object_t* object_ptr);
-int RT_addLight(lightSource_t* light);
-int RT_drawScene();
 
-#endif /* RAYTRACING_H */
+float OBJ_intersectObject(point_t* origin_ptr, point_t* lightVector_ptr, object_t* object_ptr, float tmin, float tmax);
+
+vector_t* OBJ_normalObject(object_t* object_ptr, vector_t* pointOnObject_ptr);
+#endif /* OBJECTS_H */

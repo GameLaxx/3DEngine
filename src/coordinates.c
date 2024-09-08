@@ -78,3 +78,10 @@ float COO_scalarProduct(coordinate_t* coo1_ptr, coordinate_t* coo2_ptr){
     return coo1_ptr->x * coo2_ptr->x + coo1_ptr->y * coo2_ptr->y + coo1_ptr->z * coo2_ptr->z;
 }
 
+vector_t* COO_matrixVectorProduct(float matrix[3][3], vector_t* vector_ptr){
+    vector_t* ret = calloc(1, sizeof(vector_t));
+    ret->x = matrix[0][0] * vector_ptr->x +  matrix[0][1] * vector_ptr->y +  matrix[0][2] * vector_ptr->z; 
+    ret->y = matrix[1][0] * vector_ptr->x +  matrix[1][1] * vector_ptr->y +  matrix[1][2] * vector_ptr->z; 
+    ret->z = matrix[2][0] * vector_ptr->x +  matrix[2][1] * vector_ptr->y +  matrix[2][2] * vector_ptr->z; 
+    return ret;
+}
