@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
     DRAW_moveOrigin(400,400);
     DRAW_clearRenderer();
     // Init context
-    point_t origin = {0,1,-10};
+    point_t origin = {2,0,-3};
     // sphere 1
     point_t center1 = {0,-1,3};
     sphere_t sphere1 = {.center = center1, .radius = 1};
@@ -44,6 +44,11 @@ int main(int argc, char* argv[]) {
     point_t center4 = {0, -5001,0};
     sphere_t sphere4 = {.center = center4, .radius = 5000};
     object_t object4 = {.content_ptr = &sphere4, .color = yellow, .specular = 1000, .reflective=0.1, .type=OT_sphere};
+    // sphere 4
+    vector_t vmin1 = {-1, -1,-1};
+    vector_t vmax1 = {1, 1,1};
+    cube_t cube1 = {.vectorMin=vmin1, .vectorMax=vmax1};
+    object_t object5 = {.content_ptr = &cube1, .color = gray, .specular = 1000, .reflective=0.1, .type=OT_cube};
 
     // light 1
     point_t pos1 = {1,4,4};
@@ -58,6 +63,7 @@ int main(int argc, char* argv[]) {
     RT_addObject(&object2);
     RT_addObject(&object3);
     RT_addObject(&object4);
+    RT_addObject(&object5);
     RT_addLight(&light1);
     RT_addLight(&light2);
     RT_addLight(&light3);

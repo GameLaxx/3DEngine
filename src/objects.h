@@ -28,9 +28,11 @@ struct sphere_s{
 };
 
 struct cube_s{
-    point_t origin;
     vector_t vectorMin;
     vector_t vectorMax;
+    float rotateX;
+    float rotateY;
+    float rotateZ;
 };
 
 struct object_s{

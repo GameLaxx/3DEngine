@@ -48,14 +48,7 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
         float currentValue = tmax + 1;
         
         for(int i = 0; i < MAX_ELEMENTS; i++){
-            currentValue = tmax + 1;
-            switch (g_context.objects[i].type){
-                case OT_sphere:
-                    currentValue = OBJ_intersectObject(pointOnObject_ptr, commingLightVector_ptr, &g_context.objects[i], tmin, tmax);
-                    break;
-                default:
-                    break;
-            }
+            currentValue = OBJ_intersectObject(pointOnObject_ptr, commingLightVector_ptr, &g_context.objects[i], tmin, tmax);
             if(currentValue < closestValue){
                 closestObject_ptr = &g_context.objects[i];
                 closestValue = currentValue;
@@ -99,14 +92,7 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
     object_t* closestObject_ptr = NULL;
     // get closest object
     for(int i = 0; i < MAX_ELEMENTS; i++){
-        switch (g_context.objects[i].type)
-        {
-        case OT_sphere:
-            currentValue = OBJ_intersectObject(origin_ptr, rayVector_ptr, &g_context.objects[i], tmin, tmax);
-            break;
-        default:
-            break;
-        }
+        currentValue = OBJ_intersectObject(origin_ptr, rayVector_ptr, &g_context.objects[i], tmin, tmax);
         if(currentValue < closestValue){
             closestObject_ptr = &g_context.objects[i];
             closestValue = currentValue;
@@ -187,7 +173,9 @@ int RT_drawScene(){
         for(int y = -windowWidth / 2; y < windowWidth / 2; y++){
             // Vector that goes from one pixel on the canvas to one point of the view port. Named D.
             vector_t* rayVector_ptr = canvasToViewport(x, y);
-            float rotate[3][3] = {{1,0,0},{0,1,0},{0,0,1}};
+            // float rotate[3][3] = {{1,0,0},{0,1,0},{0,0,1}};
+            // float rotate[3][3] = {{1,0,0},{0,0.7071,-0.7071},{0,0.7071,0.7071}};
+            float rotate[3][3] = {{0.7071,0,-0.7071},{0,1,0},{0.7071,0,0.7071}};
             vector_t* rotatedVector_ptr = COO_matrixVectorProduct(rotate, rayVector_ptr);
             rgba_t* color_ptr = getPixelColor(&g_context.origin, rotatedVector_ptr, 0.01, 50, 3);
             free(rayVector_ptr);
