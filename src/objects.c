@@ -10,21 +10,21 @@
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
 float min(float t1, float t2, float t3){
-    if(t1 < t2 && t1 < t3) return t1;
-    if(t2 < t1 && t2 < t3) return t2;
+    if(t1 <= t2 && t1 <= t3) return t1;
+    if(t2 <= t1 && t2 <= t3) return t2;
     return t3;
 }
 float max(float t1, float t2, float t3){
-    if(t1 > t2 && t1 > t3) return t1;
-    if(t2 > t1 && t2 > t3) return t2;
+    if(t1 >= t2 && t1 >= t3) return t1;
+    if(t2 >= t1 && t2 >= t3) return t2;
     return t3;
 }
 
 void isInInterval(float vmin, float vmax, float origin, float direction, float tmin, float tmax, float* retmin, float* retmax){
     if(direction == 0){
         if (vmin > origin || vmax < origin){
-            *retmin = tmax;
-            *retmax = tmin;
+            *retmin = tmax + 1;
+            *retmax = tmin - 1;
             return;
         }
         *retmin = tmin;
@@ -44,7 +44,7 @@ void isInInterval(float vmin, float vmax, float origin, float direction, float t
 //-----------------------------------------------------------------------------------------------------------------------
 static float OBJ_intersectSphere(point_t* origin_ptr, point_t* lightVector_ptr, void* content_ptr, float tmin, float tmax){
     sphere_t* sphere_ptr = (sphere_t*) content_ptr;
-    if(sphere_ptr->radius == 0){
+    if(sphere_ptr->radius <= 0.0001){
         return tmax + 1;
     }
     // value that determine where is the intersection between the ray and a sphere
@@ -63,7 +63,7 @@ static float OBJ_intersectSphere(point_t* origin_ptr, point_t* lightVector_ptr, 
     if(t1 < tmin && t2 < tmin){
         return tmax + 1;
     }
-    if(t1 >= tmax && t2 >= tmax){
+    if(t1 > tmax && t2 > tmax){
         return tmax + 1;
     }
     // valid t values
@@ -82,16 +82,25 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, vo
     float txmin;
     float txmax;
     isInInterval(cube_ptr->vectorMin.x, cube_ptr->vectorMax.x, origin_ptr->x, lightVector_ptr->x, tmin, tmax, &txmin, &txmax);
+    if(txmin > txmax){
+        return tmax + 1;
+    }
     float tymin;
     float tymax;
     isInInterval(cube_ptr->vectorMin.y, cube_ptr->vectorMax.y, origin_ptr->y, lightVector_ptr->y, tmin, tmax, &tymin, &tymax);
+    if(tymin > tymax){
+        return tmax + 1;
+    }
     float tzmin;
     float tzmax;
     isInInterval(cube_ptr->vectorMin.z, cube_ptr->vectorMax.z, origin_ptr->z, lightVector_ptr->z, tmin, tmax, &tzmin, &tzmax);
-
+    if(tzmin > tzmax){
+        return tmax + 1;
+    }
     float te = max(txmin, tymin, tzmin);
     float ts = min(txmax, tymax, tzmax);
     if(ts < te || ts < 0) return tmax + 1;
+    if(te < tmin || te > tmax) return tmax + 1;
     return te;
 }
 
@@ -115,31 +124,31 @@ static vector_t* OBJ_normalSphere(sphere_t* sphere_ptr, point_t* pointOnSphere_p
 
 static vector_t* OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr){
     vector_t* ret = calloc(1, sizeof(vector_t));
-    if(pointOnCube_ptr->x == cube_ptr->vectorMin.x){
+    if(fabs(pointOnCube_ptr->x - cube_ptr->vectorMin.x) < EPSILON){
         ret->x = -1;
         ret->y = 0;
         ret->z = 0;
         return ret;
     }
-    if(pointOnCube_ptr->x == cube_ptr->vectorMax.x){
+    if(fabs(pointOnCube_ptr->x - cube_ptr->vectorMax.x) < EPSILON){
         ret->x = 1;
         ret->y = 0;
         ret->z = 0;
         return ret;
     }
-    if(pointOnCube_ptr->y == cube_ptr->vectorMin.y){
+    if(fabs(pointOnCube_ptr->y - cube_ptr->vectorMin.y) < EPSILON){
         ret->x = 0;
         ret->y = -1;
         ret->z = 0;
         return ret;
     }
-    if(pointOnCube_ptr->y == cube_ptr->vectorMax.y){
+    if(fabs(pointOnCube_ptr->y - cube_ptr->vectorMax.y) < EPSILON){
         ret->x = 0;
         ret->y = 1;
         ret->z = 0;
         return ret;
     }
-    if(pointOnCube_ptr->z == cube_ptr->vectorMin.z){
+    if(fabs(pointOnCube_ptr->z - cube_ptr->vectorMin.z) < EPSILON){
         ret->x = 0;
         ret->y = 0;
         ret->z = -1;

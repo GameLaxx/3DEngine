@@ -20,6 +20,6 @@ main: src/main.c src/draw.o src/raytracing.o src/coordinates.o src/print.o src/o
 	gcc src/main.c src/coordinates.o src/draw.o src/raytracing.o src/print.o src/objects.o -o engine -lSDL2 -lm
 	./engine
 
-test: tests/unitary/test_coordinates.c src/coordinates.o src/print.o src/raytracing.o src/draw.o
-	gcc tests/unitary/test_coordinates.c src/raytracing.o src/coordinates.o src/draw.o src/print.o -o test -lm -lSDL2
+test: tests/unitary/test_coordinates.c src/coordinates.o src/print.o src/raytracing.o src/draw.o src/objects.o
+	gcc tests/unitary/test_coordinates.c src/raytracing.o src/coordinates.o src/draw.o src/print.o src/objects.o -o test -lm -lSDL2
 	./test

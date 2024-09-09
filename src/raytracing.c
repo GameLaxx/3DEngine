@@ -41,15 +41,15 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
             continue;
         }
         // get for point if shadow or not
-        float tmin = 0.0003;
-        float tmax = (g_context.lights[i].type == LT_directional) ? 1000000 : 1;
+        float tmin = 0.000001;
+        float tmax = (g_context.lights[i].type == LT_directional) ? TMAX_ALL : TMAX_POINT;
         object_t* closestObject_ptr = NULL;
         float closestValue = tmax + 1;
         float currentValue = tmax + 1;
         
         for(int i = 0; i < MAX_ELEMENTS; i++){
             currentValue = OBJ_intersectObject(pointOnObject_ptr, commingLightVector_ptr, &g_context.objects[i], tmin, tmax);
-            if(currentValue < closestValue){
+            if(currentValue < closestValue && currentValue > tmin && currentValue < tmax){
                 closestObject_ptr = &g_context.objects[i];
                 closestValue = currentValue;
             }
@@ -93,12 +93,12 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
     // get closest object
     for(int i = 0; i < MAX_ELEMENTS; i++){
         currentValue = OBJ_intersectObject(origin_ptr, rayVector_ptr, &g_context.objects[i], tmin, tmax);
-        if(currentValue < closestValue){
+        if(currentValue < closestValue && currentValue > tmin && currentValue < tmax){
             closestObject_ptr = &g_context.objects[i];
             closestValue = currentValue;
         }
     }
-    if(closestObject_ptr == NULL || closestValue >= tmax){
+    if(closestObject_ptr == NULL || closestValue > tmax || closestValue < tmin){
         return localRet;
     }
     // point on the object that intersected the ray <=> point on the ray that intersected the object. Named P.
@@ -173,13 +173,9 @@ int RT_drawScene(){
         for(int y = -windowWidth / 2; y < windowWidth / 2; y++){
             // Vector that goes from one pixel on the canvas to one point of the view port. Named D.
             vector_t* rayVector_ptr = canvasToViewport(x, y);
-            // float rotate[3][3] = {{1,0,0},{0,1,0},{0,0,1}};
-            // float rotate[3][3] = {{1,0,0},{0,0.7071,-0.7071},{0,0.7071,0.7071}};
-            float rotate[3][3] = {{0.7071,0,-0.7071},{0,1,0},{0.7071,0,0.7071}};
-            vector_t* rotatedVector_ptr = COO_matrixVectorProduct(rotate, rayVector_ptr);
-            rgba_t* color_ptr = getPixelColor(&g_context.origin, rotatedVector_ptr, 0.01, 50, 3);
+            COO_applyRotationMatrice(rayVector_ptr,0,-30,0);
+            rgba_t* color_ptr = getPixelColor(&g_context.origin, rayVector_ptr, 0.00001, TMAX_ALL, 3);
             free(rayVector_ptr);
-            free(rotatedVector_ptr);
             if(color_ptr == NULL){
                 continue;
             }

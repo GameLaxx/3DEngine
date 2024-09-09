@@ -2,7 +2,9 @@
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
 #include <stdlib.h>
+#include <stdio.h>
 #include "coordinates.h"
+#include <math.h>
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
@@ -84,4 +86,22 @@ vector_t* COO_matrixVectorProduct(float matrix[3][3], vector_t* vector_ptr){
     ret->y = matrix[1][0] * vector_ptr->x +  matrix[1][1] * vector_ptr->y +  matrix[1][2] * vector_ptr->z; 
     ret->z = matrix[2][0] * vector_ptr->x +  matrix[2][1] * vector_ptr->y +  matrix[2][2] * vector_ptr->z; 
     return ret;
+}
+
+void COO_applyRotationMatrice(vector_t* vector_ptr, float theta, float phi, float psi){
+    float theta_rad = theta * M_PI / 180;
+    float phi_rad = phi * M_PI / 180;
+    float psi_rad = psi * M_PI / 180;
+    float nx = vector_ptr->x * cos(phi_rad) * cos(psi_rad) \
+              + vector_ptr->y * (cos(psi_rad) * sin(phi_rad) * sin(theta_rad) - sin(psi_rad) * cos(theta_rad)) \
+              + vector_ptr->z * (sin(psi_rad * sin(theta_rad) + cos(psi_rad) * sin(phi_rad) * cos(theta_rad)));
+    float ny = vector_ptr->x * cos(phi_rad) * sin(psi_rad) \
+              + vector_ptr->y * (sin(psi_rad) * sin(phi_rad) * sin(theta_rad) + cos(psi_rad) * cos(theta_rad)) \
+              + vector_ptr->z * (- cos(psi_rad) * sin(theta_rad) + sin(psi_rad) * sin(phi_rad) * cos(theta_rad));
+    float nz = - vector_ptr->x * sin(phi_rad) \
+              + vector_ptr->y * cos(phi_rad) * sin(theta_rad) \
+              + vector_ptr->z * cos(phi_rad) * cos(theta_rad);
+    vector_ptr->x = nx; 
+    vector_ptr->y = ny;
+    vector_ptr->z = nz;
 }
