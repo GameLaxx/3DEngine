@@ -84,7 +84,9 @@ vector_t* COO_vectorizePoints(point_t* p1_ptr, point_t* p2_ptr);
  */
 float COO_scalarProduct(coordinate_t* coo1_ptr, coordinate_t* coo2_ptr);
 
-vector_t* COO_matrixVectorProduct(float matrix[3][3], vector_t* vector_ptr);
+vector_t* COO_matrixVectorProduct(float matrix[9], vector_t* vector_ptr);
+
+int COO_calculateInverse(float matrix[9], float result[9]);
 
 void COO_applyRotationMatrice(vector_t* vector_ptr, float theta, float phi, float psi);
 

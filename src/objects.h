@@ -28,11 +28,13 @@ struct sphere_s{
 };
 
 struct cube_s{
-    vector_t vectorMin;
-    vector_t vectorMax;
+    point_t center;
+    vector_t extendVector;
     float rotateX;
     float rotateY;
     float rotateZ;
+    float rotationMatrice[9];
+    float invertRotationMatrice[9];
 };
 
 struct object_s{
@@ -61,4 +63,9 @@ enum OBJ_objectType_e{
 float OBJ_intersectObject(point_t* origin_ptr, point_t* lightVector_ptr, object_t* object_ptr, float tmin, float tmax);
 
 vector_t* OBJ_normalObject(object_t* object_ptr, vector_t* pointOnObject_ptr);
+
+int OBJ_checkObject(object_t* object_ptr);
+
+void OBJ_initObject(object_t* object_ptr);
+
 #endif /* OBJECTS_H */

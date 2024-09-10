@@ -101,6 +101,7 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
     if(closestObject_ptr == NULL || closestValue > tmax || closestValue < tmin){
         return localRet;
     }
+    free(localRet);
     // point on the object that intersected the ray <=> point on the ray that intersected the object. Named P.
     point_t* pointOnObject_ptr = COO_linearTransformation(origin_ptr, 1, rayVector_ptr, closestValue);
     // normal vector for the point P. Named N.
@@ -111,7 +112,7 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
     vector_t* lightVector_ptr = COO_linearTransformation(rayVector_ptr, -1, NULL, 0);
     // Transform V into a unitary vector.
     COO_applyFactor(lightVector_ptr, sqrt(COO_scalarProduct(lightVector_ptr, lightVector_ptr)), FT_DIV);
-    float intensity = 0;
+    float intensity = 1;
     computeLight(pointOnObject_ptr, normal_ptr, lightVector_ptr, closestObject_ptr->specular, &intensity);
     localRet = DRAW_addIntensity(&closestObject_ptr->color, intensity);
     if(recursiveDepth > 0 && closestObject_ptr->reflective != 0){
@@ -139,6 +140,8 @@ int RT_initScene(point_t* origin, int vW, int vH, int vD){
 int RT_addObject(object_t* object_ptr){
     if(g_context.numObjects == MAX_ELEMENTS) return EXIT_FAILURE;
     if(object_ptr->type <= OT_NAO) return EXIT_FAILURE;
+    if(OBJ_checkObject(object_ptr) == 0) return EXIT_FAILURE;
+    OBJ_initObject(object_ptr);
     for(int i = 0; i < MAX_ELEMENTS; i++){
         if(g_context.objects[i].type <= OT_NAO){
             g_context.objects[i] = *object_ptr;
@@ -173,7 +176,7 @@ int RT_drawScene(){
         for(int y = -windowWidth / 2; y < windowWidth / 2; y++){
             // Vector that goes from one pixel on the canvas to one point of the view port. Named D.
             vector_t* rayVector_ptr = canvasToViewport(x, y);
-            COO_applyRotationMatrice(rayVector_ptr,0,-30,0);
+            COO_applyRotationMatrice(rayVector_ptr,90,0,0);
             rgba_t* color_ptr = getPixelColor(&g_context.origin, rayVector_ptr, 0.00001, TMAX_ALL, 3);
             free(rayVector_ptr);
             if(color_ptr == NULL){
