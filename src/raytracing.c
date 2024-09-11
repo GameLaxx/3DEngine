@@ -83,6 +83,7 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
         free(commingLightVector_ptr);
         free(reflectionVector_ptr);
     }
+    return 0;
 }
 
 rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin, double tmax, int recursiveDepth){
@@ -135,6 +136,7 @@ int RT_initScene(point_t* origin, int vW, int vH, int vD){
     g_context.viewportWidth = vW;
     g_context.viewportHeight = vH;
     g_context.viewportDistance = vD;
+    return 0;
 }
 
 int RT_addObject(object_t* object_ptr){
@@ -149,6 +151,7 @@ int RT_addObject(object_t* object_ptr){
         }
     }
     g_context.numObjects += 1;
+    return 0;
 }
 
 int RT_addLight(lightSource_t* light){
@@ -169,6 +172,7 @@ int RT_addLight(lightSource_t* light){
         }
     }
     g_context.numLights += 1;
+    return 0;
 }
 
 int RT_drawScene(){
@@ -186,4 +190,5 @@ int RT_drawScene(){
             free(color_ptr);
         }
     }
+    return 0;
 }

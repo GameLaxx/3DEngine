@@ -73,10 +73,12 @@ int DRAW_initSDL(int width, int height){
         SDL_Quit();
         return 1;
     }
+    return 0;
 }
 
 int DRAW_showRenderer(){
     SDL_RenderPresent(g_renderer);
+    return 0;
 }
 
 int DRAW_clearRenderer(){
@@ -92,16 +94,19 @@ int DRAW_cleanRenderer(){
     SDL_DestroyRenderer(g_renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+    return 0;
 }
 
 /* Canvas Functions */
 int DRAW_moveOrigin(int x, int y){
     xShift = x;
     yShift = y;
+    return 0;
 }
 
 int DRAW_invertYAxis(){
     invertY = (1 + invertY) % 2;
+    return 0;
 }
 /* Color functions */
 rgba_t* DRAW_initBackgroundColor(){
@@ -114,15 +119,15 @@ rgba_t* DRAW_initBackgroundColor(){
 
 rgba_t* DRAW_addIntensity(rgba_t* color_ptr, float intensity){
     rgba_t* ret = calloc(1, sizeof(rgba_t));
+    if(intensity <= 0){
+        return ret;
+    }
     float red = (float) color_ptr->red * intensity;
     ret->red = ((int) red > 255) ? 255 : (int) red;
-    if(ret->red < 0) ret->red = 0;
     float green = (float) color_ptr->green * intensity;
     ret->green = ((int) green > 255) ? 255 : (int) green;
-    if(ret->green < 0) ret->green = 0;
     float blue = (float) color_ptr->blue * intensity;
     ret->blue = ((int) blue > 255) ? 255 : (int) blue;
-    if(ret->blue < 0) ret->blue = 0;
     return ret;
 }
 
@@ -143,6 +148,7 @@ int DRAW_line(int x1, int y1, int x2, int y2, rgba_t* color_ptr){
         renderY2 = windowHeight - renderY2;
     }
     SDL_RenderDrawLine(g_renderer, x1 + xShift, renderY1, x2  + xShift, renderY2); // (x1, y1) -> (x2, y2) in the current reference 
+    return 0;
 }
 
 int DRAW_rectangleOutline(int x, int y, int width, int height, rgba_t* color_ptr){

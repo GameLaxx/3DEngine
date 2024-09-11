@@ -1,25 +1,39 @@
-build:
-	main
+# Variables
+CC = gcc
+CFLAGS = -Wall -Wextra -g
+LDFLAGS = -lSDL2 -lm
+SRC_DIR = src
+BUILD_DIR = obj
+TEST_DIR = tests/unitary
 
-draw: src/draw.h
-	gcc -c src/draw.c -o src/draw.o -lSDL2
+# Source files
+SRC_FILES = $(filter-out $(SRC_DIR)/main.c, $(wildcard $(SRC_DIR)/*.c))
+OBJ_FILES = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC_FILES))
 
-coo: src/coordinates.h
-	gcc -c src/coordinates.c -o src/coordinates.o
-	
-objects: src/objects.h src/draw.o src/coordinates.o
-	gcc src/objects.c src/draw.o src/coordinates.o -o src/objects.o
+# Default target
+all: main
 
-ray: src/draw.o src/coordinates.o src/objects.o src/raytracing.h
-	gcc src/raytracing.c src/coordinates.o src/draw.o src/objects.o -o src/raytracing.o
+# Create build directory if it doesn't exist
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
-print: src/draw.o src/raytracing.o src/coordinates.o src/print.h
-	gcc src/draw.o src/raytracing.o src/coordinates.o src/print.c -o src/print.o
+# Compiling object files (excluding main.c)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
 
-main: src/main.c src/draw.o src/raytracing.o src/coordinates.o src/print.o src/objects.o
-	gcc src/main.c src/coordinates.o src/draw.o src/raytracing.o src/print.o src/objects.o -o engine -lSDL2 -lm
+# Main target
+main: $(OBJ_FILES) $(SRC_DIR)/main.c
+	$(CC) $(CFLAGS) $(OBJ_FILES) $(SRC_DIR)/main.c -o engine $(LDFLAGS)
 	./engine
 
-test: tests/unitary/test_coordinates.c src/coordinates.o src/print.o src/raytracing.o src/draw.o src/objects.o
-	gcc tests/unitary/test_coordinates.c src/raytracing.o src/coordinates.o src/draw.o src/print.o src/objects.o -o test -lm -lSDL2
+# Test target
+test: $(OBJ_FILES) $(TEST_DIR)/test_coordinates.c
+	$(CC) $(CFLAGS) $(TEST_DIR)/test_coordinates.c $(OBJ_FILES) -o test $(LDFLAGS)
 	./test
+
+# Clean target to remove generated files
+clean:
+	rm -rf $(BUILD_DIR) engine test
+
+# Phony targets
+.PHONY: all clean test main
