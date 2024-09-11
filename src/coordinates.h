@@ -53,7 +53,7 @@ enum COO_factorType_e{
  */
 coordinate_t* COO_copyCoordinates(coordinate_t* coo1_ptr);
 
-int COO_applyFactor(coordinate_t* coo_ptr, float factor, int type);
+int COO_lambdaProduct(coordinate_t* coo_ptr, float factor, int type);
 
 /**
  * @brief Return a calloc coordinate made by calculating `a * v1 + b * v2` where a,b are numbers and v1,v2 vectors.
@@ -84,10 +84,10 @@ vector_t* COO_vectorizePoints(point_t* p1_ptr, point_t* p2_ptr);
  */
 float COO_scalarProduct(coordinate_t* coo1_ptr, coordinate_t* coo2_ptr);
 
-vector_t* COO_matrixVectorProduct(float matrix[9], vector_t* vector_ptr);
-
 int COO_calculateInverse(float matrix[9], float result[9]);
 
-void COO_applyRotationMatrice(vector_t* vector_ptr, float theta, float phi, float psi);
+vector_t* COO_matrixVectorProduct(float matrix[9], vector_t* vector_ptr);
+
+void COO_rotationVectorProduct(vector_t* vector_ptr, float theta, float phi, float psi);
 
 #endif /* COORDINATES_H */

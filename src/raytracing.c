@@ -58,7 +58,7 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
             continue;
         }
         // Transform L into a unitary vector.
-        COO_applyFactor(commingLightVector_ptr, sqrt(COO_scalarProduct(commingLightVector_ptr, commingLightVector_ptr)), FT_DIV);
+        COO_lambdaProduct(commingLightVector_ptr, sqrt(COO_scalarProduct(commingLightVector_ptr, commingLightVector_ptr)), FT_DIV);
         // coeff applied to the intensity of the current light. Might be over 1.
         float coeff = 0;
         // Diffuse reflection
@@ -98,7 +98,7 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
             closestValue = currentValue;
         }
     }
-    if(closestObject_ptr == NULL || closestValue > tmax || closestValue < tmin){
+    if(closestObject_ptr == NULL){
         return localRet;
     }
     free(localRet);
@@ -107,12 +107,12 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
     // normal vector for the point P. Named N.
     vector_t* normal_ptr = OBJ_normalObject(closestObject_ptr, pointOnObject_ptr);
     // Transform N into a unitary vector.
-    COO_applyFactor(normal_ptr, sqrt(COO_scalarProduct(normal_ptr, normal_ptr)), FT_DIV);
+    COO_lambdaProduct(normal_ptr, sqrt(COO_scalarProduct(normal_ptr, normal_ptr)), FT_DIV);
     // vector coming from P and going on the point of the viewport. Mainly -D. Named V.
     vector_t* lightVector_ptr = COO_linearTransformation(rayVector_ptr, -1, NULL, 0);
     // Transform V into a unitary vector.
-    COO_applyFactor(lightVector_ptr, sqrt(COO_scalarProduct(lightVector_ptr, lightVector_ptr)), FT_DIV);
-    float intensity = 1;
+    COO_lambdaProduct(lightVector_ptr, sqrt(COO_scalarProduct(lightVector_ptr, lightVector_ptr)), FT_DIV);
+    float intensity = 0;
     computeLight(pointOnObject_ptr, normal_ptr, lightVector_ptr, closestObject_ptr->specular, &intensity);
     localRet = DRAW_addIntensity(&closestObject_ptr->color, intensity);
     if(recursiveDepth > 0 && closestObject_ptr->reflective != 0){
@@ -176,7 +176,7 @@ int RT_drawScene(){
         for(int y = -windowWidth / 2; y < windowWidth / 2; y++){
             // Vector that goes from one pixel on the canvas to one point of the view port. Named D.
             vector_t* rayVector_ptr = canvasToViewport(x, y);
-            COO_applyRotationMatrice(rayVector_ptr,90,0,0);
+            COO_rotationVectorProduct(rayVector_ptr,0,0,0);
             rgba_t* color_ptr = getPixelColor(&g_context.origin, rayVector_ptr, 0.00001, TMAX_ALL, 3);
             free(rayVector_ptr);
             if(color_ptr == NULL){

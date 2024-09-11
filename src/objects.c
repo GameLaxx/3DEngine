@@ -83,8 +83,8 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
     point_t* newOrigin_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, centerWithOrigin_ptr);
     point_t* newLightVector_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, lightVector_ptr);
     // value that determine where is the intersection between the ray and a sphere
-    float xmin = cube_ptr->center.x - cube_ptr->extendVector.x;
-    float xmax = cube_ptr->center.x + cube_ptr->extendVector.x;
+    float xmin = - cube_ptr->extendVector.x;
+    float xmax = cube_ptr->extendVector.x;
     float txmin;
     float txmax;
     isInInterval(xmin, xmax, newOrigin_ptr->x, newLightVector_ptr->x, tmin, tmax, &txmin, &txmax);
@@ -94,8 +94,8 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
         free(newLightVector_ptr);
         return tmax + 1;
     }
-    float ymin = cube_ptr->center.y - cube_ptr->extendVector.y;
-    float ymax = cube_ptr->center.y + cube_ptr->extendVector.y;
+    float ymin = - cube_ptr->extendVector.y;
+    float ymax = cube_ptr->extendVector.y;
     float tymin;
     float tymax;
     isInInterval(ymin, ymax, newOrigin_ptr->y, newLightVector_ptr->y, tmin, tmax, &tymin, &tymax);
@@ -105,8 +105,8 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
         free(newLightVector_ptr);
         return tmax + 1;
     }
-    float zmin = cube_ptr->center.z - cube_ptr->extendVector.z;
-    float zmax = cube_ptr->center.z + cube_ptr->extendVector.z;
+    float zmin = - cube_ptr->extendVector.z;
+    float zmax = cube_ptr->extendVector.z;
     float tzmin;
     float tzmax;
     isInInterval(zmin, zmax, newOrigin_ptr->z, newLightVector_ptr->z, tmin, tmax, &tzmin, &tzmax);
@@ -145,34 +145,37 @@ static vector_t* OBJ_normalSphere(sphere_t* sphere_ptr, point_t* pointOnSphere_p
 }
 
 static vector_t* OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr){
-    vector_t* ret = calloc(1, sizeof(vector_t));
+    vector_t tmp;
     vector_t* pointNewOrigin_ptr = COO_vectorizePoints(&cube_ptr->center, pointOnCube_ptr);
-    vector_t* pointNewReference_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, pointOnCube_ptr);
+    vector_t* pointNewReference_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, pointNewOrigin_ptr);
     if(fabs(pointNewReference_ptr->x + cube_ptr->extendVector.x) < EPSILON){
-        ret->x = -1;
-        ret->y = 0;
-        ret->z = 0;
+        tmp.x = 1;
+        tmp.y = 0;
+        tmp.z = 0;
     }else if(fabs(pointNewReference_ptr->x - cube_ptr->extendVector.x) < EPSILON){
-        ret->x = 1;
-        ret->y = 0;
-        ret->z = 0;
+        tmp.x = -1;
+        tmp.y = 0;
+        tmp.z = 0;
     }else if(fabs(pointNewReference_ptr->y + cube_ptr->extendVector.y) < EPSILON){
-        ret->x = 0;
-        ret->y = -1;
-        ret->z = 0;
+        tmp.x = 0;
+        tmp.y = 1;
+        tmp.z = 0;
     }else if(fabs(pointNewReference_ptr->y - cube_ptr->extendVector.y) < EPSILON){
-        ret->x = 0;
-        ret->y = 1;
-        ret->z = 0;
+        tmp.x = 0;
+        tmp.y = -1;
+        tmp.z = 0;
     }else if(fabs(pointNewReference_ptr->z + cube_ptr->extendVector.z) < EPSILON){
-        ret->x = 0;
-        ret->y = 0;
-        ret->z = -1;
+        tmp.x = 0;
+        tmp.y = 0;
+        tmp.z = 1;
     }else if(fabs(pointNewReference_ptr->z - cube_ptr->extendVector.z) < EPSILON){
-        ret->x = 0;
-        ret->y = 0;
-        ret->z = 1;
+        tmp.x = 0;
+        tmp.y = 0;
+        tmp.z = -1;
     }
+    free(pointNewOrigin_ptr);
+    free(pointNewReference_ptr);
+    vector_t* ret = COO_matrixVectorProduct(cube_ptr->rotationMatrice, &tmp);
     return ret;
 }
 
@@ -215,6 +218,7 @@ void OBJ_initCube(cube_t* cube_ptr){
     float rotateX_rad = cube_ptr->rotateX * M_PI / 180;
     float rotateY_rad = cube_ptr->rotateY * M_PI / 180;
     float rotateZ_rad = cube_ptr->rotateZ * M_PI / 180;
+    // rotation
     cube_ptr->rotationMatrice[0] = cos(rotateY_rad) * cos(rotateZ_rad);
     cube_ptr->rotationMatrice[1] = cos(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) - sin(rotateZ_rad) * cos(rotateX_rad);
     cube_ptr->rotationMatrice[2] = sin(rotateZ_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
@@ -224,7 +228,16 @@ void OBJ_initCube(cube_t* cube_ptr){
     cube_ptr->rotationMatrice[6] = -sin(rotateY_rad);
     cube_ptr->rotationMatrice[7] = cos(rotateY_rad) * sin(rotateX_rad);
     cube_ptr->rotationMatrice[8] = cos(rotateY_rad) * cos(rotateX_rad);
-    COO_calculateInverse(cube_ptr->rotationMatrice, cube_ptr->invertRotationMatrice);
+    // inverse
+    cube_ptr->invertRotationMatrice[0] = cos(rotateY_rad) * cos(rotateZ_rad);
+    cube_ptr->invertRotationMatrice[1] = cos(rotateY_rad) * sin(rotateZ_rad);
+    cube_ptr->invertRotationMatrice[2] = -sin(rotateY_rad); 
+    cube_ptr->invertRotationMatrice[3] = cos(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) - sin(rotateZ_rad) * cos(rotateX_rad);
+    cube_ptr->invertRotationMatrice[4] = sin(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * cos(rotateX_rad);
+    cube_ptr->invertRotationMatrice[5] = sin(rotateX_rad) * cos(rotateY_rad);
+    cube_ptr->invertRotationMatrice[6] = sin(rotateZ_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
+    cube_ptr->invertRotationMatrice[7] = cos(rotateX_rad) * sin(rotateY_rad) * sin(rotateZ_rad) - sin(rotateX_rad) * cos(rotateZ_rad);
+    cube_ptr->invertRotationMatrice[8] = cos(rotateX_rad) * cos(rotateY_rad);
 }
 //------ Only shared function
 void OBJ_initObject(object_t* object_ptr){

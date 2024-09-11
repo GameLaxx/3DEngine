@@ -54,7 +54,7 @@ coordinate_t* COO_copyCoordinates(coordinate_t* coo1_ptr){
     return ret_ptr;
 }
 
-int COO_applyFactor(coordinate_t* coo_ptr, float factor, int type){
+int COO_lambdaProduct(coordinate_t* coo_ptr, float factor, int type){
     if(factor == 0){
         return EXIT_FAILURE;
     }
@@ -138,7 +138,7 @@ int COO_calculateInverse(float matrix[9], float result[9]) {
     return 1; // Inverse calculé avec succès
 }
 
-void COO_applyRotationMatrice(vector_t* vector_ptr, float theta, float phi, float psi){
+void COO_rotationVectorProduct(vector_t* vector_ptr, float theta, float phi, float psi){
     float theta_rad = theta * M_PI / 180;
     float phi_rad = phi * M_PI / 180;
     float psi_rad = psi * M_PI / 180;
