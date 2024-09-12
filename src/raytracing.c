@@ -24,7 +24,7 @@ point_t* canvasToViewport(int x, int y){
 int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* leavingLightVector_ptr, int specular, float* intensity){
     // leavingLightVector is the ray of light leaving the sphere and going to the camera. Named V.
     // commingLightVector is the ray of light comming from the source and going on the sphere. Named L.
-    for(int i = 0; i < MAX_ELEMENTS; i++){
+    for(int i = 0; i < MAX_LIGHTS; i++){
         if(g_context.lights[i].intensity <= 0) continue;
         // ambiant light just add intensity
         if(g_context.lights[i].type == LT_ambiant){
@@ -47,7 +47,7 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
         float closestValue = tmax + 1;
         float currentValue = tmax + 1;
         
-        for(int i = 0; i < MAX_ELEMENTS; i++){
+        for(int i = 0; i < MAX_OBJECTS; i++){
             currentValue = OBJ_intersectObject(pointOnObject_ptr, commingLightVector_ptr, &g_context.objects[i], tmin, tmax);
             if(currentValue < closestValue && currentValue > tmin && currentValue < tmax){
                 closestObject_ptr = &g_context.objects[i];
@@ -92,7 +92,7 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
     rgba_t* localRet = NULL;
     object_t* closestObject_ptr = NULL;
     // get closest object
-    for(int i = 0; i < MAX_ELEMENTS; i++){
+    for(int i = 0; i < MAX_OBJECTS; i++){
         currentValue = OBJ_intersectObject(origin_ptr, rayVector_ptr, &g_context.objects[i], tmin, tmax);
         if(currentValue < closestValue && currentValue > tmin && currentValue < tmax){
             closestObject_ptr = &g_context.objects[i];
@@ -139,11 +139,11 @@ int RT_initScene(point_t* origin, int vW, int vH, int vD){
 }
 
 int RT_addObject(object_t* object_ptr){
-    if(g_context.numObjects == MAX_ELEMENTS) return EXIT_FAILURE;
+    if(g_context.numObjects == MAX_OBJECTS) return EXIT_FAILURE;
     if(object_ptr->type <= OT_NAO) return EXIT_FAILURE;
     if(OBJ_checkObject(object_ptr) == 0) return EXIT_FAILURE;
     OBJ_initObject(object_ptr);
-    for(int i = 0; i < MAX_ELEMENTS; i++){
+    for(int i = 0; i < MAX_OBJECTS; i++){
         if(g_context.objects[i].type <= OT_NAO){
             g_context.objects[i] = *object_ptr;
             break;
@@ -154,9 +154,9 @@ int RT_addObject(object_t* object_ptr){
 }
 
 int RT_addLight(lightSource_t* light){
-    if(g_context.numLights == MAX_ELEMENTS) return EXIT_FAILURE;
+    if(g_context.numLights == MAX_LIGHTS) return EXIT_FAILURE;
     if(light->intensity <= 0) return EXIT_FAILURE;
-    for(int i = 0; i < MAX_ELEMENTS; i++){
+    for(int i = 0; i < MAX_LIGHTS; i++){
         if(g_context.lights[i].intensity <= 0){
             g_context.lights[i] = *light;
             break;

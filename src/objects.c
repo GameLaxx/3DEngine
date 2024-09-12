@@ -175,8 +175,7 @@ static vector_t* OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr){
     }
     free(pointNewOrigin_ptr);
     free(pointNewReference_ptr);
-    vector_t* ret = COO_matrixVectorProduct(cube_ptr->rotationMatrice, &tmp);
-    return ret;
+    return COO_matrixVectorProduct(cube_ptr->rotationMatrice, &tmp);
 }
 
 //------ Only shared function

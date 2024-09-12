@@ -13,7 +13,8 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------------------------------------------------
-#define MAX_ELEMENTS 6
+#define MAX_OBJECTS 15
+#define MAX_LIGHTS 5
 #define TMAX_ALL 10000
 #define TMAX_POINT 1
 //-----------------------------------------------------------------------------------------------------------------------
@@ -36,8 +37,8 @@ struct sceneContext_s{
     int viewportWidth;
     int viewportHeight;
     int viewportDistance;
-    object_t objects[MAX_ELEMENTS];
-    lightSource_t lights[MAX_ELEMENTS];
+    object_t objects[MAX_OBJECTS];
+    lightSource_t lights[MAX_LIGHTS];
     int numObjects; 
     int numLights; 
 };

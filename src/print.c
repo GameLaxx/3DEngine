@@ -22,6 +22,10 @@ void printCoo(point_t* point_ptr){
     printf("Point : %f %f %f\n", point_ptr->x, point_ptr->y, point_ptr->z);
 }
 
+void printVector(vector_t* vector_ptr){
+    printf("Vector : %f %f %f\n", vector_ptr->x, vector_ptr->y, vector_ptr->z);
+}
+
 void printRGBA(rgba_t* color_ptr){
     printf("Color : %i %i %i %i\n", color_ptr->red, color_ptr->green, color_ptr->blue, color_ptr->alpha);
 }
@@ -31,9 +35,24 @@ void printSphere(sphere_t* sphere_ptr){
     printCoo(&sphere_ptr->center);
 }
 
+void printCube(cube_t* cube_ptr){
+    printf("Cube : Rx %f° Ry %f° Rz %f°\n", cube_ptr->rotateX, cube_ptr->rotateY, cube_ptr->rotateZ);
+    printCoo(&cube_ptr->center);
+    printVector(&cube_ptr->extendVector);
+}
+
 void printObject(object_t* object_ptr){
     if(object_ptr->type == OT_sphere){
         printSphere(object_ptr->content_ptr);
+        return;
+    }
+    if(object_ptr->type == OT_cube){
+        printCube(object_ptr->content_ptr);
+        return;
+    }
+    if(object_ptr->type != OT_NAO){
+        printf("Unknown type : %i\n", object_ptr->type);
+        return;
     }
 }
 
@@ -43,25 +62,16 @@ void printLight(lightSource_t* light_ptr){
 }
 
 void printContext(){
-    sphere_t* sphere_ptr = NULL;
     printf("Context : %i %i %i, nObjects %i, nLights %i\n",
         g_context.viewportWidth, g_context.viewportHeight, g_context.viewportDistance,
         g_context.numObjects, g_context.numLights);
     printCoo(&g_context.origin);
     printf("----- Objects\n");
-    for(int i = 0; i < MAX_ELEMENTS; i++){
-        switch (g_context.objects[i].type){
-        case OT_sphere:
-            sphere_ptr = (sphere_t*) g_context.objects[i].content_ptr;
-            printSphere(sphere_ptr);
-            break;
-        default:
-            printf("Unknown type : %i\n", g_context.objects[i].type);
-            break;
-        }
+    for(int i = 0; i < MAX_OBJECTS; i++){
+        printObject(&g_context.objects[i]);
     }
     printf("----- Lights\n");
-    for(int i = 0; i < MAX_ELEMENTS; i++){
+    for(int i = 0; i < MAX_LIGHTS; i++){
         if(g_context.lights[i].intensity > 0) printLight(&g_context.lights[i]);
     }
 }
