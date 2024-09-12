@@ -20,6 +20,12 @@ int invertY = 0;
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
+/**
+ * @brief Set the canvas to draw with a given color.
+ * 
+ * @param color_ptr The color.
+ * @return int 
+ */
 static int DRAW_setDrawColor(rgba_t* color_ptr){
     if(SDL_SetRenderDrawColor(g_renderer, color_ptr->red, color_ptr->green, color_ptr->blue, color_ptr->alpha) == -1){
         printf("Failed..\n");
@@ -28,6 +34,17 @@ static int DRAW_setDrawColor(rgba_t* color_ptr){
     return EXIT_SUCCESS;
 }
 
+/**
+ * @brief General function to draw any type of rectangle.
+ * 
+ * @param x X coordinate of the origin.
+ * @param y Y coordinate of the origin.
+ * @param width Width of the rectangle.
+ * @param height Height of the rectangle.
+ * @param color_ptr Color of the rectangle.
+ * @param func Either SDL_RenderFillRect or SDL_RenderDrawRect.
+ * @return int 
+ */
 static int DRAW_rectangle(int x, int y, int width, int height, rgba_t* color_ptr, rectangleFunction func){
     DRAW_setDrawColor(color_ptr);
     int renderY = y + yShift;
@@ -108,6 +125,7 @@ int DRAW_invertYAxis(){
     invertY = (1 + invertY) % 2;
     return 0;
 }
+
 /* Color functions */
 rgba_t* DRAW_initBackgroundColor(){
     rgba_t* ret = calloc(1, sizeof(rgba_t));

@@ -23,6 +23,7 @@ int main(int argc, char* argv[]) {
     rgba_t green = {0,255,0,255};
     rgba_t yellow = {255,255,0,255};
     rgba_t purple = {255,0,255,255};
+    rgba_t brown = {255,160,0,255};
     rgba_t light_gray = {160,160,160,255};
     rgba_t dark_gray = {80,80,80,255};
     rgba_t white = {255,255,255,255};
@@ -32,11 +33,11 @@ int main(int argc, char* argv[]) {
     DRAW_clearRenderer();
     // Init context
     point_t origin = {0,1,0};
-    // // sphere 1
+    // // sphere 1 example
     // point_t center1 = {0,-1,3};
     // sphere_t sphere1 = {.center = center1, .radius = 1};
     // object_t object1 = {.content_ptr = &sphere1, .color = red, .specular = 500, .reflective=0.2, .type=OT_sphere};
-    // // sphere 4
+    // // sphere 4 example
     // vector_t vmin1 = {-2, -1,5};
     // vector_t vmax1 = {2, 1,8};
     // cube_t cube1 = {.vectorMin=vmin1, .vectorMax=vmax1};
@@ -47,7 +48,7 @@ int main(int argc, char* argv[]) {
     point_t cubeCenter1 = {0,-0.5,2};
     vector_t extend1 = {10,0.5,10};
     cube_t cube1 = {.center=cubeCenter1, .extendVector=extend1};
-    object_t object1 = {.content_ptr = &cube1, .color = dark_gray, .specular = 40, .reflective=0.3, .type=OT_cube};
+    object_t object1 = {.content_ptr = &cube1, .color = brown, .specular = 40, .reflective=0.3, .type=OT_cube};
     // cube 2 (bottom)
     point_t cubeCenter2 = {0,0.1,2};
     vector_t extend2 = {0.3,0.1,0.3};

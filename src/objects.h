@@ -59,13 +59,40 @@ enum OBJ_objectType_e{
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
-
+/**
+ * @brief Given an origin O and a direction D, return the lowest t such that O + t * D intersect an object.
+ * 
+ * @param origin_ptr Origin point.
+ * @param lightVector_ptr Direction vector.
+ * @param object_ptr Object to intersect.
+ * @param tmin Minimum value that t should take.
+ * @param tmax Maximum value that t should take.
+ * @return The value t if it is in range. tmax + 1 else.
+ */
 float OBJ_intersectObject(point_t* origin_ptr, point_t* lightVector_ptr, object_t* object_ptr, float tmin, float tmax);
 
+/**
+ * @brief Given an object and a point on the object, return the normal vector for the given point. Convention : the normal goes inside the object.
+ * 
+ * @param object_ptr The object.
+ * @param pointOnObject_ptr The point on the object.
+ * @return The normal vector (it goes inside the object and not outside).
+ */
 vector_t* OBJ_normalObject(object_t* object_ptr, vector_t* pointOnObject_ptr);
 
+/**
+ * @brief Check if an object can be considered as well defined.
+ * 
+ * @param object_ptr The object to check.
+ * @return 1 it is safe, 0 it isnt. 
+ */
 int OBJ_checkObject(object_t* object_ptr);
 
+/**
+ * @brief Apply several functions if needed.
+ * 
+ * @param object_ptr The object to initialize.
+ */
 void OBJ_initObject(object_t* object_ptr);
 
 #endif /* OBJECTS_H */

@@ -89,7 +89,7 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
 rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin, double tmax, int recursiveDepth){
     float closestValue = tmax + 1;
     float currentValue = tmax + 1;
-    rgba_t* localRet = DRAW_initBackgroundColor();
+    rgba_t* localRet = NULL;
     object_t* closestObject_ptr = NULL;
     // get closest object
     for(int i = 0; i < MAX_ELEMENTS; i++){
@@ -100,9 +100,8 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
         }
     }
     if(closestObject_ptr == NULL){
-        return localRet;
+        return DRAW_initBackgroundColor();
     }
-    free(localRet);
     // point on the object that intersected the ray <=> point on the ray that intersected the object. Named P.
     point_t* pointOnObject_ptr = COO_linearTransformation(origin_ptr, 1, rayVector_ptr, closestValue);
     // normal vector for the point P. Named N.

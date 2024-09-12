@@ -56,9 +56,38 @@ extern sceneContext_t g_context;
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
+/**
+ * @brief Set up the context variables.
+ * 
+ * @param origin Origin point of the camera.
+ * @param vW Viewport width.
+ * @param vH Viewport height.
+ * @param vD Viewport distance from the camera.
+ * @return int
+ */
 int RT_initScene(point_t* origin, int vW, int vH, int vD);
+
+/**
+ * @brief Add an object to the context.
+ * 
+ * @param object_ptr The object to add.
+ * @return int 
+ */
 int RT_addObject(object_t* object_ptr);
+
+/**
+ * @brief Add a light to the context.
+ * 
+ * @param light The light to add.
+ * @return int 
+ */
 int RT_addLight(lightSource_t* light);
+
+/**
+ * @brief Parse each pixel to associate a color based on the context.
+ * 
+ * @return int 
+ */
 int RT_drawScene();
 
 #endif /* RAYTRACING_H */

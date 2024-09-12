@@ -53,6 +53,14 @@ enum COO_factorType_e{
  */
 coordinate_t* COO_copyCoordinates(coordinate_t* coo1_ptr);
 
+/**
+ * @brief Apply a factor to a vector using +,-,/ or * computations. 
+ * 
+ * @param coo_ptr Vector that will be changed.
+ * @param factor Factor that will be used
+ * @param type @ref COO_factorType_e
+ * @return SUCCESS or FAILURE. 
+ */
 int COO_lambdaProduct(coordinate_t* coo_ptr, float factor, int type);
 
 /**
@@ -84,10 +92,23 @@ vector_t* COO_vectorizePoints(point_t* p1_ptr, point_t* p2_ptr);
  */
 float COO_scalarProduct(coordinate_t* coo1_ptr, coordinate_t* coo2_ptr);
 
-int COO_calculateInverse(float matrix[9], float result[9]);
-
+/**
+ * @brief Given a 3x3 matrix M represented by a 1x9 vector, return `M*V` where V is a vector. 
+ * 
+ * @param matrix The matrix
+ * @param vector_ptr The vector
+ * @return The newly allocated vector resulting of the product.
+ */
 vector_t* COO_matrixVectorProduct(float matrix[9], vector_t* vector_ptr);
 
+/**
+ * @brief Given a vector, apply the rotation matrix using 3 axes of rotation.
+ * 
+ * @param vector_ptr The vector that will be modified used.
+ * @param theta Angle around Ox. In °.
+ * @param phi Angle around Oy. In °.
+ * @param psi Angle around Oz. In °.
+ */
 void COO_rotationVectorProduct(vector_t* vector_ptr, float theta, float phi, float psi);
 
 #endif /* COORDINATES_H */
