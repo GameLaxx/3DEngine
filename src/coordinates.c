@@ -78,12 +78,11 @@ float COO_scalarProduct(coordinate_t* coo1_ptr, coordinate_t* coo2_ptr){
     return coo1_ptr->x * coo2_ptr->x + coo1_ptr->y * coo2_ptr->y + coo1_ptr->z * coo2_ptr->z;
 }
 
-vector_t* COO_matrixVectorProduct(float matrix[9], vector_t* vector_ptr){
-    vector_t* ret = calloc(1, sizeof(vector_t));
-    ret->x = matrix[0] * vector_ptr->x +  matrix[1] * vector_ptr->y +  matrix[2] * vector_ptr->z; 
-    ret->y = matrix[3] * vector_ptr->x +  matrix[4] * vector_ptr->y +  matrix[5] * vector_ptr->z; 
-    ret->z = matrix[6] * vector_ptr->x +  matrix[7] * vector_ptr->y +  matrix[8] * vector_ptr->z; 
-    return ret;
+int COO_matrixVectorProduct(float matrix[9], vector_t* vector_ptr, vector_t* ret_ptr){
+    ret_ptr->x = matrix[0] * vector_ptr->x +  matrix[1] * vector_ptr->y +  matrix[2] * vector_ptr->z; 
+    ret_ptr->y = matrix[3] * vector_ptr->x +  matrix[4] * vector_ptr->y +  matrix[5] * vector_ptr->z; 
+    ret_ptr->z = matrix[6] * vector_ptr->x +  matrix[7] * vector_ptr->y +  matrix[8] * vector_ptr->z; 
+    return EXIT_SUCCESS;
 }
 
 void COO_rotationVectorProduct(vector_t* vector_ptr, float theta, float phi, float psi){

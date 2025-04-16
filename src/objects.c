@@ -84,41 +84,39 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
     if(COO_vectorizePoints(&cube_ptr->center, origin_ptr, &translatedOrigin) == EXIT_FAILURE){
         return tmax + 1;
     }
-    point_t* newOrigin_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, &translatedOrigin);
-    point_t* newLightVector_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, lightVector_ptr);
+    point_t newOrigin = {};
+    if(COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, &translatedOrigin, &newOrigin) == EXIT_FAILURE){
+        return tmax + 1;
+    }
+    point_t newLightVector = {};
+    if(COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, lightVector_ptr, &newLightVector) == EXIT_FAILURE){
+        return tmax + 1;
+    }
     // value that determine where is the intersection between the ray and a sphere
     float xmin = - cube_ptr->extendVector.x;
     float xmax = cube_ptr->extendVector.x;
     float txmin;
     float txmax;
-    isInInterval(xmin, xmax, newOrigin_ptr->x, newLightVector_ptr->x, tmin, tmax, &txmin, &txmax);
+    isInInterval(xmin, xmax, newOrigin.x, newLightVector.x, tmin, tmax, &txmin, &txmax);
     if(txmin > txmax){
-        free(newOrigin_ptr);
-        free(newLightVector_ptr);
         return tmax + 1;
     }
     float ymin = - cube_ptr->extendVector.y;
     float ymax = cube_ptr->extendVector.y;
     float tymin;
     float tymax;
-    isInInterval(ymin, ymax, newOrigin_ptr->y, newLightVector_ptr->y, tmin, tmax, &tymin, &tymax);
+    isInInterval(ymin, ymax, newOrigin.y, newLightVector.y, tmin, tmax, &tymin, &tymax);
     if(tymin > tymax){
-        free(newOrigin_ptr);
-        free(newLightVector_ptr);
         return tmax + 1;
     }
     float zmin = - cube_ptr->extendVector.z;
     float zmax = cube_ptr->extendVector.z;
     float tzmin;
     float tzmax;
-    isInInterval(zmin, zmax, newOrigin_ptr->z, newLightVector_ptr->z, tmin, tmax, &tzmin, &tzmax);
+    isInInterval(zmin, zmax, newOrigin.z, newLightVector.z, tmin, tmax, &tzmin, &tzmax);
     if(tzmin > tzmax){
-        free(newOrigin_ptr);
-        free(newLightVector_ptr);
         return tmax + 1;
     }
-    free(newOrigin_ptr);
-    free(newLightVector_ptr);
     float te = max(txmin, tymin, tzmin);
     float ts = min(txmax, tymax, tzmax);
     if(ts < te || ts < 0) return tmax + 1;
@@ -132,13 +130,19 @@ static float OBJ_intersectCylinder(point_t* origin_ptr, point_t* lightVector_ptr
     if(COO_vectorizePoints(&cylinder_ptr->center, origin_ptr, &translatedOrigin) == EXIT_FAILURE){
         return tmax + 1;
     }
-    point_t* newOrigin_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, &translatedOrigin);
-    point_t* newLightVector_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, lightVector_ptr);
+    point_t newOrigin = {}; 
+    if(COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, &translatedOrigin, &newOrigin) == EXIT_FAILURE){
+        return tmax + 1;
+    }
+    point_t newLightVector = {};
+    if(COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, lightVector_ptr, &newLightVector) == EXIT_FAILURE){
+        return tmax + 1;
+    }
     
-    float ox = newOrigin_ptr->x;
-    float oz = newOrigin_ptr->z;
-    float dx = newLightVector_ptr->x;
-    float dz = newLightVector_ptr->z;
+    float ox = newOrigin.x;
+    float oz = newOrigin.z;
+    float dx = newLightVector.x;
+    float dz = newLightVector.z;
     
     float a = dx * dx + dz * dz;
     float b = 2 * (ox * dx + oz * dz);
@@ -164,31 +168,31 @@ static float OBJ_intersectCylinder(point_t* origin_ptr, point_t* lightVector_ptr
     }
     
     // Check if the ray is in range for y positions
-    float y = newOrigin_ptr->y + t * newLightVector_ptr->y;
+    float y = newOrigin.y + t * newLightVector.y;
     if (y >= - cylinder_ptr->height && y <= cylinder_ptr->height) {
         return t;
     }
 
     // Light ray is `//` to Oy
-    if(newLightVector_ptr->y == 0){
+    if(newLightVector.y == 0){
         return tmax + 1;
     }
 
-    float tBottom = (- cylinder_ptr->height - newOrigin_ptr->y) / newLightVector_ptr->y;
+    float tBottom = (- cylinder_ptr->height - newOrigin.y) / newLightVector.y;
     if (tBottom > tmin && tBottom < tmax) {
         // Vérifie si l'intersection est dans le rayon du cylindre
-        float xBottom = newOrigin_ptr->x + tBottom * newLightVector_ptr->x;
-        float zBottom = newOrigin_ptr->z + tBottom * newLightVector_ptr->z;
+        float xBottom = newOrigin.x + tBottom * newLightVector.x;
+        float zBottom = newOrigin.z + tBottom * newLightVector.z;
         if (xBottom * xBottom + zBottom * zBottom <= cylinder_ptr->radius * cylinder_ptr->radius) {
             return tBottom;
         }
     }
     
-    float tTop = (cylinder_ptr->height - newOrigin_ptr->y) / newLightVector_ptr->y;
+    float tTop = (cylinder_ptr->height - newOrigin.y) / newLightVector.y;
     if (tTop > tmin && tTop < tmax) {
         // Vérifie si l'intersection est dans le rayon du cylindre
-        float xTop = newOrigin_ptr->x + tTop * newLightVector_ptr->x;
-        float zTop = newOrigin_ptr->z + tTop * newLightVector_ptr->z;
+        float xTop = newOrigin.x + tTop * newLightVector.x;
+        float zTop = newOrigin.z + tTop * newLightVector.z;
         if (xTop * xTop + zTop * zTop <= cylinder_ptr->radius * cylinder_ptr->radius) {
             return tTop;
         }
@@ -212,81 +216,80 @@ float OBJ_intersectObject(point_t* origin_ptr, point_t* lightVector_ptr, object_
 //-----------------------------------------------------------------------------------------------------------------------
 // Normal Functions
 //-----------------------------------------------------------------------------------------------------------------------
-static vector_t* OBJ_normalSphere(sphere_t* sphere_ptr, point_t* pointOnSphere_ptr){
-    vector_t* ret_ptr = calloc(1, sizeof(vector_t));
-    if(COO_vectorizePoints(pointOnSphere_ptr, &sphere_ptr->center, ret_ptr) == EXIT_FAILURE){
-        free(ret_ptr);
-        return NULL;
-    }
-    return ret_ptr;
+static int OBJ_normalSphere(sphere_t* sphere_ptr, point_t* pointOnSphere_ptr, vector_t* ret_ptr){
+    return COO_vectorizePoints(pointOnSphere_ptr, &sphere_ptr->center, ret_ptr);
 }
 
-static vector_t* OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr){
+static int OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr, vector_t* ret_ptr){
     vector_t tmp;
     vector_t pointNewOrigin = {};
     if(COO_vectorizePoints(&cube_ptr->center, pointOnCube_ptr, &pointNewOrigin) == EXIT_FAILURE){
-        return NULL;
+        return EXIT_FAILURE;
     }
-    vector_t* pointNewReference_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, &pointNewOrigin);
-    if(fabs(pointNewReference_ptr->x + cube_ptr->extendVector.x) < EPSILON){
+    vector_t pointNewReference = {};
+    if(COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, &pointNewOrigin, &pointNewReference) == EXIT_FAILURE){
+        return EXIT_FAILURE;
+    }
+    if(fabs(pointNewReference.x + cube_ptr->extendVector.x) < EPSILON){
         tmp.x = 1;
         tmp.y = 0;
         tmp.z = 0;
-    }else if(fabs(pointNewReference_ptr->x - cube_ptr->extendVector.x) < EPSILON){
+    }else if(fabs(pointNewReference.x - cube_ptr->extendVector.x) < EPSILON){
         tmp.x = -1;
         tmp.y = 0;
         tmp.z = 0;
-    }else if(fabs(pointNewReference_ptr->y + cube_ptr->extendVector.y) < EPSILON){
+    }else if(fabs(pointNewReference.y + cube_ptr->extendVector.y) < EPSILON){
         tmp.x = 0;
         tmp.y = 1;
         tmp.z = 0;
-    }else if(fabs(pointNewReference_ptr->y - cube_ptr->extendVector.y) < EPSILON){
+    }else if(fabs(pointNewReference.y - cube_ptr->extendVector.y) < EPSILON){
         tmp.x = 0;
         tmp.y = -1;
         tmp.z = 0;
-    }else if(fabs(pointNewReference_ptr->z + cube_ptr->extendVector.z) < EPSILON){
+    }else if(fabs(pointNewReference.z + cube_ptr->extendVector.z) < EPSILON){
         tmp.x = 0;
         tmp.y = 0;
         tmp.z = 1;
-    }else if(fabs(pointNewReference_ptr->z - cube_ptr->extendVector.z) < EPSILON){
+    }else if(fabs(pointNewReference.z - cube_ptr->extendVector.z) < EPSILON){
         tmp.x = 0;
         tmp.y = 0;
         tmp.z = -1;
     }
-    free(pointNewReference_ptr);
-    return COO_matrixVectorProduct(cube_ptr->rotationMatrice, &tmp);
+    return COO_matrixVectorProduct(cube_ptr->rotationMatrice, &tmp, ret_ptr);
 }
 
-vector_t* OBJ_normalCylinder(cylinder_t* cylinder_ptr, point_t* pointOnCylinder_ptr) {
+static int OBJ_normalCylinder(cylinder_t* cylinder_ptr, point_t* pointOnCylinder_ptr, vector_t* ret_ptr) {
     vector_t pointNewOrigin = {};
     if(COO_vectorizePoints(&cylinder_ptr->center, pointOnCylinder_ptr, &pointNewOrigin) == EXIT_FAILURE){
-        return NULL;
+        return EXIT_FAILURE;
     }
-    vector_t* pointNewReference_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, &pointNewOrigin);
+    vector_t pointNewReference = {};
+    if(COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, &pointNewOrigin, &pointNewReference) == EXIT_FAILURE){
+        return EXIT_FAILURE;
+    }
     vector_t tmp;
-    if(pointNewReference_ptr->y == cylinder_ptr->height){
+    if(pointNewReference.y == cylinder_ptr->height){
         tmp.y = -1;
-    }else if(pointNewReference_ptr->y == -cylinder_ptr->height){
+    }else if(pointNewReference.y == -cylinder_ptr->height){
         tmp.y = 1;
     }else{
-        tmp.x = -pointNewReference_ptr->x;
-        tmp.z = -pointNewReference_ptr->z;
+        tmp.x = -pointNewReference.x;
+        tmp.z = -pointNewReference.z;
     }
-    free(pointNewReference_ptr);
-    return COO_matrixVectorProduct(cylinder_ptr->rotationMatrice, &tmp);
+    return COO_matrixVectorProduct(cylinder_ptr->rotationMatrice, &tmp, ret_ptr);
 }
 
 //------ Only shared function
-vector_t* OBJ_normalObject(object_t* object_ptr, point_t* pointOnObject_ptr){
+int OBJ_normalObject(object_t* object_ptr, point_t* pointOnObject_ptr, vector_t* ret_ptr){
     switch (object_ptr->type){
         case OT_sphere:
-            return OBJ_normalSphere(object_ptr->content_ptr, pointOnObject_ptr);
+            return OBJ_normalSphere(object_ptr->content_ptr, pointOnObject_ptr, ret_ptr);
         case OT_cube:
-            return OBJ_normalCube(object_ptr->content_ptr, pointOnObject_ptr);
+            return OBJ_normalCube(object_ptr->content_ptr, pointOnObject_ptr, ret_ptr);
         case OT_cylinder:
-            return OBJ_normalCylinder(object_ptr->content_ptr, pointOnObject_ptr);
+            return OBJ_normalCylinder(object_ptr->content_ptr, pointOnObject_ptr, ret_ptr);
         default:
-            return NULL;
+            return EXIT_FAILURE;
     }
 }
 //-----------------------------------------------------------------------------------------------------------------------

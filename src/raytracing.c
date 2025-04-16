@@ -112,13 +112,13 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
         return DRAW_initBackgroundColor();
     }
     // normal vector for the point P. Named N.
-    vector_t* normal_ptr = OBJ_normalObject(closestObject_ptr, &pointOnObject);
-    if(normal_ptr == NULL){
+    vector_t normal_ptr = {};
+    if(OBJ_normalObject(closestObject_ptr, &pointOnObject, &normal_ptr) == EXIT_FAILURE){
         printf("*-* ! Be careful : missing normal function for object of type %i\n",  closestObject_ptr->type);
         return DRAW_initBackgroundColor();
     }
     // Transform N into a unitary vector.
-    COO_lambdaProduct(normal_ptr, sqrt(COO_scalarProduct(normal_ptr, normal_ptr)), FT_DIV);
+    COO_lambdaProduct(&normal_ptr, sqrt(COO_scalarProduct(&normal_ptr, &normal_ptr)), FT_DIV);
     // vector coming from P and going on the point of the viewport. Mainly -D. Named V.
     vector_t lightVector = {};
     if(COO_linearTransformation(rayVector_ptr, -1, NULL, 0, &lightVector) == EXIT_FAILURE){
@@ -127,20 +127,19 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
     // Transform V into a unitary vector.
     COO_lambdaProduct(&lightVector, sqrt(COO_scalarProduct(&lightVector, &lightVector)), FT_DIV);
     float intensity = 0;
-    if(computeLight(&pointOnObject, normal_ptr, &lightVector, closestObject_ptr->specular, &intensity) == EXIT_FAILURE){
+    if(computeLight(&pointOnObject, &normal_ptr, &lightVector, closestObject_ptr->specular, &intensity) == EXIT_FAILURE){
         return DRAW_initBackgroundColor();
     }
     localRet = DRAW_addIntensity(&closestObject_ptr->color, intensity);
     if(recursiveDepth > 0 && closestObject_ptr->reflective != 0){
         vector_t reflectionVector = {};
-        if(COO_linearTransformation(normal_ptr, -2 * COO_scalarProduct(normal_ptr, rayVector_ptr), rayVector_ptr, 1, &reflectionVector) == EXIT_FAILURE){
+        if(COO_linearTransformation(&normal_ptr, -2 * COO_scalarProduct(&normal_ptr, rayVector_ptr), rayVector_ptr, 1, &reflectionVector) == EXIT_FAILURE){
             return DRAW_initBackgroundColor();
         }
         rgba_t* recursiveRet_ptr = getPixelColor(&pointOnObject, &reflectionVector, tmin, tmax, recursiveDepth - 1);
         DRAW_computeReflection(localRet, recursiveRet_ptr, closestObject_ptr->reflective); //! problem here
         free(recursiveRet_ptr);
     }
-    free(normal_ptr);
     return localRet;
 }
 //-----------------------------------------------------------------------------------------------------------------------

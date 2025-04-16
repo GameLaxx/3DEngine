@@ -88,9 +88,10 @@ float OBJ_intersectObject(point_t* origin_ptr, point_t* lightVector_ptr, object_
  * 
  * @param object_ptr The object.
  * @param pointOnObject_ptr The point on the object.
- * @return The normal vector (it goes inside the object and not outside).
+ * @param ret_ptr Vector in which the normal is stored.
+ * @return SUCCESS or FAILURE.
  */
-vector_t* OBJ_normalObject(object_t* object_ptr, vector_t* pointOnObject_ptr);
+int OBJ_normalObject(object_t* object_ptr, vector_t* pointOnObject_ptr, vector_t* ret_ptr);
 
 /**
  * @brief Check if an object can be considered as well defined.

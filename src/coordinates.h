@@ -96,13 +96,14 @@ int COO_vectorizePoints(point_t* p1_ptr, point_t* p2_ptr, point_t* ret_ptr);
 float COO_scalarProduct(coordinate_t* coo1_ptr, coordinate_t* coo2_ptr);
 
 /**
- * @brief Given a 3x3 matrix M represented by a 1x9 vector, return `M*V` where V is a vector. 
+ * @brief Given a 3x3 matrix M represented by a 1x9 vector, return `M*V` where V is a vector without calloc. 
  * 
  * @param matrix The matrix
  * @param vector_ptr The vector
+ * @param ret_ptr The variable in which the result is stored.
  * @return The newly allocated vector resulting of the product.
  */
-vector_t* COO_matrixVectorProduct(float matrix[9], vector_t* vector_ptr);
+int COO_matrixVectorProduct(float matrix[9], vector_t* vector_ptr, vector_t* ret_ptr);
 
 /**
  * @brief Given a vector, apply the rotation matrix using 3 axes of rotation.
