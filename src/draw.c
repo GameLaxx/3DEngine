@@ -127,26 +127,24 @@ int DRAW_invertYAxis(){
 }
 
 /* Color functions */
-rgba_t* DRAW_initBackgroundColor(){
-    rgba_t* ret = calloc(1, sizeof(rgba_t));
-    ret->red = g_backgroundColor.red;
-    ret->green = g_backgroundColor.green;
-    ret->blue = g_backgroundColor.blue;
-    return ret;
+int DRAW_initBackgroundColor(rgba_t* ret_ptr){
+    ret_ptr->red = g_backgroundColor.red;
+    ret_ptr->green = g_backgroundColor.green;
+    ret_ptr->blue = g_backgroundColor.blue;
+    return EXIT_SUCCESS;
 }
 
-rgba_t* DRAW_addIntensity(rgba_t* color_ptr, float intensity){
-    rgba_t* ret = calloc(1, sizeof(rgba_t));
+int DRAW_addIntensity(rgba_t* color_ptr, float intensity, rgba_t* ret_ptr){
     if(intensity <= 0){
-        return ret;
+        return EXIT_SUCCESS;
     }
     float red = (float) color_ptr->red * intensity;
-    ret->red = ((int) red > 255) ? 255 : (int) red;
+    ret_ptr->red = ((int) red > 255) ? 255 : (int) red;
     float green = (float) color_ptr->green * intensity;
-    ret->green = ((int) green > 255) ? 255 : (int) green;
+    ret_ptr->green = ((int) green > 255) ? 255 : (int) green;
     float blue = (float) color_ptr->blue * intensity;
-    ret->blue = ((int) blue > 255) ? 255 : (int) blue;
-    return ret;
+    ret_ptr->blue = ((int) blue > 255) ? 255 : (int) blue;
+    return EXIT_SUCCESS;
 }
 
 void DRAW_computeReflection(rgba_t* localColor_ptr, rgba_t* recursiveColor_ptr, float reflection){

@@ -13,12 +13,11 @@ sceneContext_t g_context;
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
-point_t* canvasToViewport(int x, int y){
-    point_t* ret = calloc(1, sizeof(point_t));
-    ret->x = x * (float)g_context.viewportWidth / (float)windowWidth;
-    ret->y = y * (float)g_context.viewportHeight / (float)windowHeight;
-    ret->z = g_context.viewportDistance;
-    return ret;
+int canvasToViewport(int x, int y, point_t* ret_ptr){
+    ret_ptr->x = x * (float)g_context.viewportWidth / (float)windowWidth;
+    ret_ptr->y = y * (float)g_context.viewportHeight / (float)windowHeight;
+    ret_ptr->z = g_context.viewportDistance;
+    return EXIT_SUCCESS;
 }
 
 int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* leavingLightVector_ptr, int specular, float* intensity){
@@ -90,10 +89,9 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
     return EXIT_SUCCESS;
 }
 
-rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin, double tmax, int recursiveDepth){
+int getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin, double tmax, int recursiveDepth, rgba_t* ret_ptr){
     float closestValue = tmax + 1;
     float currentValue = tmax + 1;
-    rgba_t* localRet = NULL;
     object_t* closestObject_ptr = NULL;
     // get closest object
     for(int i = 0; i < MAX_OBJECTS; i++){
@@ -104,43 +102,43 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
         }
     }
     if(closestObject_ptr == NULL){
-        return DRAW_initBackgroundColor();
+        return DRAW_initBackgroundColor(ret_ptr);
     }
     // point on the object that intersected the ray <=> point on the ray that intersected the object. Named P.
     point_t pointOnObject = {};
     if(COO_linearTransformation(origin_ptr, 1, rayVector_ptr, closestValue, &pointOnObject) == EXIT_FAILURE){
-        return DRAW_initBackgroundColor();
+        return DRAW_initBackgroundColor(ret_ptr);
     }
     // normal vector for the point P. Named N.
-    vector_t normal_ptr = {};
-    if(OBJ_normalObject(closestObject_ptr, &pointOnObject, &normal_ptr) == EXIT_FAILURE){
+    vector_t normalVector = {};
+    if(OBJ_normalObject(closestObject_ptr, &pointOnObject, &normalVector) == EXIT_FAILURE){
         printf("*-* ! Be careful : missing normal function for object of type %i\n",  closestObject_ptr->type);
-        return DRAW_initBackgroundColor();
+        return DRAW_initBackgroundColor(ret_ptr);
     }
     // Transform N into a unitary vector.
-    COO_lambdaProduct(&normal_ptr, sqrt(COO_scalarProduct(&normal_ptr, &normal_ptr)), FT_DIV);
+    COO_lambdaProduct(&normalVector, sqrt(COO_scalarProduct(&normalVector, &normalVector)), FT_DIV);
     // vector coming from P and going on the point of the viewport. Mainly -D. Named V.
     vector_t lightVector = {};
     if(COO_linearTransformation(rayVector_ptr, -1, NULL, 0, &lightVector) == EXIT_FAILURE){
-        return DRAW_initBackgroundColor();
+        return DRAW_initBackgroundColor(ret_ptr);
     }
     // Transform V into a unitary vector.
     COO_lambdaProduct(&lightVector, sqrt(COO_scalarProduct(&lightVector, &lightVector)), FT_DIV);
     float intensity = 0;
-    if(computeLight(&pointOnObject, &normal_ptr, &lightVector, closestObject_ptr->specular, &intensity) == EXIT_FAILURE){
-        return DRAW_initBackgroundColor();
+    if(computeLight(&pointOnObject, &normalVector, &lightVector, closestObject_ptr->specular, &intensity) == EXIT_FAILURE){
+        return DRAW_initBackgroundColor(ret_ptr);
     }
-    localRet = DRAW_addIntensity(&closestObject_ptr->color, intensity);
+    DRAW_addIntensity(&closestObject_ptr->color, intensity, ret_ptr);
     if(recursiveDepth > 0 && closestObject_ptr->reflective != 0){
         vector_t reflectionVector = {};
-        if(COO_linearTransformation(&normal_ptr, -2 * COO_scalarProduct(&normal_ptr, rayVector_ptr), rayVector_ptr, 1, &reflectionVector) == EXIT_FAILURE){
-            return DRAW_initBackgroundColor();
+        if(COO_linearTransformation(&normalVector, -2 * COO_scalarProduct(&normalVector, rayVector_ptr), rayVector_ptr, 1, &reflectionVector) == EXIT_FAILURE){
+            return DRAW_initBackgroundColor(ret_ptr);
         }
-        rgba_t* recursiveRet_ptr = getPixelColor(&pointOnObject, &reflectionVector, tmin, tmax, recursiveDepth - 1);
-        DRAW_computeReflection(localRet, recursiveRet_ptr, closestObject_ptr->reflective); //! problem here
-        free(recursiveRet_ptr);
+        rgba_t recursiveRet = {};
+        getPixelColor(&pointOnObject, &reflectionVector, tmin, tmax, recursiveDepth - 1, &recursiveRet);
+        DRAW_computeReflection(ret_ptr, &recursiveRet, closestObject_ptr->reflective); //! problem here
     }
-    return localRet;
+    return EXIT_SUCCESS;
 }
 //-----------------------------------------------------------------------------------------------------------------------
 // Global Functions
@@ -190,18 +188,19 @@ int RT_addLight(lightSource_t* light){
 }
 
 int RT_drawScene(){
+    vector_t rayVector_ptr = {};
+    rgba_t pixelColor = {};
     for(int x = -windowWidth / 2; x < windowWidth / 2; x++){
         for(int y = -windowWidth / 2; y < windowWidth / 2; y++){
             // Vector that goes from one pixel on the canvas to one point of the view port. Named D.
-            vector_t* rayVector_ptr = canvasToViewport(x, y);
-            COO_rotationVectorProduct(rayVector_ptr,0,0,0);
-            rgba_t* color_ptr = getPixelColor(&g_context.origin, rayVector_ptr, 0.00001, TMAX_ALL, 3);
-            free(rayVector_ptr);
-            if(color_ptr == NULL){
+            if(canvasToViewport(x, y, &rayVector_ptr) == EXIT_FAILURE){
                 continue;
             }
-            DRAW_pixel(x, y, color_ptr);
-            free(color_ptr);
+            COO_rotationVectorProduct(&rayVector_ptr,0,0,0);
+            if(getPixelColor(&g_context.origin, &rayVector_ptr, 0.00001, TMAX_ALL, 3, &pixelColor) == EXIT_FAILURE){
+                continue;
+            }
+            DRAW_pixel(x, y, &pixelColor);
         }
     }
     return 0;

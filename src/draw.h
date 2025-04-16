@@ -93,18 +93,21 @@ int DRAW_invertYAxis();
 /**
  * @brief Return the default color of the background.
  * 
+ * @param ret_ptr The variable in which the result is stored.
+ * 
  * @return The newly allocated color.
  */
-rgba_t* DRAW_initBackgroundColor();
+int DRAW_initBackgroundColor(rgba_t* ret_ptr);
 
 /**
  * @brief Compute the new color given an intensity.
  * 
  * @param color_ptr The color that will be used as a base.
  * @param intensity The intensity (<0 completely black, 1 the initial color, >1 can lead to full white).
+ * @param ret_ptr The variable in which the result is stored.
  * @return The newly allocated color.
  */
-rgba_t* DRAW_addIntensity(rgba_t* color_ptr, float intensity);
+int DRAW_addIntensity(rgba_t* color_ptr, float intensity, rgba_t* ret_ptr);
 
 void DRAW_computeReflection(rgba_t* localColor_ptr, rgba_t* recursiveColor_ptr, float reflection);
 
