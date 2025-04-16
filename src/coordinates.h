@@ -46,42 +46,45 @@ enum COO_factorType_e{
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
 /**
- * @brief Return a calloc copy of the given coordinate.
+ * @brief Return a copy of the given coordinate without calloc.
  * 
  * @param coo1_ptr The coordinate to copy.
- * @return The copied coordinate. Has to be free when not used anymore.
+ * @param coo1_ptr The coordinate copied.
+ * @return SUCCESS or FAILURE.
  */
-coordinate_t* COO_copyCoordinates(coordinate_t* coo1_ptr);
+int COO_copyCoordinates(coordinate_t* coo1_ptr, coordinate_t* ret_ptr);
 
 /**
- * @brief Apply a factor to a vector using +,-,/ or * computations. 
+ * @brief Apply a factor to a vector using +,-,/ or * computations. This computation is in-place.
  * 
  * @param coo_ptr Vector that will be changed.
- * @param factor Factor that will be used
+ * @param factor Factor that will be used. Should be != 0.
  * @param type @ref COO_factorType_e
  * @return SUCCESS or FAILURE. 
  */
 int COO_lambdaProduct(coordinate_t* coo_ptr, float factor, int type);
 
 /**
- * @brief Return a calloc coordinate made by calculating `a * v1 + b * v2` where a,b are numbers and v1,v2 vectors.
+ * @brief Return a coordinate made by calculating `a * v1 + b * v2` where a,b are numbers and v1,v2 vectors without calloc.
  * 
  * @param coo1_ptr The first coordinate (v1)
- * @param firstCoeff The first coefficient (a)
+ * @param factor1 The first coefficient (a)
  * @param coo2_ptr The second coordinate (v2)
- * @param secondCoeff The second coefficient (b)
- * @return The newly made vector. Has to be free when not used anymore.
+ * @param factor2 The second coefficient (b)
+ * @param ret_ptr The variable in which the result is stored.
+ * @return SUCCESS or FAILURE.
  */
-coordinate_t* COO_linearTransformation(coordinate_t* coo1_ptr, float firstCoeff, coordinate_t* coo2_ptr, float secondCoeff);
+int COO_linearTransformation(coordinate_t* coo1_ptr, float factor1, coordinate_t* coo2_ptr, float factor2, coordinate_t* ret_ptr);
 
 /**
  * @brief Side use case of @ref COO_linearTransformation with `a = -1` and `b = 1`.
  * 
  * @param p1_ptr The first point (v1)
  * @param p2_ptr The second point (v2)
- * @return A vector made by `v2 - v1`. Has to be free when not used anymore.
+ * @param ret_ptr The variable in which the result is stored.
+ * @return SUCCESS or FAILURE.
  */
-vector_t* COO_vectorizePoints(point_t* p1_ptr, point_t* p2_ptr);
+int COO_vectorizePoints(point_t* p1_ptr, point_t* p2_ptr, point_t* ret_ptr);
 
 /**
  * @brief The scalar product between v1 and v2 where v1,v2 are vectors.

@@ -16,12 +16,11 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Global Functions
 //-----------------------------------------------------------------------------------------------------------------------
-coordinate_t* COO_copyCoordinates(coordinate_t* coo1_ptr){
-    coordinate_t *ret_ptr = calloc(1, sizeof(coordinate_t));
+int COO_copyCoordinates(coordinate_t* coo1_ptr, coordinate_t* ret_ptr){
     ret_ptr->x = coo1_ptr->x;
     ret_ptr->y = coo1_ptr->y;
     ret_ptr->z = coo1_ptr->z;
-    return ret_ptr;
+    return EXIT_SUCCESS;
 }
 
 int COO_lambdaProduct(coordinate_t* coo_ptr, float factor, int type){
@@ -56,24 +55,23 @@ int COO_lambdaProduct(coordinate_t* coo_ptr, float factor, int type){
     return EXIT_SUCCESS;
 }
 
-coordinate_t* COO_linearTransformation(coordinate_t* coo1_ptr, float firstCoeff, coordinate_t* coo2_ptr, float secondCoeff){
-    if(coo1_ptr == NULL && coo2_ptr == NULL) return NULL;
-    if(coo1_ptr == NULL) return COO_linearTransformation(coo2_ptr, secondCoeff, coo1_ptr, firstCoeff);
-    coordinate_t *ret_ptr = calloc(1, sizeof(coordinate_t));
+int COO_linearTransformation(coordinate_t* coo1_ptr, float factor1, coordinate_t* coo2_ptr, float factor2, coordinate_t* ret_ptr){
+    if(coo1_ptr == NULL && coo2_ptr == NULL) return EXIT_FAILURE;
+    if(coo1_ptr == NULL) return COO_linearTransformation(coo2_ptr, factor2, coo1_ptr, factor1, ret_ptr);
     if(coo2_ptr == NULL){
-        ret_ptr->x = coo1_ptr->x * firstCoeff;
-        ret_ptr->y = coo1_ptr->y * firstCoeff;
-        ret_ptr->z = coo1_ptr->z * firstCoeff;
+        ret_ptr->x = coo1_ptr->x * factor1;
+        ret_ptr->y = coo1_ptr->y * factor1;
+        ret_ptr->z = coo1_ptr->z * factor1;
     }else{
-        ret_ptr->x = coo1_ptr->x * firstCoeff + coo2_ptr->x * secondCoeff;
-        ret_ptr->y = coo1_ptr->y * firstCoeff + coo2_ptr->y * secondCoeff;
-        ret_ptr->z = coo1_ptr->z * firstCoeff + coo2_ptr->z * secondCoeff;
+        ret_ptr->x = coo1_ptr->x * factor1 + coo2_ptr->x * factor2;
+        ret_ptr->y = coo1_ptr->y * factor1 + coo2_ptr->y * factor2;
+        ret_ptr->z = coo1_ptr->z * factor1 + coo2_ptr->z * factor2;
     }
-    return ret_ptr;
+    return EXIT_SUCCESS;
 }
 
-vector_t* COO_vectorizePoints(point_t* p1_ptr, point_t* p2_ptr){
-    return COO_linearTransformation(p1_ptr, -1, p2_ptr, 1);
+int COO_vectorizePoints(point_t* p1_ptr, point_t* p2_ptr, point_t* ret_ptr){
+    return COO_linearTransformation(p1_ptr, -1, p2_ptr, 1, ret_ptr);
 }
 
 float COO_scalarProduct(coordinate_t* coo1_ptr, coordinate_t* coo2_ptr){

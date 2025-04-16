@@ -48,11 +48,13 @@ static float OBJ_intersectSphere(point_t* origin_ptr, point_t* lightVector_ptr, 
         return tmax + 1;
     }
     // value that determine where is the intersection between the ray and a sphere
-    vector_t *vector = COO_vectorizePoints(&sphere_ptr->center, origin_ptr);
+    vector_t vector = {};
+    if(COO_vectorizePoints(&sphere_ptr->center, origin_ptr, &vector) == EXIT_FAILURE){
+        return tmax + 1;
+    }
     float a = COO_scalarProduct(lightVector_ptr, lightVector_ptr);
-    float b = 2 * COO_scalarProduct(vector, lightVector_ptr);
-    float c = COO_scalarProduct(vector, vector) - sphere_ptr->radius * sphere_ptr->radius;
-    free(vector);
+    float b = 2 * COO_scalarProduct(&vector, lightVector_ptr);
+    float c = COO_scalarProduct(&vector, &vector) - sphere_ptr->radius * sphere_ptr->radius;
     float delta = b * b - 4 * a * c;
     if(delta < 0){
         return tmax + 1;
@@ -78,8 +80,11 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
         return tmax + 1;
     }
     // Calculate origin and lightVector in the new reference
-    point_t* translatedOrigin_ptr = COO_vectorizePoints(&cube_ptr->center, origin_ptr);
-    point_t* newOrigin_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, translatedOrigin_ptr);
+    point_t translatedOrigin = {};
+    if(COO_vectorizePoints(&cube_ptr->center, origin_ptr, &translatedOrigin) == EXIT_FAILURE){
+        return tmax + 1;
+    }
+    point_t* newOrigin_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, &translatedOrigin);
     point_t* newLightVector_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, lightVector_ptr);
     // value that determine where is the intersection between the ray and a sphere
     float xmin = - cube_ptr->extendVector.x;
@@ -88,7 +93,6 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
     float txmax;
     isInInterval(xmin, xmax, newOrigin_ptr->x, newLightVector_ptr->x, tmin, tmax, &txmin, &txmax);
     if(txmin > txmax){
-        free(translatedOrigin_ptr);
         free(newOrigin_ptr);
         free(newLightVector_ptr);
         return tmax + 1;
@@ -99,7 +103,6 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
     float tymax;
     isInInterval(ymin, ymax, newOrigin_ptr->y, newLightVector_ptr->y, tmin, tmax, &tymin, &tymax);
     if(tymin > tymax){
-        free(translatedOrigin_ptr);
         free(newOrigin_ptr);
         free(newLightVector_ptr);
         return tmax + 1;
@@ -110,12 +113,10 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
     float tzmax;
     isInInterval(zmin, zmax, newOrigin_ptr->z, newLightVector_ptr->z, tmin, tmax, &tzmin, &tzmax);
     if(tzmin > tzmax){
-        free(translatedOrigin_ptr);
         free(newOrigin_ptr);
         free(newLightVector_ptr);
         return tmax + 1;
     }
-    free(translatedOrigin_ptr);
     free(newOrigin_ptr);
     free(newLightVector_ptr);
     float te = max(txmin, tymin, tzmin);
@@ -127,8 +128,11 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
 
 static float OBJ_intersectCylinder(point_t* origin_ptr, point_t* lightVector_ptr, cylinder_t* cylinder_ptr, float tmin, float tmax){
     // Calculate origin and lightVector in the new reference
-    point_t* translatedOrigin_ptr = COO_vectorizePoints(&cylinder_ptr->center, origin_ptr);
-    point_t* newOrigin_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, translatedOrigin_ptr);
+    point_t translatedOrigin = {};
+    if(COO_vectorizePoints(&cylinder_ptr->center, origin_ptr, &translatedOrigin) == EXIT_FAILURE){
+        return tmax + 1;
+    }
+    point_t* newOrigin_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, &translatedOrigin);
     point_t* newLightVector_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, lightVector_ptr);
     
     float ox = newOrigin_ptr->x;
@@ -209,13 +213,21 @@ float OBJ_intersectObject(point_t* origin_ptr, point_t* lightVector_ptr, object_
 // Normal Functions
 //-----------------------------------------------------------------------------------------------------------------------
 static vector_t* OBJ_normalSphere(sphere_t* sphere_ptr, point_t* pointOnSphere_ptr){
-    return  COO_vectorizePoints(pointOnSphere_ptr, &sphere_ptr->center);
+    vector_t* ret_ptr = calloc(1, sizeof(vector_t));
+    if(COO_vectorizePoints(pointOnSphere_ptr, &sphere_ptr->center, ret_ptr) == EXIT_FAILURE){
+        free(ret_ptr);
+        return NULL;
+    }
+    return ret_ptr;
 }
 
 static vector_t* OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr){
     vector_t tmp;
-    vector_t* pointNewOrigin_ptr = COO_vectorizePoints(&cube_ptr->center, pointOnCube_ptr);
-    vector_t* pointNewReference_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, pointNewOrigin_ptr);
+    vector_t pointNewOrigin = {};
+    if(COO_vectorizePoints(&cube_ptr->center, pointOnCube_ptr, &pointNewOrigin) == EXIT_FAILURE){
+        return NULL;
+    }
+    vector_t* pointNewReference_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, &pointNewOrigin);
     if(fabs(pointNewReference_ptr->x + cube_ptr->extendVector.x) < EPSILON){
         tmp.x = 1;
         tmp.y = 0;
@@ -241,24 +253,25 @@ static vector_t* OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr){
         tmp.y = 0;
         tmp.z = -1;
     }
-    free(pointNewOrigin_ptr);
     free(pointNewReference_ptr);
     return COO_matrixVectorProduct(cube_ptr->rotationMatrice, &tmp);
 }
 
 vector_t* OBJ_normalCylinder(cylinder_t* cylinder_ptr, point_t* pointOnCylinder_ptr) {
-    vector_t* pointNewOrigin_ptr = COO_vectorizePoints(&cylinder_ptr->center, pointOnCylinder_ptr);
-    vector_t* pointNewReference_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, pointNewOrigin_ptr);
+    vector_t pointNewOrigin = {};
+    if(COO_vectorizePoints(&cylinder_ptr->center, pointOnCylinder_ptr, &pointNewOrigin) == EXIT_FAILURE){
+        return NULL;
+    }
+    vector_t* pointNewReference_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, &pointNewOrigin);
     vector_t tmp;
     if(pointNewReference_ptr->y == cylinder_ptr->height){
         tmp.y = -1;
     }else if(pointNewReference_ptr->y == -cylinder_ptr->height){
         tmp.y = 1;
     }else{
-        tmp.x = - pointNewReference_ptr->x;
-        tmp.z = - pointNewReference_ptr->z;
+        tmp.x = -pointNewReference_ptr->x;
+        tmp.z = -pointNewReference_ptr->z;
     }
-    free(pointNewOrigin_ptr);
     free(pointNewReference_ptr);
     return COO_matrixVectorProduct(cylinder_ptr->rotationMatrice, &tmp);
 }
