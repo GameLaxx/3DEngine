@@ -43,8 +43,7 @@ void isInInterval(float vmin, float vmax, float origin, float direction, float t
 //-----------------------------------------------------------------------------------------------------------------------
 // Intersect Functions
 //-----------------------------------------------------------------------------------------------------------------------
-static float OBJ_intersectSphere(point_t* origin_ptr, point_t* lightVector_ptr, void* content_ptr, float tmin, float tmax){
-    sphere_t* sphere_ptr = (sphere_t*) content_ptr;
+static float OBJ_intersectSphere(point_t* origin_ptr, point_t* lightVector_ptr, sphere_t* sphere_ptr, float tmin, float tmax){
     if(sphere_ptr->radius <= 0.0001){
         return tmax + 1;
     }
@@ -58,8 +57,8 @@ static float OBJ_intersectSphere(point_t* origin_ptr, point_t* lightVector_ptr, 
     if(delta < 0){
         return tmax + 1;
     }
-    double t1 = (- (float)b - sqrt(delta)) / (2.f * (float)a);
-    double t2 = (-(float)b + sqrt(delta)) / (2.f * (float)a);
+    double t1 = (- b - sqrt(delta)) / (2.f * a);
+    double t2 = (- b + sqrt(delta)) / (2.f * a);
     // unvalid t values for the current sphere
     if(t1 < tmin && t2 < tmin){
         return tmax + 1;
@@ -79,8 +78,8 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
         return tmax + 1;
     }
     // Calculate origin and lightVector in the new reference
-    point_t* centerWithOrigin_ptr = COO_vectorizePoints(&cube_ptr->center, origin_ptr);
-    point_t* newOrigin_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, centerWithOrigin_ptr);
+    point_t* translatedOrigin_ptr = COO_vectorizePoints(&cube_ptr->center, origin_ptr);
+    point_t* newOrigin_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, translatedOrigin_ptr);
     point_t* newLightVector_ptr = COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, lightVector_ptr);
     // value that determine where is the intersection between the ray and a sphere
     float xmin = - cube_ptr->extendVector.x;
@@ -89,7 +88,7 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
     float txmax;
     isInInterval(xmin, xmax, newOrigin_ptr->x, newLightVector_ptr->x, tmin, tmax, &txmin, &txmax);
     if(txmin > txmax){
-        free(centerWithOrigin_ptr);
+        free(translatedOrigin_ptr);
         free(newOrigin_ptr);
         free(newLightVector_ptr);
         return tmax + 1;
@@ -100,7 +99,7 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
     float tymax;
     isInInterval(ymin, ymax, newOrigin_ptr->y, newLightVector_ptr->y, tmin, tmax, &tymin, &tymax);
     if(tymin > tymax){
-        free(centerWithOrigin_ptr);
+        free(translatedOrigin_ptr);
         free(newOrigin_ptr);
         free(newLightVector_ptr);
         return tmax + 1;
@@ -111,12 +110,12 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
     float tzmax;
     isInInterval(zmin, zmax, newOrigin_ptr->z, newLightVector_ptr->z, tmin, tmax, &tzmin, &tzmax);
     if(tzmin > tzmax){
-        free(centerWithOrigin_ptr);
+        free(translatedOrigin_ptr);
         free(newOrigin_ptr);
         free(newLightVector_ptr);
         return tmax + 1;
     }
-    free(centerWithOrigin_ptr);
+    free(translatedOrigin_ptr);
     free(newOrigin_ptr);
     free(newLightVector_ptr);
     float te = max(txmin, tymin, tzmin);
@@ -126,6 +125,73 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
     return te;
 }
 
+static float OBJ_intersectCylinder(point_t* origin_ptr, point_t* lightVector_ptr, cylinder_t* cylinder_ptr, float tmin, float tmax){
+    // Calculate origin and lightVector in the new reference
+    point_t* translatedOrigin_ptr = COO_vectorizePoints(&cylinder_ptr->center, origin_ptr);
+    point_t* newOrigin_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, translatedOrigin_ptr);
+    point_t* newLightVector_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, lightVector_ptr);
+    
+    float ox = newOrigin_ptr->x;
+    float oz = newOrigin_ptr->z;
+    float dx = newLightVector_ptr->x;
+    float dz = newLightVector_ptr->z;
+    
+    float a = dx * dx + dz * dz;
+    float b = 2 * (ox * dx + oz * dz);
+    float c = ox * ox + oz * oz - cylinder_ptr->radius * cylinder_ptr->radius;
+    
+    float delta = b * b - 4 * a * c;
+    if(delta < 0){
+        return tmax + 1;
+    }
+    double t1 = (- b - sqrt(delta)) / (2.f * a);
+    double t2 = (- b + sqrt(delta)) / (2.f * a);
+    
+    // unvalid t values for the current sphere
+    if(t1 < tmin && t2 < tmin){
+        return tmax + 1;
+    }
+    if(t1 > tmax && t2 > tmax){
+        return tmax + 1;
+    }
+    float t = t1;
+    if(t2 < t1){
+        t = t2;
+    }
+    
+    // Check if the ray is in range for y positions
+    float y = newOrigin_ptr->y + t * newLightVector_ptr->y;
+    if (y >= - cylinder_ptr->height && y <= cylinder_ptr->height) {
+        return t;
+    }
+
+    // Light ray is `//` to Oy
+    if(newLightVector_ptr->y == 0){
+        return tmax + 1;
+    }
+
+    float tBottom = (- cylinder_ptr->height - newOrigin_ptr->y) / newLightVector_ptr->y;
+    if (tBottom > tmin && tBottom < tmax) {
+        // Vérifie si l'intersection est dans le rayon du cylindre
+        float xBottom = newOrigin_ptr->x + tBottom * newLightVector_ptr->x;
+        float zBottom = newOrigin_ptr->z + tBottom * newLightVector_ptr->z;
+        if (xBottom * xBottom + zBottom * zBottom <= cylinder_ptr->radius * cylinder_ptr->radius) {
+            return tBottom;
+        }
+    }
+    
+    float tTop = (cylinder_ptr->height - newOrigin_ptr->y) / newLightVector_ptr->y;
+    if (tTop > tmin && tTop < tmax) {
+        // Vérifie si l'intersection est dans le rayon du cylindre
+        float xTop = newOrigin_ptr->x + tTop * newLightVector_ptr->x;
+        float zTop = newOrigin_ptr->z + tTop * newLightVector_ptr->z;
+        if (xTop * xTop + zTop * zTop <= cylinder_ptr->radius * cylinder_ptr->radius) {
+            return tTop;
+        }
+    }
+    return tmax + 1;
+}
+
 //------ Only shared function
 float OBJ_intersectObject(point_t* origin_ptr, point_t* lightVector_ptr, object_t* object_ptr, float tmin, float tmax){
     switch (object_ptr->type){
@@ -133,6 +199,8 @@ float OBJ_intersectObject(point_t* origin_ptr, point_t* lightVector_ptr, object_
             return OBJ_intersectSphere(origin_ptr, lightVector_ptr, object_ptr->content_ptr, tmin, tmax);
         case OT_cube:
             return OBJ_intersectCube(origin_ptr, lightVector_ptr, object_ptr->content_ptr, tmin, tmax);
+        case OT_cylinder:
+            return OBJ_intersectCylinder(origin_ptr, lightVector_ptr, object_ptr->content_ptr, tmin, tmax);
         default:
             return tmax + 1;
     }
@@ -178,6 +246,23 @@ static vector_t* OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr){
     return COO_matrixVectorProduct(cube_ptr->rotationMatrice, &tmp);
 }
 
+vector_t* OBJ_normalCylinder(cylinder_t* cylinder_ptr, point_t* pointOnCylinder_ptr) {
+    vector_t* pointNewOrigin_ptr = COO_vectorizePoints(&cylinder_ptr->center, pointOnCylinder_ptr);
+    vector_t* pointNewReference_ptr = COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, pointNewOrigin_ptr);
+    vector_t tmp;
+    if(pointNewReference_ptr->y == cylinder_ptr->height){
+        tmp.y = -1;
+    }else if(pointNewReference_ptr->y == -cylinder_ptr->height){
+        tmp.y = 1;
+    }else{
+        tmp.x = - pointNewReference_ptr->x;
+        tmp.z = - pointNewReference_ptr->z;
+    }
+    free(pointNewOrigin_ptr);
+    free(pointNewReference_ptr);
+    return COO_matrixVectorProduct(cylinder_ptr->rotationMatrice, &tmp);
+}
+
 //------ Only shared function
 vector_t* OBJ_normalObject(object_t* object_ptr, point_t* pointOnObject_ptr){
     switch (object_ptr->type){
@@ -185,6 +270,8 @@ vector_t* OBJ_normalObject(object_t* object_ptr, point_t* pointOnObject_ptr){
             return OBJ_normalSphere(object_ptr->content_ptr, pointOnObject_ptr);
         case OT_cube:
             return OBJ_normalCube(object_ptr->content_ptr, pointOnObject_ptr);
+        case OT_cylinder:
+            return OBJ_normalCylinder(object_ptr->content_ptr, pointOnObject_ptr);
         default:
             return NULL;
     }
@@ -192,20 +279,43 @@ vector_t* OBJ_normalObject(object_t* object_ptr, point_t* pointOnObject_ptr){
 //-----------------------------------------------------------------------------------------------------------------------
 // Check Functions
 //-----------------------------------------------------------------------------------------------------------------------
-int OBJ_checkSphere(sphere_t* sphere_ptr){
+static int OBJ_checkObjType(object_t* object_ptr){
+    return 1;
+    switch (object_ptr->type){
+        case OT_sphere:
+            return sizeof(*object_ptr->content_ptr) == sizeof(sphere_t);
+        case OT_cube:
+            return sizeof(*object_ptr->content_ptr) == sizeof(cube_t);
+        case OT_cylinder:
+            return sizeof(*object_ptr->content_ptr) == sizeof(cylinder_t);
+        default:
+            return 0;
+    }
+}
+
+static int OBJ_checkSphere(sphere_t* sphere_ptr){
     return sphere_ptr->radius > 0;
 }
 
-int OBJ_checkCube(cube_t* cube_ptr){
+static int OBJ_checkCube(cube_t* cube_ptr){
     return cube_ptr->extendVector.x >= 0 && cube_ptr->extendVector.y >= 0 && cube_ptr->extendVector.z >= 0;
+}
+
+static int OBJ_checkCylinder(cylinder_t* cylinder_ptr){
+    return cylinder_ptr->height > 0 && cylinder_ptr->radius > 0;
 }
 //------ Only shared function
 int OBJ_checkObject(object_t* object_ptr){
+    // Object type and content pointer are not the same
+    if(OBJ_checkObjType(object_ptr) == 0) return 0;
+    // Check each type of object indivually
     switch (object_ptr->type){
         case OT_sphere:
             return OBJ_checkSphere(object_ptr->content_ptr); 
         case OT_cube:
             return OBJ_checkCube(object_ptr->content_ptr); 
+        case OT_cylinder:
+            return OBJ_checkCylinder(object_ptr->content_ptr); 
         default:
             return 0;
     }
@@ -238,11 +348,38 @@ void OBJ_initCube(cube_t* cube_ptr){
     cube_ptr->invertRotationMatrice[7] = cos(rotateX_rad) * sin(rotateY_rad) * sin(rotateZ_rad) - sin(rotateX_rad) * cos(rotateZ_rad);
     cube_ptr->invertRotationMatrice[8] = cos(rotateX_rad) * cos(rotateY_rad);
 }
+void OBJ_initCylinder(cylinder_t* cylinder_ptr){
+    float rotateX_rad = cylinder_ptr->rotateX * M_PI / 180;
+    float rotateZ_rad = cylinder_ptr->rotateZ * M_PI / 180;
+    // rotation
+    cylinder_ptr->rotationMatrice[0] = cos(rotateZ_rad);
+    cylinder_ptr->rotationMatrice[1] = - sin(rotateZ_rad) * cos(rotateX_rad);
+    cylinder_ptr->rotationMatrice[2] = sin(rotateZ_rad) * sin(rotateX_rad);
+    cylinder_ptr->rotationMatrice[3] = sin(rotateZ_rad);
+    cylinder_ptr->rotationMatrice[4] = cos(rotateZ_rad) * cos(rotateX_rad);
+    cylinder_ptr->rotationMatrice[5] = - cos(rotateZ_rad) * sin(rotateX_rad);
+    cylinder_ptr->rotationMatrice[6] = 0;
+    cylinder_ptr->rotationMatrice[7] = sin(rotateX_rad);
+    cylinder_ptr->rotationMatrice[8] = cos(rotateX_rad);
+    // inverse
+    cylinder_ptr->invertRotationMatrice[0] = cos(rotateZ_rad);
+    cylinder_ptr->invertRotationMatrice[1] = sin(rotateZ_rad);
+    cylinder_ptr->invertRotationMatrice[2] = 0; 
+    cylinder_ptr->invertRotationMatrice[3] = - sin(rotateZ_rad) * cos(rotateX_rad);
+    cylinder_ptr->invertRotationMatrice[4] = cos(rotateZ_rad) * cos(rotateX_rad);
+    cylinder_ptr->invertRotationMatrice[5] = sin(rotateX_rad);
+    cylinder_ptr->invertRotationMatrice[6] = sin(rotateZ_rad) * sin(rotateX_rad);
+    cylinder_ptr->invertRotationMatrice[7] = - sin(rotateX_rad) * cos(rotateZ_rad);
+    cylinder_ptr->invertRotationMatrice[8] = cos(rotateX_rad);
+}
 //------ Only shared function
 void OBJ_initObject(object_t* object_ptr){
     switch (object_ptr->type){
         case OT_cube:
             OBJ_initCube(object_ptr->content_ptr); 
+            break;
+        case OT_cylinder:
+            OBJ_initCylinder(object_ptr->content_ptr); 
             break;
         default:
             break;

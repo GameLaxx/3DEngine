@@ -33,15 +33,19 @@ int main() {
     DRAW_clearRenderer();
     // Init context
     point_t origin = {0,1,0};
-    // // sphere 1 example
+    // // sphere example
     // point_t center1 = {0,-1,3};
     // sphere_t sphere1 = {.center = center1, .radius = 1};
     // object_t object1 = {.content_ptr = &sphere1, .color = red, .specular = 500, .reflective=0.2, .type=OT_sphere};
-    // // sphere 4 example
+    // // cube example
     // vector_t vmin1 = {-2, -1,5};
     // vector_t vmax1 = {2, 1,8};
     // cube_t cube1 = {.vectorMin=vmin1, .vectorMax=vmax1};
-    // object_t object5 = {.content_ptr = &cube1, .color = red, .specular = 40, .reflective=0.3, .type=OT_cube};
+    // object_t object1 = {.content_ptr = &cube1, .color = red, .specular = 40, .reflective=0.3, .type=OT_cube};
+    // // cylinder example
+    // point_t center1 = {0, 0,2};
+    // cylinder_t cylinder1 = {.center = center1, .height = 0.5, .radius = 1};
+    // object_t object1 = {.content_ptr = &cylinder1, .color = red, .specular = 40, .reflective=0.3, .type=OT_cylinder};
     float tvRotationY = -45;
     float tvRotationX = 15;
     // cube 1 (ground)
@@ -73,6 +77,10 @@ int main() {
     point_t center1 = {0,1.2,1.5};
     sphere_t sphere1 = {.center = center1, .radius = 0.3};
     object_t object6 = {.content_ptr = &sphere1, .color = red, .specular = 500, .reflective=0.2, .type=OT_sphere};
+    // cylinder 1
+    point_t center7 = {1, 1, 2};
+    cylinder_t cylinder7 = {.center = center7, .height = 0.4, .radius = 0.5, .rotateX=70};
+    object_t object7 = {.content_ptr = &cylinder7, .color = light_gray, .specular = 40, .reflective=0.3, .type=OT_cylinder};
 
     // light 1
     point_t pos1 = {1,4,-4};
@@ -89,6 +97,7 @@ int main() {
     RT_addObject(&object4);
     RT_addObject(&object5);
     RT_addObject(&object6);
+    RT_addObject(&object7);
     RT_addLight(&light1);
     RT_addLight(&light2);
     RT_addLight(&light3);

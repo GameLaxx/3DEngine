@@ -106,6 +106,10 @@ rgba_t* getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin,
     point_t* pointOnObject_ptr = COO_linearTransformation(origin_ptr, 1, rayVector_ptr, closestValue);
     // normal vector for the point P. Named N.
     vector_t* normal_ptr = OBJ_normalObject(closestObject_ptr, pointOnObject_ptr);
+    if(normal_ptr == NULL){
+        printf("*-* ! Be careful : missing normal function for object of type %i\n",  closestObject_ptr->type);
+        return DRAW_initBackgroundColor();
+    }
     // Transform N into a unitary vector.
     COO_lambdaProduct(normal_ptr, sqrt(COO_scalarProduct(normal_ptr, normal_ptr)), FT_DIV);
     // vector coming from P and going on the point of the viewport. Mainly -D. Named V.
@@ -171,7 +175,7 @@ int RT_addLight(lightSource_t* light){
         }
     }
     g_context.numLights += 1;
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 int RT_drawScene(){

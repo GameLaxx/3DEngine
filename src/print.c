@@ -41,6 +41,11 @@ void printCube(cube_t* cube_ptr){
     printVector(&cube_ptr->extendVector);
 }
 
+void printCylinder(cylinder_t* cylinder_ptr){
+    printf("Cylinder : Rx %f° Rz %f°\n", cylinder_ptr->rotateX, cylinder_ptr->rotateZ);
+    printf("Carac : radius %f height %f\n", cylinder_ptr->radius, cylinder_ptr->height);
+}
+
 void printObject(object_t* object_ptr){
     if(object_ptr->type == OT_sphere){
         printSphere(object_ptr->content_ptr);

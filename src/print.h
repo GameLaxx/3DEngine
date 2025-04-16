@@ -1,5 +1,5 @@
 /* print.h
- * date : $$DAY$$/$$MONTH$$/$$YEAR$$ (dd/mm/yy)
+ * date : 05/09/2024 (dd/mm/yy)
  * author : tboisse
 */
 #ifndef PRINT_H

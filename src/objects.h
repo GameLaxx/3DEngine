@@ -1,5 +1,5 @@
 /* objects.h
- * date : $$DAY$$/$$MONTH$$/$$YEAR$$ (dd/mm/yy)
+ * date : 08/09/2024 (dd/mm/yy)
  * author : tboisse
 */
 #ifndef OBJECTS_H
@@ -18,6 +18,7 @@
 //-----------------------------------------------------------------------------------------------------------------------
 typedef struct sphere_s sphere_t;
 typedef struct cube_s cube_t;
+typedef struct cylinder_s cylinder_t;
 typedef struct object_s object_t;
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
@@ -37,6 +38,16 @@ struct cube_s{
     float invertRotationMatrice[9];
 };
 
+struct cylinder_s{
+    point_t center;
+    float radius;
+    float height;
+    float rotateX;
+    float rotateZ;
+    float rotationMatrice[9];
+    float invertRotationMatrice[9];
+};
+
 struct object_s{
     void* content_ptr;
     int type;
@@ -50,7 +61,8 @@ struct object_s{
 enum OBJ_objectType_e{
     OT_NAO = 0, // not an object
     OT_sphere = 1,
-    OT_cube
+    OT_cube,
+    OT_cylinder
 };
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
