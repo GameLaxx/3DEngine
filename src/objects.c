@@ -22,19 +22,21 @@ float max(float t1, float t2, float t3){
 }
 
 void isInInterval(float vmin, float vmax, float origin, float direction, float tmin, float tmax, float* retmin, float* retmax){
-    if(direction == 0){
-        if (vmin > origin || vmax < origin){
+    if(direction == 0){ // rayDirection is aligned with the current considered axe
+        if (vmin > origin || vmax < origin){ // origin is outside of the bounds so doesn't intersect
             *retmin = tmax + 1;
             *retmax = tmin - 1;
             return;
         }
+        // inside of the bound but the faces that should be intersected are perpendicular to this axes so we return worst case
         *retmin = tmin;
         *retmax = tmax;
         return;
     }
-    if(direction < 0){
-        *retmin = (vmax - origin) / direction;
-        *retmax = (vmin - origin) / direction;
+    // nominal cases (depends on if light direction is in the direction of the axis or the opposite)
+    if(direction < 0){ 
+        *retmin = (vmax - origin) / direction; 
+        *retmax = (vmin - origin) / direction; // be careful, even if vmin < origin, retmax > 0 because direction < 0
         return;
     }
     *retmin = (vmin - origin) / direction;
@@ -59,8 +61,10 @@ static float OBJ_intersectSphere(point_t* origin_ptr, point_t* lightVector_ptr, 
     if(delta < 0){
         return tmax + 1;
     }
-    double t1 = (- b - sqrt(delta)) / (2.f * a);
-    double t2 = (- b + sqrt(delta)) / (2.f * a);
+    float sqrtDelta = sqrtf(delta);
+    float q = (b < 0) ? (-b - sqrtDelta) * 0.5f : (-b + sqrtDelta) * 0.5f;
+    float t1 = q / a;
+    float t2 = c / q;
     // unvalid t values for the current sphere
     if(t1 < tmin && t2 < tmin){
         return tmax + 1;
@@ -92,27 +96,27 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
     if(COO_matrixVectorProduct(cube_ptr->invertRotationMatrice, lightVector_ptr, &newLightVector) == EXIT_FAILURE){
         return tmax + 1;
     }
-    // value that determine where is the intersection between the ray and a sphere
+    // value that determine where is the intersection between the ray and a cube
     float xmin = - cube_ptr->extendVector.x;
     float xmax = cube_ptr->extendVector.x;
-    float txmin;
-    float txmax;
+    float txmin = 0;
+    float txmax = 0;
     isInInterval(xmin, xmax, newOrigin.x, newLightVector.x, tmin, tmax, &txmin, &txmax);
     if(txmin > txmax){
         return tmax + 1;
     }
     float ymin = - cube_ptr->extendVector.y;
     float ymax = cube_ptr->extendVector.y;
-    float tymin;
-    float tymax;
+    float tymin = 0;
+    float tymax = 0;
     isInInterval(ymin, ymax, newOrigin.y, newLightVector.y, tmin, tmax, &tymin, &tymax);
     if(tymin > tymax){
         return tmax + 1;
     }
     float zmin = - cube_ptr->extendVector.z;
     float zmax = cube_ptr->extendVector.z;
-    float tzmin;
-    float tzmax;
+    float tzmin = 0;
+    float tzmax = 0;
     isInInterval(zmin, zmax, newOrigin.z, newLightVector.z, tmin, tmax, &tzmin, &tzmax);
     if(tzmin > tzmax){
         return tmax + 1;
@@ -125,6 +129,9 @@ static float OBJ_intersectCube(point_t* origin_ptr, point_t* lightVector_ptr, cu
 }
 
 static float OBJ_intersectCylinder(point_t* origin_ptr, point_t* lightVector_ptr, cylinder_t* cylinder_ptr, float tmin, float tmax){
+    if(cylinder_ptr == NULL || origin_ptr == NULL || lightVector_ptr == NULL){
+        return tmax + 1;
+    }
     // Calculate origin and lightVector in the new reference
     point_t translatedOrigin = {};
     if(COO_vectorizePoints(&cylinder_ptr->center, origin_ptr, &translatedOrigin) == EXIT_FAILURE){
@@ -152,9 +159,10 @@ static float OBJ_intersectCylinder(point_t* origin_ptr, point_t* lightVector_ptr
     if(delta < 0){
         return tmax + 1;
     }
-    double t1 = (- b - sqrt(delta)) / (2.f * a);
-    double t2 = (- b + sqrt(delta)) / (2.f * a);
-    
+    float sqrtDelta = sqrtf(delta);
+    float q = (b < 0) ? (-b - sqrtDelta) * 0.5f : (-b + sqrtDelta) * 0.5f;
+    float t1 = q / a;
+    float t2 = c / q;
     // unvalid t values for the current sphere
     if(t1 < tmin && t2 < tmin){
         return tmax + 1;
@@ -162,14 +170,14 @@ static float OBJ_intersectCylinder(point_t* origin_ptr, point_t* lightVector_ptr
     if(t1 > tmax && t2 > tmax){
         return tmax + 1;
     }
-    float t = t1;
-    if(t2 < t1){
-        t = t2;
-    }
+    // valid t values
+    double t = tmax + 1;
+    if (t1 > tmin && t1 < tmax) t = t1;
+    if (t2 > tmin && t2 < t && t2 > tmin) t = t2;
     
     // Check if the ray is in range for y positions
     float y = newOrigin.y + t * newLightVector.y;
-    if (y >= - cylinder_ptr->height && y <= cylinder_ptr->height) {
+    if (y > - cylinder_ptr->height && y < cylinder_ptr->height) {
         return t;
     }
 
@@ -180,7 +188,6 @@ static float OBJ_intersectCylinder(point_t* origin_ptr, point_t* lightVector_ptr
 
     float tBottom = (- cylinder_ptr->height - newOrigin.y) / newLightVector.y;
     if (tBottom > tmin && tBottom < tmax) {
-        // Vérifie si l'intersection est dans le rayon du cylindre
         float xBottom = newOrigin.x + tBottom * newLightVector.x;
         float zBottom = newOrigin.z + tBottom * newLightVector.z;
         if (xBottom * xBottom + zBottom * zBottom <= cylinder_ptr->radius * cylinder_ptr->radius) {
@@ -190,7 +197,6 @@ static float OBJ_intersectCylinder(point_t* origin_ptr, point_t* lightVector_ptr
     
     float tTop = (cylinder_ptr->height - newOrigin.y) / newLightVector.y;
     if (tTop > tmin && tTop < tmax) {
-        // Vérifie si l'intersection est dans le rayon du cylindre
         float xTop = newOrigin.x + tTop * newLightVector.x;
         float zTop = newOrigin.z + tTop * newLightVector.z;
         if (xTop * xTop + zTop * zTop <= cylinder_ptr->radius * cylinder_ptr->radius) {
@@ -221,7 +227,7 @@ static int OBJ_normalSphere(sphere_t* sphere_ptr, point_t* pointOnSphere_ptr, ve
 }
 
 static int OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr, vector_t* ret_ptr){
-    vector_t tmp;
+    vector_t tmp = {};
     vector_t pointNewOrigin = {};
     if(COO_vectorizePoints(&cube_ptr->center, pointOnCube_ptr, &pointNewOrigin) == EXIT_FAILURE){
         return EXIT_FAILURE;
@@ -267,10 +273,10 @@ static int OBJ_normalCylinder(cylinder_t* cylinder_ptr, point_t* pointOnCylinder
     if(COO_matrixVectorProduct(cylinder_ptr->invertRotationMatrice, &pointNewOrigin, &pointNewReference) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
-    vector_t tmp;
-    if(pointNewReference.y == cylinder_ptr->height){
+    vector_t tmp = {};
+    if(fabs(pointNewReference.y - cylinder_ptr->height) < EPSILON){
         tmp.y = 1;
-    }else if(pointNewReference.y == -cylinder_ptr->height){
+    }else if(fabs(pointNewReference.y  + cylinder_ptr->height) < EPSILON){
         tmp.y = -1;
     }else{
         tmp.x = pointNewReference.x;

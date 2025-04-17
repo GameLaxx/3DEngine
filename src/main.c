@@ -43,9 +43,9 @@ int main() {
     // vector_t vmax1 = {2, 1,8};
     // cube_t cube1 = {.vectorMin=vmin1, .vectorMax=vmax1};
     // object_t object1 = {.content_ptr = &cube1, .color = red, .specular = 40, .reflective=0.3, .type=OT_cube};
-    // // cylinder example
-    // point_t center1 = {0, 0,2};
-    // cylinder_t cylinder1 = {.center = center1, .height = 0.5, .radius = 1};
+    // cylinder example
+    // point_t center1 = {1,1,3};
+    // cylinder_t cylinder1 = {.center = center1, .height = 0.5, .radius = 1, .rotateX=70};
     // object_t object1 = {.content_ptr = &cylinder1, .color = red, .specular = 40, .reflective=0.3, .type=OT_cylinder};
     */
     // TV example
