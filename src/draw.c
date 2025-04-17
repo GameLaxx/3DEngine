@@ -11,8 +11,8 @@
 rgba_t g_backgroundColor = {.red = 150, .green = 150, .blue = 255, .alpha = 255};
 SDL_Window* window;
 
-int windowWidth;
-int windowHeight;
+int g_windowWidth;
+int g_windowHeight;
 
 int xShift = 0;
 int yShift = 0;
@@ -49,7 +49,7 @@ static int DRAW_rectangle(int x, int y, int width, int height, rgba_t* color_ptr
     DRAW_setDrawColor(color_ptr);
     int renderY = y + yShift;
     if(invertY){
-        renderY = windowHeight - renderY - height;
+        renderY = g_windowHeight - renderY - height;
     }
     SDL_Rect rect = {x + xShift, renderY, width, height}; // x, y, largeur, hauteur
     return func(g_renderer, &rect);
@@ -59,33 +59,28 @@ static int DRAW_rectangle(int x, int y, int width, int height, rgba_t* color_ptr
 //-----------------------------------------------------------------------------------------------------------------------
 /* Maintenance Functions */
 int DRAW_initSDL(int width, int height){
-    // Initialisation de la SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        printf("Erreur d'initialisation de la SDL: %s\n", SDL_GetError());
+        printf("Error while initializing SDL: %s\n", SDL_GetError());
         return 1;
     }
-    windowWidth = width;
-    windowHeight = height;
-
-    // Création d'une fenêtre
+    g_windowWidth = width;
+    g_windowHeight = height;
+    // create the window
     window = SDL_CreateWindow(
-        "Canvas SDL",                     // Titre de la fenêtre
-        SDL_WINDOWPOS_UNDEFINED,          // Position X de la fenêtre
-        SDL_WINDOWPOS_UNDEFINED,          // Position Y de la fenêtre
-        windowWidth, windowHeight,                         // Largeur et hauteur de la fenêtre
-        SDL_WINDOW_SHOWN                 // Option pour montrer la fenêtre
+        "3D Engine", // title
+        SDL_WINDOWPOS_UNDEFINED, // X pos of the window
+        SDL_WINDOWPOS_UNDEFINED, // Y pos of the window
+        g_windowWidth, g_windowHeight, // Sizes of the window
+        SDL_WINDOW_SHOWN // Show option
     );
-
     if (window == NULL) {
-        printf("Erreur lors de la création de la fenêtre: %s\n", SDL_GetError());
+        printf("Error while creating the window: %s\n", SDL_GetError());
         SDL_Quit();
         return 1;
     }
-
-    // Création d'un renderer pour dessiner
     g_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (g_renderer == NULL) {
-        printf("Erreur lors de la création du renderer: %s\n", SDL_GetError());
+        printf("Error while creating the renderer: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
         SDL_Quit();
         return 1;
@@ -160,8 +155,8 @@ int DRAW_line(int x1, int y1, int x2, int y2, rgba_t* color_ptr){
     int renderY1 = y1 + yShift;
     int renderY2 = y2 + yShift;
     if(invertY){
-        renderY1 = windowHeight - renderY1;
-        renderY2 = windowHeight - renderY2;
+        renderY1 = g_windowHeight - renderY1;
+        renderY2 = g_windowHeight - renderY2;
     }
     SDL_RenderDrawLine(g_renderer, x1 + xShift, renderY1, x2  + xShift, renderY2); // (x1, y1) -> (x2, y2) in the current reference 
     return 0;

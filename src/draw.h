@@ -35,8 +35,8 @@ struct rgba_s{
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
 extern SDL_Renderer* g_renderer;
-extern int windowWidth;
-extern int windowHeight;
+extern int g_windowWidth;
+extern int g_windowHeight;
 extern rgba_t g_whiteColor;
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions

@@ -14,8 +14,8 @@ sceneContext_t g_context;
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
 int canvasToViewport(int x, int y, point_t* ret_ptr){
-    ret_ptr->x = x * (float)g_context.viewportWidth / (float)windowWidth;
-    ret_ptr->y = y * (float)g_context.viewportHeight / (float)windowHeight;
+    ret_ptr->x = x * (float)g_context.viewportWidth / (float)g_windowWidth;
+    ret_ptr->y = y * (float)g_context.viewportHeight / (float)g_windowHeight;
     ret_ptr->z = g_context.viewportDistance;
     return EXIT_SUCCESS;
 }
@@ -158,7 +158,7 @@ int RT_addObject(object_t* object_ptr){
     OBJ_initObject(object_ptr);
     for(int i = 0; i < MAX_OBJECTS; i++){
         if(g_context.objects[i].type <= OT_NAO){
-            g_context.objects[i] = *object_ptr;
+            g_context.objects[i] = *object_ptr; // TODO : remove copy of the object instead of using the pointer
             break;
         }
     }
@@ -190,8 +190,8 @@ int RT_addLight(lightSource_t* light){
 int RT_drawScene(){
     vector_t rayVector_ptr = {};
     rgba_t pixelColor = {};
-    for(int x = -windowWidth / 2; x < windowWidth / 2; x++){
-        for(int y = -windowWidth / 2; y < windowWidth / 2; y++){
+    for(int x = -g_windowWidth / 2; x < g_windowWidth / 2; x++){
+        for(int y = -g_windowHeight / 2; y < g_windowHeight / 2; y++){
             // Vector that goes from one pixel on the canvas to one point of the view port. Named D.
             if(canvasToViewport(x, y, &rayVector_ptr) == EXIT_FAILURE){
                 continue;
