@@ -33,6 +33,7 @@ int main() {
     DRAW_clearRenderer();
     // Init context
     point_t origin = {0,1,0};
+    /*
     // // sphere example
     // point_t center1 = {0,-1,3};
     // sphere_t sphere1 = {.center = center1, .radius = 1};
@@ -46,6 +47,8 @@ int main() {
     // point_t center1 = {0, 0,2};
     // cylinder_t cylinder1 = {.center = center1, .height = 0.5, .radius = 1};
     // object_t object1 = {.content_ptr = &cylinder1, .color = red, .specular = 40, .reflective=0.3, .type=OT_cylinder};
+    */
+    // TV example
     float tvRotationY = -45;
     float tvRotationX = 15;
     // cube 1 (ground)
@@ -81,14 +84,28 @@ int main() {
     point_t center7 = {1, 1, 2};
     cylinder_t cylinder7 = {.center = center7, .height = 0.4, .radius = 0.5, .rotateX=70};
     object_t object7 = {.content_ptr = &cylinder7, .color = light_gray, .specular = 40, .reflective=0.3, .type=OT_cylinder};
-
+    /*
+    // Tuto example
+    // point_t center1 = {0,-1,3};
+    // sphere_t sphere1 = {.center = center1, .radius = 1};
+    // object_t object1 = {.content_ptr = &sphere1, .color = red, .specular = 500, .reflective=0, .type=OT_sphere};
+    // point_t center2 = {2,0,4};
+    // sphere_t sphere2 = {.center = center2, .radius = 1};
+    // object_t object2 = {.content_ptr = &sphere2, .color = blue, .specular = 500, .reflective=0, .type=OT_sphere};
+    // point_t center3 = {-2,0,4};
+    // sphere_t sphere3 = {.center = center3, .radius = 1};
+    // object_t object3 = {.content_ptr = &sphere3, .color = green, .specular = 10, .reflective=0, .type=OT_sphere};
+    // point_t center4 = {0,-5001,0};
+    // sphere_t sphere4 = {.center = center4, .radius = 5000};
+    // object_t object4 = {.content_ptr = &sphere4, .color = yellow, .specular = 1000, .reflective=0, .type=OT_sphere};
+    */
     // light 1
-    point_t pos1 = {1,4,-4};
+    point_t pos1 = {1,4,4};
     lightSource_t light1 = {.type=LT_directional, .intensity=0.2, .carac=pos1};
     // light 2
     lightSource_t light2 = {.type=LT_ambiant, .intensity=0.2};
     // light 3
-    point_t pos3 = {2,1,-3};
+    point_t pos3 = {2,1,0};
     lightSource_t light3 = {.type=LT_point, .intensity=0.6, .carac=pos3};
     RT_initScene(&origin, 2, 2, 1);
     RT_addObject(&object1);

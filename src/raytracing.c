@@ -14,6 +14,7 @@ sceneContext_t g_context;
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
 int canvasToViewport(int x, int y, point_t* ret_ptr){
+    // compute the vector from Camera to Viewport Point.
     ret_ptr->x = x * (float)g_context.viewportWidth / (float)g_windowWidth;
     ret_ptr->y = y * (float)g_context.viewportHeight / (float)g_windowHeight;
     ret_ptr->z = g_context.viewportDistance;
@@ -22,7 +23,8 @@ int canvasToViewport(int x, int y, point_t* ret_ptr){
 
 int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* leavingLightVector_ptr, int specular, float* intensity){
     // leavingLightVector is the ray of light leaving the object and going to the camera. Named V.
-    // commingLightVector is the ray of light comming from the source and going on the object. Named L.
+    // commingLightVector is the ray of light leaving the object and going to the source. Named L.
+    // normal vector is a unitary vector.
     for(int i = 0; i < MAX_LIGHTS; i++){
         if(g_context.lights[i].intensity <= 0) continue;
         // ambiant light just add intensity
@@ -33,14 +35,17 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
         // get direction of light
         vector_t commingLightVector = {}; 
         if(g_context.lights[i].type == LT_directional){
-            if(COO_copyCoordinates(&g_context.lights[i].carac, &commingLightVector) == EXIT_FAILURE){
+            if(COO_copyCoordinates(&g_context.lights[i].carac, &commingLightVector) == EXIT_FAILURE){ //! I think its in the wrond direction
+                printf("*-* Error : Problem occured while getting carac of light %i.\n", i);
                 return EXIT_FAILURE;
             }
         }else if(g_context.lights[i].type == LT_point){
             if(COO_vectorizePoints(pointOnObject_ptr, &g_context.lights[i].carac, &commingLightVector) == EXIT_FAILURE){
+                printf("*-* Error : Problem occured while getting carac of light %i.\n", i);
                 return EXIT_FAILURE;
             }
-        }else{
+        }else{                
+            printf("*-* Warning : Unknwon type of light %i : type %i.\n", i, g_context.lights[i].type);
             continue;
         }
         // get for point if shadow or not
@@ -57,31 +62,33 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
                 closestValue = currentValue;
             }
         }
-        if(closestObject_ptr != NULL){
+        if(closestObject_ptr != NULL){ // other object between source and current object ==> no light from this source
             continue;
         }
-        // Transform L into a unitary vector.
-        COO_lambdaProduct(&commingLightVector, sqrt(COO_scalarProduct(&commingLightVector, &commingLightVector)), FT_DIV);
+        // precalculations
+        float angleNormalLight = COO_scalarProduct(normal_ptr, &commingLightVector);
         // coeff applied to the intensity of the current light. Might be over 1.
         float coeff = 0;
-        // Diffuse reflection
-        float direction = -COO_scalarProduct(normal_ptr, &commingLightVector); // TODO : I had to use - but I'm not sure why
-        if(direction >= 0){
-            coeff += direction;
+        //------------- Diffuse reflection
+        if(angleNormalLight >= 0){
+            coeff += angleNormalLight / sqrt(COO_scalarProduct(&commingLightVector, &commingLightVector));
         }
-        // Check if object if matte or shiny
+        //------------- Specular reflection
+        // Check if object is matte or shiny
         if(specular <= 0){
+            *intensity += g_context.lights[i].intensity * coeff;
             continue;
         }
-        // Specular reflection
         vector_t reflectionVector = {};
-        if(COO_linearTransformation(normal_ptr, 2*COO_scalarProduct(normal_ptr, &commingLightVector), &commingLightVector, -1, &reflectionVector) == EXIT_FAILURE){
+        // compute R = 2 (N.L) N - L
+        if(COO_linearTransformation(normal_ptr, 2 * angleNormalLight, &commingLightVector, -1, &reflectionVector) == EXIT_FAILURE){
             return EXIT_FAILURE;
         }
-        float reflection = COO_scalarProduct(&reflectionVector, leavingLightVector_ptr);
-        if(reflection >= 0){
-            reflection /= sqrt(COO_scalarProduct(&reflectionVector, &reflectionVector));
-            coeff += pow(reflection, specular);
+        float angleReflectionLight = COO_scalarProduct(&reflectionVector, leavingLightVector_ptr);
+        if(angleReflectionLight >= 0){
+            angleReflectionLight /= sqrt(COO_scalarProduct(&reflectionVector, &reflectionVector));
+            angleReflectionLight /= sqrt(COO_scalarProduct(leavingLightVector_ptr, leavingLightVector_ptr));
+            coeff += pow(angleReflectionLight, specular);
         }
         // add to intensity
         *intensity += g_context.lights[i].intensity * coeff;
@@ -89,13 +96,17 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
     return EXIT_SUCCESS;
 }
 
-int getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin, double tmax, int recursiveDepth, rgba_t* ret_ptr){
+int getPixelColor(point_t* origin_ptr, vector_t* rayDirectionVector_ptr, double tmin, double tmax, int recursiveDepth, rgba_t* ret_ptr){
+    // rayDirection is the vector from the camera to the viewport. Named D. It is used to calculate intersections.
+    // rayVector is the vector from the viewport / the point on an object to the camera. Named V. It is used to calculate lights.
     float closestValue = tmax + 1;
     float currentValue = tmax + 1;
     object_t* closestObject_ptr = NULL;
+    vector_t rayVector = {};
+    COO_linearTransformation(rayDirectionVector_ptr, -1, NULL, 0, &rayVector);
     // get closest object
     for(int i = 0; i < MAX_OBJECTS; i++){
-        currentValue = OBJ_intersectObject(origin_ptr, rayVector_ptr, &g_context.objects[i], tmin, tmax);
+        currentValue = OBJ_intersectObject(origin_ptr, rayDirectionVector_ptr, &g_context.objects[i], tmin, tmax);
         if(currentValue < closestValue && currentValue > tmin && currentValue < tmax){
             closestObject_ptr = &g_context.objects[i];
             closestValue = currentValue;
@@ -106,7 +117,7 @@ int getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin, dou
     }
     // point on the object that intersected the ray <=> point on the ray that intersected the object. Named P.
     point_t pointOnObject = {};
-    if(COO_linearTransformation(origin_ptr, 1, rayVector_ptr, closestValue, &pointOnObject) == EXIT_FAILURE){
+    if(COO_linearTransformation(origin_ptr, 1, rayDirectionVector_ptr, closestValue, &pointOnObject) == EXIT_FAILURE){
         return DRAW_initBackgroundColor(ret_ptr);
     }
     // normal vector for the point P. Named N.
@@ -117,21 +128,22 @@ int getPixelColor(point_t* origin_ptr, vector_t* rayVector_ptr, double tmin, dou
     }
     // Transform N into a unitary vector.
     COO_lambdaProduct(&normalVector, sqrt(COO_scalarProduct(&normalVector, &normalVector)), FT_DIV);
-    // vector coming from P and going on the point of the viewport. Mainly -D. Named V.
+    // vector coming from P and going on the point of the viewport. Mainly D. Named V.
     vector_t lightVector = {};
-    if(COO_linearTransformation(rayVector_ptr, -1, NULL, 0, &lightVector) == EXIT_FAILURE){
+    if(COO_copyCoordinates(&rayVector, &lightVector) == EXIT_FAILURE){
         return DRAW_initBackgroundColor(ret_ptr);
     }
-    // Transform V into a unitary vector.
-    COO_lambdaProduct(&lightVector, sqrt(COO_scalarProduct(&lightVector, &lightVector)), FT_DIV);
+    // compute intensity
     float intensity = 0;
     if(computeLight(&pointOnObject, &normalVector, &lightVector, closestObject_ptr->specular, &intensity) == EXIT_FAILURE){
         return DRAW_initBackgroundColor(ret_ptr);
     }
+    // add intensity
     DRAW_addIntensity(&closestObject_ptr->color, intensity, ret_ptr);
+    // add recursive intensity
     if(recursiveDepth > 0 && closestObject_ptr->reflective != 0){
         vector_t reflectionVector = {};
-        if(COO_linearTransformation(&normalVector, -2 * COO_scalarProduct(&normalVector, rayVector_ptr), rayVector_ptr, 1, &reflectionVector) == EXIT_FAILURE){
+        if(COO_linearTransformation(&normalVector, 2 * COO_scalarProduct(&normalVector, &rayVector), &rayVector, -1, &reflectionVector) == EXIT_FAILURE){
             return DRAW_initBackgroundColor(ret_ptr);
         }
         rgba_t recursiveRet = {};
@@ -188,16 +200,16 @@ int RT_addLight(lightSource_t* light){
 }
 
 int RT_drawScene(){
-    vector_t rayVector_ptr = {};
+    vector_t rayDirectionVector = {};
     rgba_t pixelColor = {};
     for(int x = -g_windowWidth / 2; x < g_windowWidth / 2; x++){
         for(int y = -g_windowHeight / 2; y < g_windowHeight / 2; y++){
-            // Vector that goes from one pixel on the canvas to one point of the view port. Named D.
-            if(canvasToViewport(x, y, &rayVector_ptr) == EXIT_FAILURE){
+            // Vector that goes from one pixel on the canvas to the camera. Named D.
+            if(canvasToViewport(x, y, &rayDirectionVector) == EXIT_FAILURE){
                 continue;
             }
-            COO_rotationVectorProduct(&rayVector_ptr,0,0,0);
-            if(getPixelColor(&g_context.origin, &rayVector_ptr, 0.00001, TMAX_ALL, 3, &pixelColor) == EXIT_FAILURE){
+            COO_rotationVectorProduct(&rayDirectionVector,0,0,0);
+            if(getPixelColor(&g_context.origin, &rayDirectionVector, 0.00001, TMAX_ALL, 3, &pixelColor) == EXIT_FAILURE){
                 continue;
             }
             DRAW_pixel(x, y, &pixelColor);

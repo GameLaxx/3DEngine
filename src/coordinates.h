@@ -49,7 +49,7 @@ enum COO_factorType_e{
  * @brief Return a copy of the given coordinate without calloc.
  * 
  * @param coo1_ptr The coordinate to copy.
- * @param coo1_ptr The coordinate copied.
+ * @param ret_ptr The coordinate copied.
  * @return SUCCESS or FAILURE.
  */
 int COO_copyCoordinates(coordinate_t* coo1_ptr, coordinate_t* ret_ptr);
@@ -77,7 +77,7 @@ int COO_lambdaProduct(coordinate_t* coo_ptr, float factor, int type);
 int COO_linearTransformation(coordinate_t* coo1_ptr, float factor1, coordinate_t* coo2_ptr, float factor2, coordinate_t* ret_ptr);
 
 /**
- * @brief Side use case of @ref COO_linearTransformation with `a = -1` and `b = 1`.
+ * @brief Side use case of COO_linearTransformation with `a = -1` and `b = 1`.
  * 
  * @param p1_ptr The first point (v1)
  * @param p2_ptr The second point (v2)

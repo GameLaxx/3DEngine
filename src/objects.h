@@ -84,7 +84,7 @@ enum OBJ_objectType_e{
 float OBJ_intersectObject(point_t* origin_ptr, point_t* lightVector_ptr, object_t* object_ptr, float tmin, float tmax);
 
 /**
- * @brief Given an object and a point on the object, return the normal vector for the given point. Convention : the normal goes inside the object.
+ * @brief Given an object and a point on the object, return the normal vector for the given point. Convention : the normal goes outside the object.
  * 
  * @param object_ptr The object.
  * @param pointOnObject_ptr The point on the object.

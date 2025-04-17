@@ -217,7 +217,7 @@ float OBJ_intersectObject(point_t* origin_ptr, point_t* lightVector_ptr, object_
 // Normal Functions
 //-----------------------------------------------------------------------------------------------------------------------
 static int OBJ_normalSphere(sphere_t* sphere_ptr, point_t* pointOnSphere_ptr, vector_t* ret_ptr){
-    return COO_vectorizePoints(pointOnSphere_ptr, &sphere_ptr->center, ret_ptr);
+    return COO_vectorizePoints(&sphere_ptr->center, pointOnSphere_ptr, ret_ptr);
 }
 
 static int OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr, vector_t* ret_ptr){
@@ -231,29 +231,29 @@ static int OBJ_normalCube(cube_t* cube_ptr, point_t* pointOnCube_ptr, vector_t* 
         return EXIT_FAILURE;
     }
     if(fabs(pointNewReference.x + cube_ptr->extendVector.x) < EPSILON){
-        tmp.x = 1;
+        tmp.x = -1;
         tmp.y = 0;
         tmp.z = 0;
     }else if(fabs(pointNewReference.x - cube_ptr->extendVector.x) < EPSILON){
-        tmp.x = -1;
+        tmp.x = 1;
         tmp.y = 0;
         tmp.z = 0;
     }else if(fabs(pointNewReference.y + cube_ptr->extendVector.y) < EPSILON){
         tmp.x = 0;
-        tmp.y = 1;
+        tmp.y = -1;
         tmp.z = 0;
     }else if(fabs(pointNewReference.y - cube_ptr->extendVector.y) < EPSILON){
         tmp.x = 0;
-        tmp.y = -1;
+        tmp.y = 1;
         tmp.z = 0;
     }else if(fabs(pointNewReference.z + cube_ptr->extendVector.z) < EPSILON){
         tmp.x = 0;
         tmp.y = 0;
-        tmp.z = 1;
+        tmp.z = -1;
     }else if(fabs(pointNewReference.z - cube_ptr->extendVector.z) < EPSILON){
         tmp.x = 0;
         tmp.y = 0;
-        tmp.z = -1;
+        tmp.z = 1;
     }
     return COO_matrixVectorProduct(cube_ptr->rotationMatrice, &tmp, ret_ptr);
 }
@@ -269,12 +269,12 @@ static int OBJ_normalCylinder(cylinder_t* cylinder_ptr, point_t* pointOnCylinder
     }
     vector_t tmp;
     if(pointNewReference.y == cylinder_ptr->height){
-        tmp.y = -1;
-    }else if(pointNewReference.y == -cylinder_ptr->height){
         tmp.y = 1;
+    }else if(pointNewReference.y == -cylinder_ptr->height){
+        tmp.y = -1;
     }else{
-        tmp.x = -pointNewReference.x;
-        tmp.z = -pointNewReference.z;
+        tmp.x = pointNewReference.x;
+        tmp.z = pointNewReference.z;
     }
     return COO_matrixVectorProduct(cylinder_ptr->rotationMatrice, &tmp, ret_ptr);
 }
