@@ -2,6 +2,7 @@
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
 #include <stdlib.h>
+#include <string.h> // for memcpy
 #include "objects.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
@@ -45,7 +46,7 @@ int OBJ_createCubeMesh(mesh_t* ret_ptr){
         6, 7, 5
     };
     memcpy(ret_ptr->vertices, vertices, ret_ptr->verticesCount * sizeof(point_t));
-    memcpy(ret_ptr->indices, indices, ret_ptr->trianglesCount * 3 * sizeof(point_t));
+    memcpy(ret_ptr->indices, indices, ret_ptr->trianglesCount * 3 * sizeof(int));
     return EXIT_SUCCESS;
 }
 //-----------------------------------------------------------------------------------------------------------------------

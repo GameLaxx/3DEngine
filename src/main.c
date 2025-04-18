@@ -36,12 +36,19 @@ int main(int argc, char* argv[]) {
     // Define meshes
     mesh_t cubeMesh = {};
     OBJ_createCubeMesh(&cubeMesh);
-    RR_addMesh(&cubeMesh);
+    if(RR_addMesh(&cubeMesh) == EXIT_FAILURE){
+        printf("*-* Failed while adding mesh.\n");
+        return -1;
+    }
     // Draw on the canvas
-    point_t originCube1 = {.x = 500, .z = 1000};
-    object_t object1 = {.origin = originCube1, .meshId = 0, .materialType = MT_COLOR, .material_ptr = &red}; 
-    RR_addObject(&object1);
+    point_t originCube1 = {.x = 1, .y = 2, .z = 5};
+    object_t object1 = {.origin = originCube1, .meshId = 0, .materialType = MT_COLOR, .material_ptr = &red, .scale = {2,2,2}}; 
+    if(RR_addObject(&object1) == EXIT_FAILURE){
+        printf("*-* Failed while adding object.\n");
+        return -1;
+    }
     // Main loop to keep the window open
+    RR_drawScene();
     DRAW_showRenderer();
     SDL_Event e;
     int quit = 0;
@@ -55,5 +62,6 @@ int main(int argc, char* argv[]) {
 
     DRAW_cleanRenderer();
     RR_clearScene();
+    printf("End\n");
     return 0;
 }

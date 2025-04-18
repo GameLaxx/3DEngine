@@ -33,6 +33,7 @@ struct object_s {
     int meshId;
     mesh_t* mesh;
     point_t origin;
+    float scale[3];
     // mat4_t transform;
     void* material_ptr;
 };
