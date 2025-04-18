@@ -33,12 +33,14 @@ int main(int argc, char* argv[]) {
     // Define scene variables
     point_t origin = {.x = 0, .y = 0, .z = 0};
     RR_initScene(&origin, 2, 2, 1);
+    // Define meshes
+    mesh_t cubeMesh = {};
+    OBJ_createCubeMesh(&cubeMesh);
+    RR_addMesh(&cubeMesh);
     // Draw on the canvas
-    point_t p1 = {.x = -1000, .y = -1000, .z = 5};
-    point_t p2 = {.x = 0, .y = 1000, .z = 5};
-    point_t p3 = {.x = 1000, .y = -1000, .z = 5};
-    triangle_t triangle = {.p1 = p1, .p2 = p2, .p3 = p3, .color = black};
-    RR_fillTriangle(&triangle);
+    point_t originCube1 = {.x = 500, .z = 1000};
+    object_t object1 = {.origin = originCube1, .meshId = 0, .materialType = MT_COLOR, .material_ptr = &red}; 
+    RR_addObject(&object1);
     // Main loop to keep the window open
     DRAW_showRenderer();
     SDL_Event e;
@@ -52,5 +54,6 @@ int main(int argc, char* argv[]) {
     }
 
     DRAW_cleanRenderer();
+    RR_clearScene();
     return 0;
 }

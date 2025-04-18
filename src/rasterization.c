@@ -19,10 +19,8 @@ int projectPoint(point_t* point_ptr, point_t* ret_ptr){
     ret_ptr->z = g_context.viewportDistance;
     return EXIT_SUCCESS;
 }
-//-----------------------------------------------------------------------------------------------------------------------
-// Global Functions
-//-----------------------------------------------------------------------------------------------------------------------
-int RR_fillTriangle(triangle_t* triangle_ptr){
+
+int fillTriangle(triangle_t* triangle_ptr){
     point_t p1, p2, p3 = {};
     if(projectPoint(&triangle_ptr->p1, &p1) == EXIT_FAILURE || 
        projectPoint(&triangle_ptr->p2, &p2) == EXIT_FAILURE ||
@@ -41,7 +39,6 @@ int RR_fillTriangle(triangle_t* triangle_ptr){
             float w2 = (x - p1.x) * (p2.y - p1.y) - (p2.x - p1.x) * (y - p1.y);
 
             if ((w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0)) {
-            // if (w0 == 0 && w1 == 0 && w2 == 0) {
                 if (x >= -g_xShift && y >= -g_yShift && x < g_windowWidth - g_xShift && y < g_windowHeight - g_yShift) {
                     DRAW_pixel(x, y, &triangle_ptr->color);
                 }
@@ -50,11 +47,53 @@ int RR_fillTriangle(triangle_t* triangle_ptr){
     }
     return EXIT_SUCCESS;
 }
+//-----------------------------------------------------------------------------------------------------------------------
+// Global Functions
+//-----------------------------------------------------------------------------------------------------------------------
+int RR_addMesh(mesh_t* mesh_ptr){
+    if(g_context.meshesCount == MAX_MESHES){
+        return EXIT_FAILURE;
+    }
+    if(mesh_ptr->id >= MAX_MESH_IDS){
+        return EXIT_FAILURE;
+    }
+    g_context.meshesId[mesh_ptr->id] = g_context.meshesCount;
+    g_context.meshes[g_context.meshesCount] = *mesh_ptr;
+    g_context.meshesCount++;
+    return EXIT_SUCCESS;
+}
+
+int RR_addObject(object_t* object_ptr){
+    if(g_context.objectsCount == MAX_OBJECTS){
+        return EXIT_FAILURE;
+    }
+    if(object_ptr->meshId < 0 || object_ptr->meshId >= MAX_MESH_IDS){
+        return EXIT_FAILURE;
+    }
+    g_context.objects[g_context.objectsCount] = *object_ptr;
+    g_context.objects[g_context.objectsCount].mesh = &g_context.meshes[g_context.meshesId[object_ptr->meshId]];
+    g_context.objectsCount++;
+    return EXIT_SUCCESS;
+}
 
 int RR_initScene(point_t* origin, int vW, int vH, int vD){
     g_context.origin = *origin;
     g_context.viewportWidth = vW;
     g_context.viewportHeight = vH;
     g_context.viewportDistance = vD;
-    return 0;
+    g_context.meshesCount = 0;
+    g_context.objectsCount = 0;
+    return EXIT_SUCCESS;
+}
+
+int RR_clearScene(){
+    for(int i = 0; i < g_context.meshesCount; i++){
+        free(g_context.meshes[i].vertices);
+        free(g_context.meshes[i].indices);
+    }
+    return EXIT_SUCCESS;
+}
+
+int RR_drawScene(){
+    return EXIT_SUCCESS;
 }
