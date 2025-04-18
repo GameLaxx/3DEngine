@@ -103,7 +103,10 @@ int getPixelColor(point_t* origin_ptr, vector_t* rayDirectionVector_ptr, double 
     float currentValue = tmax + 1;
     object_t* closestObject_ptr = NULL;
     vector_t rayVector = {};
-    COO_linearTransformation(rayDirectionVector_ptr, -1, NULL, 0, &rayVector);
+    if(COO_linearTransformation(rayDirectionVector_ptr, -1, NULL, 0, &rayVector) == EXIT_FAILURE){
+        printf("*-* Error while trying to transform ray vector.\n");
+        return DRAW_initBackgroundColor(ret_ptr);
+    }
     // get closest object
     for(int i = 0; i < MAX_OBJECTS; i++){
         currentValue = OBJ_intersectObject(origin_ptr, rayDirectionVector_ptr, &g_context.objects[i], tmin, tmax);
@@ -112,12 +115,13 @@ int getPixelColor(point_t* origin_ptr, vector_t* rayDirectionVector_ptr, double 
             closestValue = currentValue;
         }
     }
-    if(closestObject_ptr == NULL){
+    if(closestObject_ptr == NULL){ // no object found so return background color
         return DRAW_initBackgroundColor(ret_ptr);
     }
     // point on the object that intersected the ray <=> point on the ray that intersected the object. Named P.
     point_t pointOnObject = {};
     if(COO_linearTransformation(origin_ptr, 1, rayDirectionVector_ptr, closestValue, &pointOnObject) == EXIT_FAILURE){
+        printf("*-* Error while trying to transform point on object.\n");
         return DRAW_initBackgroundColor(ret_ptr);
     }
     // normal vector for the point P. Named N.
@@ -131,11 +135,13 @@ int getPixelColor(point_t* origin_ptr, vector_t* rayDirectionVector_ptr, double 
     // vector coming from P and going on the point of the viewport. Mainly D. Named V.
     vector_t lightVector = {};
     if(COO_copyCoordinates(&rayVector, &lightVector) == EXIT_FAILURE){
+        printf("*-* Error while trying to copy coordinate for lightVector.\n");
         return DRAW_initBackgroundColor(ret_ptr);
     }
     // compute intensity
     float intensity = 0;
     if(computeLight(&pointOnObject, &normalVector, &lightVector, closestObject_ptr->specular, &intensity) == EXIT_FAILURE){
+        printf("*-* Error during light computation.\n");
         return DRAW_initBackgroundColor(ret_ptr);
     }
     // add intensity
@@ -144,6 +150,7 @@ int getPixelColor(point_t* origin_ptr, vector_t* rayDirectionVector_ptr, double 
     if(recursiveDepth > 0 && closestObject_ptr->reflective != 0){
         vector_t reflectionVector = {};
         if(COO_linearTransformation(&normalVector, 2 * COO_scalarProduct(&normalVector, &rayVector), &rayVector, -1, &reflectionVector) == EXIT_FAILURE){
+            printf("*-* Error while transforming reflection vector.\n");
             return DRAW_initBackgroundColor(ret_ptr);
         }
         rgba_t recursiveRet = {};

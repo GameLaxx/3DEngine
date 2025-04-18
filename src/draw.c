@@ -130,7 +130,7 @@ int DRAW_initBackgroundColor(rgba_t* ret_ptr){
 }
 
 int DRAW_addIntensity(rgba_t* color_ptr, float intensity, rgba_t* ret_ptr){
-    if(intensity <= 0){
+    if(intensity < 0){
         return EXIT_SUCCESS;
     }
     float red = (float) color_ptr->red * intensity;
