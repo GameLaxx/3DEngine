@@ -11,11 +11,11 @@
 rgba_t g_backgroundColor = {.red = 150, .green = 150, .blue = 255, .alpha = 255};
 SDL_Window* window;
 
-int g_windowWidth;
-int g_windowHeight;
+int g_windowWidth = 0;
+int g_windowHeight = 0;
+int g_xShift = 0;
+int g_yShift = 0;
 
-int xShift = 0;
-int yShift = 0;
 int invertY = 0;
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
@@ -47,11 +47,11 @@ static int DRAW_setDrawColor(rgba_t* color_ptr){
  */
 static int DRAW_rectangle(int x, int y, int width, int height, rgba_t* color_ptr, rectangleFunction func){
     DRAW_setDrawColor(color_ptr);
-    int renderY = y + yShift;
+    int renderY = y + g_yShift;
     if(invertY){
         renderY = g_windowHeight - renderY - height;
     }
-    SDL_Rect rect = {x + xShift, renderY, width, height}; // x, y, largeur, hauteur
+    SDL_Rect rect = {x + g_xShift, renderY, width, height}; // x, y, largeur, hauteur
     return func(g_renderer, &rect);
 }
 //-----------------------------------------------------------------------------------------------------------------------
@@ -111,8 +111,8 @@ int DRAW_cleanRenderer(){
 
 /* Canvas Functions */
 int DRAW_moveOrigin(int x, int y){
-    xShift = x;
-    yShift = y;
+    g_xShift = x;
+    g_yShift = y;
     return 0;
 }
 
@@ -152,13 +152,13 @@ void DRAW_computeReflection(rgba_t* localColor_ptr, rgba_t* recursiveColor_ptr, 
 /* Drawing Functions */
 int DRAW_line(int x1, int y1, int x2, int y2, rgba_t* color_ptr){
     DRAW_setDrawColor(color_ptr);
-    int renderY1 = y1 + yShift;
-    int renderY2 = y2 + yShift;
+    int renderY1 = y1 + g_yShift;
+    int renderY2 = y2 + g_yShift;
     if(invertY){
         renderY1 = g_windowHeight - renderY1;
         renderY2 = g_windowHeight - renderY2;
     }
-    SDL_RenderDrawLine(g_renderer, x1 + xShift, renderY1, x2  + xShift, renderY2); // (x1, y1) -> (x2, y2) in the current reference 
+    SDL_RenderDrawLine(g_renderer, x1 + g_xShift, renderY1, x2  + g_xShift, renderY2); // (x1, y1) -> (x2, y2) in the current reference 
     return 0;
 }
 
