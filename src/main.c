@@ -41,9 +41,31 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     // Draw on the canvas
-    point_t originCube1 = {.x = 1, .y = 2, .z = 5};
-    object_t object1 = {.origin = originCube1, .meshId = 0, .materialType = MT_COLOR, .material_ptr = &red, .scale = {2,2,2}}; 
+    point_t originCube1 = {.x = -3, .y = -2.6, .z = 4.5};
+    rgba_t colors1[] = {
+        red,red,
+        blue, blue,
+        yellow, yellow,
+        brown, brown,
+        black, black,
+        green, green
+    };
+    object_t object1 = {.origin = originCube1, .meshId = 0, .materialType = MT_COLOR, .material_ptr = colors1, .scale = {2,2,2}}; 
     if(RR_addObject(&object1) == EXIT_FAILURE){
+        printf("*-* Failed while adding object.\n");
+        return -1;
+    }
+    point_t originCube2 = {.x = -4.3, .y = -3, .z = 5};
+    rgba_t colors2[] = {
+        red,red,
+        light_gray, light_gray,
+        yellow, yellow,
+        white, white,
+        purple, purple,
+        green, green
+    };
+    object_t object2 = {.origin = originCube2, .meshId = 0, .materialType = MT_COLOR, .material_ptr = colors2, .scale = {4,2,2}}; 
+    if(RR_addObject(&object2) == EXIT_FAILURE){
         printf("*-* Failed while adding object.\n");
         return -1;
     }

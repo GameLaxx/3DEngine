@@ -24,7 +24,7 @@ int translatePoint(point_t* point_ptr, vector_t* vector_ptr){
     return EXIT_SUCCESS;
 }
 
-int projectPoint(point_t* point_ptr, point_t* ret_ptr){
+int point3DtoPixel(point_t* point_ptr, point_t* ret_ptr){
     if(!ret_ptr || !point_ptr){
         return EXIT_FAILURE;
     }
@@ -34,30 +34,53 @@ int projectPoint(point_t* point_ptr, point_t* ret_ptr){
     return EXIT_SUCCESS;
 }
 
+float triangleArea(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr){
+    return (p2_ptr->x - p1_ptr->x) * (p3_ptr->y - p1_ptr->y) - (p2_ptr->y - p1_ptr->y) * (p3_ptr->x - p1_ptr->x);
+}
+
 int fillTriangle(triangle_t* triangle_ptr){
     point_t p1, p2, p3 = {};
-    if(projectPoint(&triangle_ptr->p1, &p1) == EXIT_FAILURE || 
-       projectPoint(&triangle_ptr->p2, &p2) == EXIT_FAILURE ||
-       projectPoint(&triangle_ptr->p3, &p3) == EXIT_FAILURE){
+    if(point3DtoPixel(&triangle_ptr->p1, &p1) == EXIT_FAILURE || 
+       point3DtoPixel(&triangle_ptr->p2, &p2) == EXIT_FAILURE ||
+       point3DtoPixel(&triangle_ptr->p3, &p3) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
-    int min_x = fminf(fminf(p1.x, p2.x), p3.x);
-    int max_x = fmaxf(fmaxf(p1.x, p2.x), p3.x);
-    int min_y = fminf(fminf(p1.y, p2.y), p3.y);
-    int max_y = fmaxf(fmaxf(p1.y, p2.y), p3.y);
-    // TODO : manque le test pour savoir si l'air est nulle
-    for (int y = min_y; y <= max_y; y++) {
-        for (int x = min_x; x <= max_x; x++) {
-            float w0 = (x - p2.x) * (p3.y - p2.y) - (p3.x - p2.x) * (y - p2.y);
-            float w1 = (x - p3.x) * (p1.y - p3.y) - (p1.x - p3.x) * (y - p3.y);
-            float w2 = (x - p1.x) * (p2.y - p1.y) - (p2.x - p1.x) * (y - p1.y);
-
-            if ((w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0)) {
-                if (x >= -g_xShift && y >= -g_yShift && x < g_windowWidth - g_xShift && y < g_windowHeight - g_yShift) {
-                    DRAW_pixel(x, y, &triangle_ptr->color);
-                }
-            }
+    float totalArea = triangleArea(&p1, &p2, &p3);
+    if(totalArea == 0){
+        return EXIT_SUCCESS;
+    }
+    int minXs = fminf(fminf(p1.x, p2.x), p3.x);
+    int maxXs = fmaxf(fmaxf(p1.x, p2.x), p3.x);
+    int minYs = fminf(fminf(p1.y, p2.y), p3.y);
+    int maxYs = fmaxf(fmaxf(p1.y, p2.y), p3.y);
+    float areaWithout1 = 0;
+    float areaWithout2 = 0;
+    float areaWithout3 = 0;
+    float interpolatedZ = 0;
+    for (int y = minYs; y <= maxYs; y++) {
+    for (int x = minXs; x <= maxXs; x++) {
+        if (x < -g_xShift || y < -g_yShift || x >= g_windowWidth - g_xShift || y >= g_windowHeight - g_yShift) {
+            continue;
         }
+        point_t currentPoint = {.x = x + 0.5, .y = y + 0.5, .z = 0};
+        areaWithout1 = triangleArea(&p2, &currentPoint, &p3);
+        areaWithout2 = triangleArea(&p3, &currentPoint, &p1);
+        areaWithout3 = triangleArea(&p1, &currentPoint, &p2);
+        if (((areaWithout1 < 0 || areaWithout2 < 0 || areaWithout3 < 0) && (areaWithout1 > 0 || areaWithout2 > 0 || areaWithout3 > 0))){
+            // pixel outside of the triangle
+            continue;
+        }
+        interpolatedZ = (areaWithout1/totalArea) * triangle_ptr->p1.z
+                        + (areaWithout2/totalArea) * triangle_ptr->p2.z
+                        + (areaWithout3/totalArea) * triangle_ptr->p3.z + 0.1; // zBuffer is calloc so if == 0 then never assigned hence + 0.1
+        // add shift to go in zbuffer because x and y can be < 0
+        if(g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] != 0 
+        && g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] < 1 / interpolatedZ){
+            continue;
+        }
+        g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] = 1 / interpolatedZ;
+        DRAW_pixel(x, y, &triangle_ptr->color);
+    }
     }
     return EXIT_SUCCESS;
 }
@@ -100,6 +123,7 @@ int RR_initScene(point_t* origin, int vW, int vH, int vD){
     g_context.viewportDistance = vD;
     g_context.meshesCount = 0;
     g_context.objectsCount = 0;
+    g_context.zBuffer = NULL;
     return EXIT_SUCCESS;
 }
 
@@ -112,26 +136,29 @@ int RR_clearScene(){
 }
 
 int RR_drawScene(){
-    for(int o = 0; o < g_context.objectsCount; o++){
-        rgba_t* color_ptr = (rgba_t*)g_context.objects[o].material_ptr;
-        for(int t = 0; t < g_context.objects[o].mesh->trianglesCount * 3; t += 3){
-            point_t p1 = g_context.objects[o].mesh->vertices[g_context.objects[o].mesh->indices[t]];
-            point_t p2 = g_context.objects[o].mesh->vertices[g_context.objects[o].mesh->indices[t + 1]];
-            point_t p3 = g_context.objects[o].mesh->vertices[g_context.objects[o].mesh->indices[t + 2]];
-            scalePoint(&p1, g_context.objects[o].scale);
-            scalePoint(&p2, g_context.objects[o].scale);
-            scalePoint(&p3, g_context.objects[o].scale);
-            translatePoint(&p1, &g_context.objects[o].origin);
-            translatePoint(&p2, &g_context.objects[o].origin);
-            translatePoint(&p3, &g_context.objects[o].origin);
+    g_context.zBuffer = calloc(g_windowHeight * g_windowWidth, sizeof(float));
+    for(int obj = 0; obj < g_context.objectsCount; obj++){
+        rgba_t* color_ptr = (rgba_t*)g_context.objects[obj].material_ptr;
+        for(int t = 0; t < g_context.objects[obj].mesh->trianglesCount * 3; t += 3){
+            point_t p1 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[t]];
+            point_t p2 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[t + 1]];
+            point_t p3 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[t + 2]];
+            scalePoint(&p1, g_context.objects[obj].scale);
+            scalePoint(&p2, g_context.objects[obj].scale);
+            scalePoint(&p3, g_context.objects[obj].scale);
+            translatePoint(&p1, &g_context.objects[obj].origin);
+            translatePoint(&p2, &g_context.objects[obj].origin);
+            translatePoint(&p3, &g_context.objects[obj].origin);
             triangle_t triangle = {
                 .p1 = p1,
                 .p2 = p2,
                 .p3 = p3,
-                .color = *color_ptr
+                .color = color_ptr[(int) (t / 3)]
             };
             fillTriangle(&triangle);
         }
     }
+    free(g_context.zBuffer);
+    g_context.zBuffer = NULL;
     return EXIT_SUCCESS;
 }

@@ -34,6 +34,7 @@ struct sceneContext_s{
     int meshesId[MAX_MESH_IDS];
     mesh_t meshes[MAX_MESHES];
     object_t objects[MAX_OBJECTS];
+    float* zBuffer;
 };
 
 struct triangle_s{
