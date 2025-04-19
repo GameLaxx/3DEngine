@@ -2,6 +2,7 @@
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h> // for memcpy
 #include "objects.h"
 //-----------------------------------------------------------------------------------------------------------------------
@@ -20,7 +21,9 @@ int OBJ_createCubeMesh(mesh_t* ret_ptr){
     ret_ptr->verticesCount = 8;
     ret_ptr->trianglesCount = 12;
     ret_ptr->vertices = calloc(ret_ptr->verticesCount, sizeof(point_t));
+    ret_ptr->normalVertices_ptr = NULL;
     ret_ptr->indices = calloc(ret_ptr->trianglesCount * 3, sizeof(int)); // 3 indices per triangle
+    ret_ptr->normalTriangles_ptr = calloc(ret_ptr->trianglesCount, sizeof(vector_t));
     point_t vertices[] = {
         {0,0,0},
         {1,0,0},
@@ -41,12 +44,28 @@ int OBJ_createCubeMesh(mesh_t* ret_ptr){
         6, 2, 4,
         6, 4, 7,
         6, 0, 2,
-        6, 0, 3,
+        6, 3, 0,
         6, 3, 5,
         6, 7, 5
     };
+    vector_t normalTriangles[] = {
+        {1,0,0},
+        {1,0,0},
+        {0,0,-1},
+        {0,0,-1},
+        {0,-1,0},
+        {0,-1,0},
+
+        {0,1,0},
+        {0,1,0},
+        {-1,0,0},
+        {-1,0,0},
+        {0,0,1},
+        {0,0,1}
+    };
     memcpy(ret_ptr->vertices, vertices, ret_ptr->verticesCount * sizeof(point_t));
     memcpy(ret_ptr->indices, indices, ret_ptr->trianglesCount * 3 * sizeof(int));
+    memcpy(ret_ptr->normalTriangles_ptr, normalTriangles, ret_ptr->trianglesCount * sizeof(vector_t));
     return EXIT_SUCCESS;
 }
 //-----------------------------------------------------------------------------------------------------------------------

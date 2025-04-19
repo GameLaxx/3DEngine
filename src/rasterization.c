@@ -24,6 +24,13 @@ int translatePoint(point_t* point_ptr, vector_t* vector_ptr){
     return EXIT_SUCCESS;
 }
 
+int backFaceCulling(vector_t* normal_ptr, vector_t* ray_ptr){
+    if(COO_scalarProduct(normal_ptr, ray_ptr) <= 0){
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+
 int point3DtoPixel(point_t* point_ptr, point_t* ret_ptr){
     if(!ret_ptr || !point_ptr){
         return EXIT_FAILURE;
@@ -129,8 +136,18 @@ int RR_initScene(point_t* origin, int vW, int vH, int vD){
 
 int RR_clearScene(){
     for(int i = 0; i < g_context.meshesCount; i++){
-        free(g_context.meshes[i].vertices);
-        free(g_context.meshes[i].indices);
+        if(g_context.meshes[i].vertices){
+            free(g_context.meshes[i].vertices);
+        }
+        if(g_context.meshes[i].indices){
+            free(g_context.meshes[i].indices);
+        }
+        if(g_context.meshes[i].normalTriangles_ptr){
+            free(g_context.meshes[i].normalTriangles_ptr);
+        }
+        if(g_context.meshes[i].normalVertices_ptr){
+            free(g_context.meshes[i].normalVertices_ptr);
+        }
     }
     return EXIT_SUCCESS;
 }
@@ -139,21 +156,26 @@ int RR_drawScene(){
     g_context.zBuffer = calloc(g_windowHeight * g_windowWidth, sizeof(float));
     for(int obj = 0; obj < g_context.objectsCount; obj++){
         rgba_t* color_ptr = (rgba_t*)g_context.objects[obj].material_ptr;
-        for(int t = 0; t < g_context.objects[obj].mesh->trianglesCount * 3; t += 3){
-            point_t p1 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[t]];
-            point_t p2 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[t + 1]];
-            point_t p3 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[t + 2]];
+        for(int t = 0; t < g_context.objects[obj].mesh->trianglesCount; t++){
+            point_t p1 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[3 * t]];
+            vector_t ray = {};
+            point_t p2 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[3 * t + 1]];
+            point_t p3 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[3 * t + 2]];
             scalePoint(&p1, g_context.objects[obj].scale);
             scalePoint(&p2, g_context.objects[obj].scale);
             scalePoint(&p3, g_context.objects[obj].scale);
             translatePoint(&p1, &g_context.objects[obj].origin);
             translatePoint(&p2, &g_context.objects[obj].origin);
             translatePoint(&p3, &g_context.objects[obj].origin);
+            COO_vectorizePoints(&p1, &g_context.origin, &ray);
+            if(backFaceCulling(&g_context.objects[obj].mesh->normalTriangles_ptr[t], &ray) == EXIT_FAILURE){
+                continue; // is facing backward
+            }
             triangle_t triangle = {
                 .p1 = p1,
                 .p2 = p2,
                 .p3 = p3,
-                .color = color_ptr[(int) (t / 3)]
+                .color = color_ptr[t]
             };
             fillTriangle(&triangle);
         }

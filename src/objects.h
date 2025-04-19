@@ -23,8 +23,10 @@ typedef struct object_s object_t;
 struct mesh_s {
     int verticesCount;
     point_t* vertices;
+    vector_t* normalVertices_ptr;
     int trianglesCount;
     int* indices;
+    vector_t* normalTriangles_ptr;
     int id; // TODO : can store up to 64 to not waste space
 };
 

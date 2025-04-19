@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
+#include <time.h>
 #include "coordinates.h"
 #include "draw.h"
 #include "rasterization.h"
@@ -41,7 +42,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     // Draw on the canvas
-    point_t originCube1 = {.x = -3, .y = -2.6, .z = 4.5};
+    point_t originCube1 = {.x = 1, .y = 2, .z = 4.5};
     rgba_t colors1[] = {
         red,red,
         blue, blue,
@@ -69,8 +70,26 @@ int main(int argc, char* argv[]) {
         printf("*-* Failed while adding object.\n");
         return -1;
     }
+    point_t originCube3 = {.x = -4.3, .y = 5, .z = 5};
+    rgba_t colors3[] = {
+        red,red,
+        light_gray, light_gray,
+        yellow, yellow,
+        white, white,
+        purple, purple,
+        green, green
+    };
+    object_t object3 = {.origin = originCube3, .meshId = 0, .materialType = MT_COLOR, .material_ptr = colors3, .scale = {2,2,4}}; 
+    if(RR_addObject(&object3) == EXIT_FAILURE){
+        printf("*-* Failed while adding object.\n");
+        return -1;
+    }
     // Main loop to keep the window open
+    clock_t start = clock();
     RR_drawScene();
+    clock_t end = clock();
+    double elapsed_time = (double)(end - start) / CLOCKS_PER_SEC;
+    printf("Elapsed time : %f secondes\n", elapsed_time);
     DRAW_showRenderer();
     SDL_Event e;
     int quit = 0;
