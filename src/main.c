@@ -41,6 +41,13 @@ int main(int argc, char* argv[]) {
         printf("*-* Failed while adding mesh.\n");
         return -1;
     }
+    mesh_t pyramidMesh = {};
+    char pyramidPath[] = "ressources/pyramid.obj";
+    OBJ_readObjFile(pyramidPath, &pyramidMesh);
+    if(RR_addMesh(&pyramidMesh) == EXIT_FAILURE){
+        printf("*-* Failed while adding mesh.\n");
+        return -1;
+    }
     // Draw on the canvas
     point_t originCube1 = {.x = 1, .y = 2, .z = 4.5};
     rgba_t colors1[] = {
@@ -56,31 +63,17 @@ int main(int argc, char* argv[]) {
         printf("*-* Failed while adding object.\n");
         return -1;
     }
-    point_t originCube2 = {.x = -4.3, .y = -3, .z = 5};
+    point_t originPyramid1 = {.x = -3, .y = -2, .z = 4.5};
     rgba_t colors2[] = {
         red,red,
-        light_gray, light_gray,
+        blue, blue,
         yellow, yellow,
-        white, white,
-        purple, purple,
+        brown, brown,
+        black, black,
         green, green
     };
-    object_t object2 = {.origin = originCube2, .meshId = 0, .materialType = MT_COLOR, .material_ptr = colors2, .scale = {4,2,2}}; 
+    object_t object2 = {.origin = originPyramid1, .meshId = 1, .materialType = MT_COLOR, .material_ptr = colors2, .scale = {2,2,2}}; 
     if(RR_addObject(&object2) == EXIT_FAILURE){
-        printf("*-* Failed while adding object.\n");
-        return -1;
-    }
-    point_t originCube3 = {.x = -4.3, .y = 5, .z = 5};
-    rgba_t colors3[] = {
-        red,red,
-        light_gray, light_gray,
-        yellow, yellow,
-        white, white,
-        purple, purple,
-        green, green
-    };
-    object_t object3 = {.origin = originCube3, .meshId = 0, .materialType = MT_COLOR, .material_ptr = colors3, .scale = {2,2,4}}; 
-    if(RR_addObject(&object3) == EXIT_FAILURE){
         printf("*-* Failed while adding object.\n");
         return -1;
     }
