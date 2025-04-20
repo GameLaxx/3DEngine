@@ -36,7 +36,8 @@ struct object_s {
     mesh_t* mesh;
     point_t origin;
     float scale[3];
-    // mat4_t transform;
+    float angleRotation[3];
+    float rotationMatrix[9];
     void* material_ptr;
 };
 //-----------------------------------------------------------------------------------------------------------------------

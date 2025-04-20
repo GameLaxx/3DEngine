@@ -1,6 +1,7 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
+#include <math.h>
 #include "rasterization.h"
 #include "draw.h"
 //-----------------------------------------------------------------------------------------------------------------------
@@ -18,11 +19,13 @@ int scalePoint(point_t* point_ptr, float scale_ptr[3]){
 }
 
 int rotatePoint(point_t* point_ptr, float rotationMatrix[9]){
-    // float tmpX = point_ptr->x
-    // point_ptr->x += vector_ptr->x;
-    // point_ptr->y += vector_ptr->y;
-    // point_ptr->z += vector_ptr->z;
-    // return EXIT_SUCCESS;
+    float tmpX = point_ptr->x * rotationMatrix[0] + point_ptr->y * rotationMatrix[1] + point_ptr->z * rotationMatrix[2];
+    float tmpY = point_ptr->x * rotationMatrix[3] + point_ptr->y * rotationMatrix[4] + point_ptr->z * rotationMatrix[5];
+    float tmpZ = point_ptr->x * rotationMatrix[6] + point_ptr->y * rotationMatrix[7] + point_ptr->z * rotationMatrix[8];
+    point_ptr->x = tmpX;
+    point_ptr->y = tmpY;
+    point_ptr->z = tmpZ;
+    return EXIT_SUCCESS;
 }
 
 int translatePoint(point_t* point_ptr, vector_t* vector_ptr){
@@ -223,6 +226,18 @@ int RR_addObject(object_t* object_ptr){
     }
     g_context.objects[g_context.objectsCount] = *object_ptr;
     g_context.objects[g_context.objectsCount].mesh = &g_context.meshes[g_context.meshesId[object_ptr->meshId] - 1]; // because added with + 1
+    float rotateX_rad = object_ptr->angleRotation[0] * M_PI / 180;
+    float rotateY_rad = object_ptr->angleRotation[1] * M_PI / 180;
+    float rotateZ_rad = object_ptr->angleRotation[2] * M_PI / 180;
+    g_context.objects[g_context.objectsCount].rotationMatrix[0] = cos(rotateY_rad) * cos(rotateZ_rad);
+    g_context.objects[g_context.objectsCount].rotationMatrix[1] = cos(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) - sin(rotateZ_rad) * cos(rotateX_rad);
+    g_context.objects[g_context.objectsCount].rotationMatrix[2] = sin(rotateZ_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
+    g_context.objects[g_context.objectsCount].rotationMatrix[3] = cos(rotateY_rad) * sin(rotateZ_rad);
+    g_context.objects[g_context.objectsCount].rotationMatrix[4] = sin(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * cos(rotateX_rad);
+    g_context.objects[g_context.objectsCount].rotationMatrix[5] = - cos(rotateZ_rad) * sin(rotateX_rad) + sin(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
+    g_context.objects[g_context.objectsCount].rotationMatrix[6] = -sin(rotateY_rad);
+    g_context.objects[g_context.objectsCount].rotationMatrix[7] = cos(rotateY_rad) * sin(rotateX_rad);
+    g_context.objects[g_context.objectsCount].rotationMatrix[8] = cos(rotateY_rad) * cos(rotateX_rad);
     g_context.objectsCount++;
     return EXIT_SUCCESS;
 }
@@ -269,13 +284,18 @@ int RR_drawScene(){
             scalePoint(&p1, g_context.objects[obj].scale);
             scalePoint(&p2, g_context.objects[obj].scale);
             scalePoint(&p3, g_context.objects[obj].scale);
+            rotatePoint(&p1, g_context.objects[obj].rotationMatrix);
+            rotatePoint(&p2, g_context.objects[obj].rotationMatrix);
+            rotatePoint(&p3, g_context.objects[obj].rotationMatrix);
             translatePoint(&p1, &g_context.objects[obj].origin);
             translatePoint(&p2, &g_context.objects[obj].origin);
             translatePoint(&p3, &g_context.objects[obj].origin);
             if(g_context.objects[obj].mesh->normalTriangles_ptr){
                 vector_t ray = {};
                 COO_vectorizePoints(&p1, &g_context.origin, &ray);
-                if(backFaceCulling(&g_context.objects[obj].mesh->normalTriangles_ptr[t], &ray) == EXIT_FAILURE){
+                vector_t normalVector = g_context.objects[obj].mesh->normalTriangles_ptr[t];
+                rotatePoint(&normalVector, g_context.objects[obj].rotationMatrix);
+                if(backFaceCulling(&normalVector, &ray) == EXIT_FAILURE){
                     continue; // is facing backward
                 }
                 computeLight(&p1, &g_context.objects[obj].mesh->normalTriangles_ptr[t], &p1, 40, &intensity);

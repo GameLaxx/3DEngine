@@ -65,9 +65,13 @@ int main(int argc, char* argv[]) {
     RR_addLight(&light2);
     RR_addLight(&light3);
     // Draw on the canvas
-    point_t originCube1 = {.x = 1, .y = 2, .z = 4.5};
+    point_t originCube1 = {.x = 1, .y = 0, .z = 4.5};
     rgba_t colors1 = red;
-    object_t object1 = {.origin = originCube1, .meshId = 0, .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors1, .scale = {2,2,2}}; 
+    object_t object1 = {
+        .origin = originCube1, .meshId = 0, 
+        .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors1, 
+        .scale = {2,2,2}, .angleRotation = {-45,45,0}
+    }; 
     if(RR_addObject(&object1) == EXIT_FAILURE){
         printf("*-* Failed while adding object.\n");
         return -1;
