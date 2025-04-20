@@ -41,6 +41,81 @@ int point3DtoPixel(point_t* point_ptr, point_t* ret_ptr){
     return EXIT_SUCCESS;
 }
 
+int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* leavingLightVector_ptr, int specular, float* intensity){
+    // leavingLightVector is the ray of light leaving the object and going to the camera. Named V.
+    // commingLightVector is the ray of light leaving the object and going to the source. Named L.
+    // normal vector is a unitary vector.
+    for(int i = 0; i < MAX_LIGHTS; i++){
+        if(g_context.lights[i].intensity <= 0) continue;
+        // ambiant light just add intensity
+        if(g_context.lights[i].type == LT_ambiant){
+            *intensity += g_context.lights[i].intensity;
+            continue;
+        }
+        // get direction of light
+        vector_t commingLightVector = {}; 
+        if(g_context.lights[i].type == LT_directional){
+            if(COO_copyCoordinates(&g_context.lights[i].carac, &commingLightVector) == EXIT_FAILURE){ //! I think its in the wrond direction
+                printf("*-* Error : Problem occured while getting carac of light %i.\n", i);
+                return EXIT_FAILURE;
+            }
+        }else if(g_context.lights[i].type == LT_point){
+            if(COO_vectorizePoints(pointOnObject_ptr, &g_context.lights[i].carac, &commingLightVector) == EXIT_FAILURE){
+                printf("*-* Error : Problem occured while getting carac of light %i.\n", i);
+                return EXIT_FAILURE;
+            }
+        }else{                
+            printf("*-* Warning : Unknwon type of light %i : type %i.\n", i, g_context.lights[i].type);
+            continue;
+        }
+        // get for point if shadow or not
+        // float tmin = 0.000001;
+        // float tmax = (g_context.lights[i].type == LT_directional) ? TMAX_ALL : TMAX_POINT;
+        // object_t* closestObject_ptr = NULL;
+        // float closestValue = tmax + 1;
+        // float currentValue = tmax + 1;
+        
+        // for(int i = 0; i < MAX_OBJECTS; i++){
+        //     currentValue = OBJ_intersectObject(pointOnObject_ptr, &commingLightVector, &g_context.objects[i], tmin, tmax);
+        //     if(currentValue < closestValue && currentValue > tmin && currentValue < tmax){
+        //         closestObject_ptr = &g_context.objects[i];
+        //         closestValue = currentValue;
+        //     }
+        // }
+        // if(closestObject_ptr != NULL){ // other object between source and current object ==> no light from this source
+        //     continue;
+        // }
+        // precalculations
+        float angleNormalLight = COO_scalarProduct(normal_ptr, &commingLightVector);
+        // coeff applied to the intensity of the current light. Might be over 1.
+        float coeff = 0;
+        //------------- Diffuse reflection
+        if(angleNormalLight >= 0){
+            coeff += angleNormalLight / sqrt(COO_scalarProduct(&commingLightVector, &commingLightVector));
+        }
+        //------------- Specular reflection
+        // Check if object is matte or shiny
+        if(specular <= 0){
+            *intensity += g_context.lights[i].intensity * coeff;
+            continue;
+        }
+        vector_t reflectionVector = {};
+        // compute R = 2 (N.L) N - L
+        if(COO_linearTransformation(normal_ptr, 2 * angleNormalLight, &commingLightVector, -1, &reflectionVector) == EXIT_FAILURE){
+            return EXIT_FAILURE;
+        }
+        float angleReflectionLight = COO_scalarProduct(&reflectionVector, leavingLightVector_ptr);
+        if(angleReflectionLight >= 0){
+            angleReflectionLight /= sqrt(COO_scalarProduct(&reflectionVector, &reflectionVector));
+            angleReflectionLight /= sqrt(COO_scalarProduct(leavingLightVector_ptr, leavingLightVector_ptr));
+            coeff += pow(angleReflectionLight, specular);
+        }
+        // add to intensity
+        *intensity += g_context.lights[i].intensity * coeff;
+    }
+    return EXIT_SUCCESS;
+}
+
 float triangleArea(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr){
     return (p2_ptr->x - p1_ptr->x) * (p3_ptr->y - p1_ptr->y) - (p2_ptr->y - p1_ptr->y) * (p3_ptr->x - p1_ptr->x);
 }
@@ -107,6 +182,27 @@ int RR_addMesh(mesh_t* mesh_ptr){
     return EXIT_SUCCESS;
 }
 
+int RR_addLight(lightSource_t* light){
+    if(g_context.lightsCount == MAX_LIGHTS) return EXIT_FAILURE;
+    if(light->intensity <= 0) return EXIT_FAILURE;
+    for(int i = 0; i < MAX_LIGHTS; i++){
+        if(g_context.lights[i].intensity <= 0){
+            g_context.lights[i] = *light;
+            break;
+        }
+        if(g_context.lights[i].type == LT_ambiant && light->type == LT_ambiant){
+            g_context.lights[i].intensity += light->intensity;
+            if(g_context.lights[i].intensity > 1){
+                g_context.lights[i].intensity = 1;
+            }
+            g_context.lightsCount -= 1; //compensate the fact that we did not add a light
+            break;
+        }
+    }
+    g_context.lightsCount += 1;
+    return 0;
+}
+
 int RR_addObject(object_t* object_ptr){
     if(g_context.objectsCount == MAX_OBJECTS){
         return EXIT_FAILURE;
@@ -154,6 +250,8 @@ int RR_clearScene(){
 
 int RR_drawScene(){
     g_context.zBuffer = calloc(g_windowHeight * g_windowWidth, sizeof(float));
+    triangle_t triangle = {};
+    float intensity = 0;
     for(int obj = 0; obj < g_context.objectsCount; obj++){
         rgba_t* color_ptr = (rgba_t*)g_context.objects[obj].material_ptr;
         for(int t = 0; t < g_context.objects[obj].mesh->trianglesCount; t++){
@@ -172,14 +270,24 @@ int RR_drawScene(){
                 if(backFaceCulling(&g_context.objects[obj].mesh->normalTriangles_ptr[t], &ray) == EXIT_FAILURE){
                     continue; // is facing backward
                 }
+                computeLight(&p1, &g_context.objects[obj].mesh->normalTriangles_ptr[t], &p1, 40, &intensity);
+                if(g_context.objects[obj].materialType == MT_COLOR_EACH){
+                    DRAW_addIntensity(&color_ptr[t], intensity, &triangle.color);
+                }else if(g_context.objects[obj].materialType == MT_COLOR_UNIFORM){
+                    DRAW_addIntensity(&color_ptr, intensity, &triangle.color);
+                }
+            }else{
+                if(g_context.objects[obj].materialType == MT_COLOR_EACH){
+                    triangle.color = color_ptr[t];
+                }else if(g_context.objects[obj].materialType == MT_COLOR_UNIFORM){
+                    triangle.color = *color_ptr;
+                }
             }
-            triangle_t triangle = {
-                .p1 = p1,
-                .p2 = p2,
-                .p3 = p3,
-                .color = color_ptr[t]
-            };
+            triangle.p1 = p1;
+            triangle.p2 = p2;
+            triangle.p3 = p3;
             fillTriangle(&triangle);
+            intensity = 0;
         }
     }
     free(g_context.zBuffer);

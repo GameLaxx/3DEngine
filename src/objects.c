@@ -69,13 +69,13 @@ int OBJ_createCubeMesh(mesh_t* ret_ptr){
     return EXIT_SUCCESS;
 }
 
-int OBJ_readObjFile(char* filePath_ptr, mesh_t* ret_ptr){
+int OBJ_readObjFile(char* filePath_ptr, int mesh_id, mesh_t* ret_ptr){
     FILE *file_ptr;
     char buffer[256];
     file_ptr = fopen(filePath_ptr, "r");
     ret_ptr->verticesCount = 0;
     ret_ptr->trianglesCount = 0;
-    ret_ptr->id = 1;
+    ret_ptr->id = mesh_id;
     //-------------------------- get different counts
     while (fgets(buffer, sizeof(buffer), file_ptr)) {
         if(buffer[0] == 'v' && buffer[1] == ' '){

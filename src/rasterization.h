@@ -16,14 +16,22 @@
 #define MAX_MESHES 5
 #define MAX_MESH_IDS 50
 #define MAX_OBJECTS 10
+#define MAX_LIGHTS 5
 //-----------------------------------------------------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------------------------------------------------
 typedef struct sceneContext_s sceneContext_t;
 typedef struct triangle_s triangle_t;
+typedef struct lightSource_s lightSource_t;
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
 //-----------------------------------------------------------------------------------------------------------------------
+struct lightSource_s{
+    int type;
+    float intensity;
+    point_t carac; //<< could be position or direction
+};
+
 struct sceneContext_s{
     point_t origin;
     int viewportWidth;
@@ -31,9 +39,11 @@ struct sceneContext_s{
     int viewportDistance;
     int meshesCount;
     int objectsCount;
+    int lightsCount;
     int meshesId[MAX_MESH_IDS];
     mesh_t meshes[MAX_MESHES];
     object_t objects[MAX_OBJECTS];
+    lightSource_t lights[MAX_LIGHTS];
     float* zBuffer;
 };
 
@@ -46,7 +56,11 @@ struct triangle_s{
 //-----------------------------------------------------------------------------------------------------------------------
 // Enums
 //-----------------------------------------------------------------------------------------------------------------------
-
+enum lightType_e{
+    LT_ambiant = 0,
+    LT_point,
+    LT_directional
+};
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
@@ -57,6 +71,20 @@ extern sceneContext_t g_context;
 
 int RR_addMesh(mesh_t* mesh_ptr);
 
+/**
+ * @brief Add a light to the context.
+ * 
+ * @param light The light to add.
+ * @return int 
+ */
+int RR_addLight(lightSource_t* light);
+
+/**
+ * @brief Add an object to the context.
+ * 
+ * @param object_ptr The object to add.
+ * @return int 
+ */
 int RR_addObject(object_t* object_ptr);
 
 /**

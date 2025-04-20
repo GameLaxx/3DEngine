@@ -43,7 +43,8 @@ struct object_s {
 // Enums
 //-----------------------------------------------------------------------------------------------------------------------
 enum materialType_e{
-    MT_COLOR = 0,
+    MT_COLOR_UNIFORM = 0,
+    MT_COLOR_EACH,
     MT_BITMAP
 };
 //-----------------------------------------------------------------------------------------------------------------------
@@ -54,6 +55,6 @@ enum materialType_e{
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
 int OBJ_createCubeMesh(mesh_t* ret_ptr);
-int OBJ_readObjFile(char* filePath_ptr, mesh_t* ret_ptr);
+int OBJ_readObjFile(char* filePath_ptr, int mesh_id, mesh_t* ret_ptr);
 
 #endif /* OBJECTS_H */
