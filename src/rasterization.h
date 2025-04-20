@@ -21,7 +21,6 @@
 // Typedefs
 //-----------------------------------------------------------------------------------------------------------------------
 typedef struct sceneContext_s sceneContext_t;
-typedef struct triangle_s triangle_t;
 typedef struct lightSource_s lightSource_t;
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
@@ -45,13 +44,6 @@ struct sceneContext_s{
     object_t objects[MAX_OBJECTS];
     lightSource_t lights[MAX_LIGHTS];
     float* zBuffer;
-};
-
-struct triangle_s{
-    point_t p1;
-    point_t p2;
-    point_t p3;
-    rgba_t color;
 };
 //-----------------------------------------------------------------------------------------------------------------------
 // Enums

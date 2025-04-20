@@ -17,6 +17,14 @@ int scalePoint(point_t* point_ptr, float scale_ptr[3]){
     return EXIT_SUCCESS;
 }
 
+int rotatePoint(point_t* point_ptr, float rotationMatrix[9]){
+    // float tmpX = point_ptr->x
+    // point_ptr->x += vector_ptr->x;
+    // point_ptr->y += vector_ptr->y;
+    // point_ptr->z += vector_ptr->z;
+    // return EXIT_SUCCESS;
+}
+
 int translatePoint(point_t* point_ptr, vector_t* vector_ptr){
     point_ptr->x += vector_ptr->x;
     point_ptr->y += vector_ptr->y;
@@ -120,11 +128,11 @@ float triangleArea(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr){
     return (p2_ptr->x - p1_ptr->x) * (p3_ptr->y - p1_ptr->y) - (p2_ptr->y - p1_ptr->y) * (p3_ptr->x - p1_ptr->x);
 }
 
-int fillTriangle(triangle_t* triangle_ptr){
+int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, rgba_t* color_ptr){
     point_t p1, p2, p3 = {};
-    if(point3DtoPixel(&triangle_ptr->p1, &p1) == EXIT_FAILURE || 
-       point3DtoPixel(&triangle_ptr->p2, &p2) == EXIT_FAILURE ||
-       point3DtoPixel(&triangle_ptr->p3, &p3) == EXIT_FAILURE){
+    if(point3DtoPixel(p1_ptr, &p1) == EXIT_FAILURE || 
+       point3DtoPixel(p2_ptr, &p2) == EXIT_FAILURE ||
+       point3DtoPixel(p3_ptr, &p3) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
     float totalArea = triangleArea(&p1, &p2, &p3);
@@ -152,16 +160,16 @@ int fillTriangle(triangle_t* triangle_ptr){
             // pixel outside of the triangle
             continue;
         }
-        interpolatedZ = (areaWithout1/totalArea) * triangle_ptr->p1.z
-                        + (areaWithout2/totalArea) * triangle_ptr->p2.z
-                        + (areaWithout3/totalArea) * triangle_ptr->p3.z + 0.1; // zBuffer is calloc so if == 0 then never assigned hence + 0.1
+        interpolatedZ = (areaWithout1/totalArea) * p1_ptr->z
+                        + (areaWithout2/totalArea) * p2_ptr->z
+                        + (areaWithout3/totalArea) * p3_ptr->z + 0.1; // zBuffer is calloc so if == 0 then never assigned hence + 0.1
         // add shift to go in zbuffer because x and y can be < 0
         if(g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] != 0 
         && g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] < 1 / interpolatedZ){
             continue;
         }
         g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] = 1 / interpolatedZ;
-        DRAW_pixel(x, y, &triangle_ptr->color);
+        DRAW_pixel(x, y, color_ptr);
     }
     }
     return EXIT_SUCCESS;
@@ -250,11 +258,11 @@ int RR_clearScene(){
 
 int RR_drawScene(){
     g_context.zBuffer = calloc(g_windowHeight * g_windowWidth, sizeof(float));
-    triangle_t triangle = {};
     float intensity = 0;
     for(int obj = 0; obj < g_context.objectsCount; obj++){
-        rgba_t* color_ptr = (rgba_t*)g_context.objects[obj].material_ptr;
+        rgba_t* material_ptr = (rgba_t*)g_context.objects[obj].material_ptr;
         for(int t = 0; t < g_context.objects[obj].mesh->trianglesCount; t++){
+            rgba_t color = {};
             point_t p1 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[3 * t]];
             point_t p2 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[3 * t + 1]];
             point_t p3 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[3 * t + 2]];
@@ -272,21 +280,18 @@ int RR_drawScene(){
                 }
                 computeLight(&p1, &g_context.objects[obj].mesh->normalTriangles_ptr[t], &p1, 40, &intensity);
                 if(g_context.objects[obj].materialType == MT_COLOR_EACH){
-                    DRAW_addIntensity(&color_ptr[t], intensity, &triangle.color);
+                    DRAW_addIntensity(&material_ptr[t], intensity, &color);
                 }else if(g_context.objects[obj].materialType == MT_COLOR_UNIFORM){
-                    DRAW_addIntensity(&color_ptr, intensity, &triangle.color);
+                    DRAW_addIntensity(material_ptr, intensity, &color);
                 }
             }else{
                 if(g_context.objects[obj].materialType == MT_COLOR_EACH){
-                    triangle.color = color_ptr[t];
+                    color = material_ptr[t];
                 }else if(g_context.objects[obj].materialType == MT_COLOR_UNIFORM){
-                    triangle.color = *color_ptr;
+                    color = *material_ptr;
                 }
             }
-            triangle.p1 = p1;
-            triangle.p2 = p2;
-            triangle.p3 = p3;
-            fillTriangle(&triangle);
+            fillTriangle(&p1, &p2, &p3, &color);
             intensity = 0;
         }
     }
