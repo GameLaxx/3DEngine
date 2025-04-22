@@ -292,6 +292,7 @@ int RR_drawScene(){
     point_t p3 = {};
     vector_t u = {};
     vector_t v = {};
+    vector_t translateVector = {};
     vector_t normalP1 = {};
     vector_t normalP2 = {};
     vector_t normalP3 = {};
@@ -307,6 +308,7 @@ int RR_drawScene(){
             normalP1 = g_context.objects[obj].mesh->normals_ptr[g_context.objects[obj].mesh->indicesNormals_ptr[3 * t]];
             normalP2 = g_context.objects[obj].mesh->normals_ptr[g_context.objects[obj].mesh->indicesNormals_ptr[3 * t + 1]];
             normalP3 = g_context.objects[obj].mesh->normals_ptr[g_context.objects[obj].mesh->indicesNormals_ptr[3 * t + 2]];
+            COO_vectorizePoints(&g_context.origin, &g_context.objects[obj].origin, &translateVector);
             // scale the mesh
             scalePoint(&p1, g_context.objects[obj].scale);
             scalePoint(&p2, g_context.objects[obj].scale);
@@ -319,9 +321,9 @@ int RR_drawScene(){
             rotatePoint(&normalP2, g_context.objects[obj].rotationMatrix);
             rotatePoint(&normalP3, g_context.objects[obj].rotationMatrix);
             // translate it
-            translatePoint(&p1, &g_context.objects[obj].origin);
-            translatePoint(&p2, &g_context.objects[obj].origin);
-            translatePoint(&p3, &g_context.objects[obj].origin);
+            translatePoint(&p1, &translateVector);
+            translatePoint(&p2, &translateVector);
+            translatePoint(&p3, &translateVector);
             // get center and geometrical normal
             point_t center = {
                 .x = (p1.x + p2.x + p3.x) / 3,

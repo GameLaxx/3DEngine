@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     rgba_t white = {255,255,255,255};
     rgba_t black = {0,0,0,255};
     // Define scene variables
-    point_t origin = {.x = 0, .y = 0, .z = 0};
+    point_t origin = {.x = 0, .y = -1, .z = 0};
     RR_initScene(&origin, 2, 2, 1);
     // Define meshes
     mesh_t cubeMesh = {};
@@ -124,6 +124,31 @@ int main(int argc, char* argv[]) {
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
                 quit = 1;
+            }
+            if (e.type == SDL_KEYDOWN) {
+                DRAW_clearRenderer();
+                switch (e.key.keysym.sym) {
+                    case SDLK_UP:
+                        g_context.origin.y += 0.1;
+                        break;
+                    case SDLK_DOWN:
+                        g_context.origin.y -= 0.1;
+                        break;
+                    case SDLK_LEFT:
+                        g_context.origin.x -= 0.1;
+                        break;
+                    case SDLK_RIGHT:
+                        g_context.origin.x += 0.1;
+                        break;
+                    case SDLK_s:
+                        g_context.origin.z -= 0.1;
+                        break;
+                    case SDLK_z:
+                        g_context.origin.z += 0.1;
+                        break;
+                }
+                RR_drawScene();
+                DRAW_showRenderer();
             }
         }
     }
