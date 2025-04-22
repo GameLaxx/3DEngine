@@ -46,8 +46,14 @@ int point3DtoPixel(point_t* point_ptr, point_t* ret_ptr){
     if(!ret_ptr || !point_ptr){
         return EXIT_FAILURE;
     }
-    ret_ptr->x = (point_ptr->x * g_context.viewportDistance) / point_ptr->z * (g_windowWidth / g_context.viewportWidth);
-    ret_ptr->y = (point_ptr->y * g_context.viewportDistance) / point_ptr->z * (g_windowHeight / g_context.viewportHeight);
+    if (point_ptr->z <= 0){
+        return EXIT_FAILURE;
+    }
+
+    ret_ptr->x = (point_ptr->x * g_context.viewportDistance) / point_ptr->z *
+                 ((float)g_windowWidth / g_context.viewportWidth);
+    ret_ptr->y = (point_ptr->y * g_context.viewportDistance) / point_ptr->z *
+                 ((float)g_windowHeight / g_context.viewportHeight);
     ret_ptr->z = g_context.viewportDistance;
     return EXIT_SUCCESS;
 }
@@ -134,14 +140,16 @@ float triangleArea(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr){
 int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, 
     float intensityP1, float intensityP2, float intensityP3,
     rgba_t* color_ptr){
-    point_t p1, p2, p3 = {};
+    point_t p1 = {};
+    point_t p2 = {};
+    point_t p3 = {};
     if(point3DtoPixel(p1_ptr, &p1) == EXIT_FAILURE || 
        point3DtoPixel(p2_ptr, &p2) == EXIT_FAILURE ||
        point3DtoPixel(p3_ptr, &p3) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
-    float totalArea = fabs(triangleArea(&p1, &p2, &p3));
-    if(totalArea == 0){
+    float totalArea = fabsf(triangleArea(&p1, &p2, &p3));
+    if(totalArea == 0.0f){
         return EXIT_SUCCESS;
     }
     int minXs = fminf(fminf(p1.x, p2.x), p3.x);
@@ -151,6 +159,7 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr,
     float areaWithout1 = 0;
     float areaWithout2 = 0;
     float areaWithout3 = 0;
+    int bufferIndex = 0;
     float interpolatedZ = 0;
     float interpolatedIntensity = 0;
     rgba_t color = {};
@@ -163,22 +172,24 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr,
         areaWithout1 = triangleArea(&p2, &currentPoint, &p3);
         areaWithout2 = triangleArea(&p3, &currentPoint, &p1);
         areaWithout3 = triangleArea(&p1, &currentPoint, &p2);
-        if (((areaWithout1 < 0 || areaWithout2 < 0 || areaWithout3 < 0) && (areaWithout1 > 0 || areaWithout2 > 0 || areaWithout3 > 0))){
+        if (((areaWithout1 < 0.0f || areaWithout2 < 0.0f || areaWithout3 < 0.0f) 
+            && (areaWithout1 > 0.0f || areaWithout2 > 0.0f || areaWithout3 > 0.0f))){
             // pixel outside of the triangle
             continue;
         }
-        areaWithout1 = fabs(areaWithout1);
-        areaWithout2 = fabs(areaWithout2);
-        areaWithout3 = fabs(areaWithout3);
+        areaWithout1 = fabsf(areaWithout1);
+        areaWithout2 = fabsf(areaWithout2);
+        areaWithout3 = fabsf(areaWithout3);
         interpolatedZ = (areaWithout1/totalArea) * p1_ptr->z
                         + (areaWithout2/totalArea) * p2_ptr->z
                         + (areaWithout3/totalArea) * p3_ptr->z + 0.1; // zBuffer is calloc so if == 0 then never assigned hence + 0.1
         // add shift to go in zbuffer because x and y can be < 0
-        if(g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] != 0 
-        && g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] < 1 / interpolatedZ){
+        if(g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] != 0.0f
+        && g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] > 1.0f / interpolatedZ){
             continue;
         }
-        g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] = 1 / interpolatedZ;
+        bufferIndex = (y + g_yShift) + (x + g_xShift) * g_windowHeight;
+        g_context.zBuffer[bufferIndex] = 1.0f / interpolatedZ;
         interpolatedIntensity = (areaWithout1/totalArea) * intensityP1
         + (areaWithout2/totalArea) * intensityP2
         + (areaWithout3/totalArea) * intensityP3;
@@ -297,7 +308,10 @@ int RR_drawScene(){
     vector_t normalP2 = {};
     vector_t normalP3 = {};
     rgba_t color = {};
-    vector_t ray = {};
+    vector_t rayCenter = {};
+    vector_t rayP1 = {};
+    vector_t rayP2 = {};
+    vector_t rayP3 = {};
     rgba_t* material_ptr = NULL;
     for(int obj = 0; obj < g_context.objectsCount; obj++){
         material_ptr = (rgba_t*)g_context.objects[obj].material_ptr;
@@ -337,13 +351,16 @@ int RR_drawScene(){
             float normalLength = sqrt(COO_scalarProduct(&normal,&normal));
             COO_lambdaProduct(&normal, normalLength, FT_DIV);
             // ray going on the triangle
-            COO_vectorizePoints(&center, &g_context.origin, &ray);
-            if(backFaceCulling(&normal, &ray) == EXIT_FAILURE){
+            COO_vectorizePoints(&center, &g_context.origin, &rayCenter);
+            COO_vectorizePoints(&p1, &g_context.origin, &rayP1);
+            COO_vectorizePoints(&p2, &g_context.origin, &rayP2);
+            COO_vectorizePoints(&p3, &g_context.origin, &rayP3);
+            if(backFaceCulling(&normal, &rayCenter) == EXIT_FAILURE){
                 continue; // is facing backward
             }
-            computeLight(&p1, &normalP1, &p1, 40, &intensityP1);
-            computeLight(&p2, &normalP2, &p2, 40, &intensityP2);
-            computeLight(&p3, &normalP3, &p3, 40, &intensityP3);
+            computeLight(&p1, &normalP1, &rayP1, 40, &intensityP1);
+            computeLight(&p2, &normalP2, &rayP2, 40, &intensityP2);
+            computeLight(&p3, &normalP3, &rayP3, 40, &intensityP3);
             if(g_context.objects[obj].materialType == MT_COLOR_EACH){
                 fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, &material_ptr[t]);
             }else if(g_context.objects[obj].materialType == MT_COLOR_UNIFORM){

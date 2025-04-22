@@ -17,9 +17,9 @@ SDL_Renderer* g_renderer;
 //-----------------------------------------------------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
     //init
-    DRAW_initSDL(800, 800);
+    DRAW_initSDL(1080, 1080);
     DRAW_invertYAxis();
-    DRAW_moveOrigin(400,400);
+    DRAW_moveOrigin(1080 / 2, 1080 / 2);
     DRAW_clearRenderer();
     rgba_t red = {255,0,0,255};
     rgba_t blue = {0,0,255,255};
