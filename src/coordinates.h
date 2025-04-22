@@ -95,6 +95,8 @@ int COO_vectorizePoints(point_t* p1_ptr, point_t* p2_ptr, point_t* ret_ptr);
  */
 float COO_scalarProduct(coordinate_t* coo1_ptr, coordinate_t* coo2_ptr);
 
+int COO_crossProduct(vector_t* vector1_ptr, vector_t* vector2_ptr, vector_t* ret_ptr);
+
 /**
  * @brief Given a 3x3 matrix M represented by a 1x9 vector, return `M*V` where V is a vector without calloc. 
  * 

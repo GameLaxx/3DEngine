@@ -22,11 +22,12 @@ typedef struct object_s object_t;
 //-----------------------------------------------------------------------------------------------------------------------
 struct mesh_s {
     int verticesCount;
-    point_t* vertices;
-    vector_t* normalVertices_ptr;
     int trianglesCount;
-    int* indices;
-    vector_t* normalTriangles_ptr;
+    int normalsCount;
+    point_t* vertices_ptr;
+    int* indicesVertices_ptr;
+    vector_t* normals_ptr;
+    int* indicesNormals_ptr; // no need for a count for this one because already stored in vertices or triangles
     int id; // TODO : can store up to 64 to not waste space
 };
 
@@ -55,7 +56,6 @@ enum materialType_e{
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
-int OBJ_createCubeMesh(mesh_t* ret_ptr);
 int OBJ_readObjFile(char* filePath_ptr, int mesh_id, mesh_t* ret_ptr);
 
 #endif /* OBJECTS_H */

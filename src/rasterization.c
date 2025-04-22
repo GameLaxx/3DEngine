@@ -131,14 +131,16 @@ float triangleArea(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr){
     return (p2_ptr->x - p1_ptr->x) * (p3_ptr->y - p1_ptr->y) - (p2_ptr->y - p1_ptr->y) * (p3_ptr->x - p1_ptr->x);
 }
 
-int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, rgba_t* color_ptr){
+int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, 
+    float intensityP1, float intensityP2, float intensityP3,
+    rgba_t* color_ptr){
     point_t p1, p2, p3 = {};
     if(point3DtoPixel(p1_ptr, &p1) == EXIT_FAILURE || 
        point3DtoPixel(p2_ptr, &p2) == EXIT_FAILURE ||
        point3DtoPixel(p3_ptr, &p3) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
-    float totalArea = triangleArea(&p1, &p2, &p3);
+    float totalArea = fabs(triangleArea(&p1, &p2, &p3));
     if(totalArea == 0){
         return EXIT_SUCCESS;
     }
@@ -150,6 +152,8 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, rgba_t* colo
     float areaWithout2 = 0;
     float areaWithout3 = 0;
     float interpolatedZ = 0;
+    float interpolatedIntensity = 0;
+    rgba_t color = {};
     for (int y = minYs; y <= maxYs; y++) {
     for (int x = minXs; x <= maxXs; x++) {
         if (x < -g_xShift || y < -g_yShift || x >= g_windowWidth - g_xShift || y >= g_windowHeight - g_yShift) {
@@ -163,6 +167,9 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, rgba_t* colo
             // pixel outside of the triangle
             continue;
         }
+        areaWithout1 = fabs(areaWithout1);
+        areaWithout2 = fabs(areaWithout2);
+        areaWithout3 = fabs(areaWithout3);
         interpolatedZ = (areaWithout1/totalArea) * p1_ptr->z
                         + (areaWithout2/totalArea) * p2_ptr->z
                         + (areaWithout3/totalArea) * p3_ptr->z + 0.1; // zBuffer is calloc so if == 0 then never assigned hence + 0.1
@@ -172,7 +179,11 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, rgba_t* colo
             continue;
         }
         g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] = 1 / interpolatedZ;
-        DRAW_pixel(x, y, color_ptr);
+        interpolatedIntensity = (areaWithout1/totalArea) * intensityP1
+        + (areaWithout2/totalArea) * intensityP2
+        + (areaWithout3/totalArea) * intensityP3;
+        DRAW_addIntensity(color_ptr, interpolatedIntensity, &color);
+        DRAW_pixel(x, y, &color);
     }
     }
     return EXIT_SUCCESS;
@@ -255,17 +266,17 @@ int RR_initScene(point_t* origin, int vW, int vH, int vD){
 
 int RR_clearScene(){
     for(int i = 0; i < g_context.meshesCount; i++){
-        if(g_context.meshes[i].vertices){
-            free(g_context.meshes[i].vertices);
+        if(g_context.meshes[i].vertices_ptr){
+            free(g_context.meshes[i].vertices_ptr);
         }
-        if(g_context.meshes[i].indices){
-            free(g_context.meshes[i].indices);
+        if(g_context.meshes[i].indicesVertices_ptr){
+            free(g_context.meshes[i].indicesVertices_ptr);
         }
-        if(g_context.meshes[i].normalTriangles_ptr){
-            free(g_context.meshes[i].normalTriangles_ptr);
+        if(g_context.meshes[i].normals_ptr){
+            free(g_context.meshes[i].normals_ptr);
         }
-        if(g_context.meshes[i].normalVertices_ptr){
-            free(g_context.meshes[i].normalVertices_ptr);
+        if(g_context.meshes[i].indicesNormals_ptr){
+            free(g_context.meshes[i].indicesNormals_ptr);
         }
     }
     return EXIT_SUCCESS;
@@ -273,46 +284,72 @@ int RR_clearScene(){
 
 int RR_drawScene(){
     g_context.zBuffer = calloc(g_windowHeight * g_windowWidth, sizeof(float));
-    float intensity = 0;
+    float intensityP1 = 0;
+    float intensityP2 = 0;
+    float intensityP3 = 0;
+    point_t p1 = {};
+    point_t p2 = {};
+    point_t p3 = {};
+    vector_t u = {};
+    vector_t v = {};
+    vector_t normalP1 = {};
+    vector_t normalP2 = {};
+    vector_t normalP3 = {};
+    rgba_t color = {};
+    vector_t ray = {};
+    rgba_t* material_ptr = NULL;
     for(int obj = 0; obj < g_context.objectsCount; obj++){
-        rgba_t* material_ptr = (rgba_t*)g_context.objects[obj].material_ptr;
+        material_ptr = (rgba_t*)g_context.objects[obj].material_ptr;
         for(int t = 0; t < g_context.objects[obj].mesh->trianglesCount; t++){
-            rgba_t color = {};
-            point_t p1 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[3 * t]];
-            point_t p2 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[3 * t + 1]];
-            point_t p3 = g_context.objects[obj].mesh->vertices[g_context.objects[obj].mesh->indices[3 * t + 2]];
+            p1 = g_context.objects[obj].mesh->vertices_ptr[g_context.objects[obj].mesh->indicesVertices_ptr[3 * t]];
+            p2 = g_context.objects[obj].mesh->vertices_ptr[g_context.objects[obj].mesh->indicesVertices_ptr[3 * t + 1]];
+            p3 = g_context.objects[obj].mesh->vertices_ptr[g_context.objects[obj].mesh->indicesVertices_ptr[3 * t + 2]];
+            normalP1 = g_context.objects[obj].mesh->normals_ptr[g_context.objects[obj].mesh->indicesNormals_ptr[3 * t]];
+            normalP2 = g_context.objects[obj].mesh->normals_ptr[g_context.objects[obj].mesh->indicesNormals_ptr[3 * t + 1]];
+            normalP3 = g_context.objects[obj].mesh->normals_ptr[g_context.objects[obj].mesh->indicesNormals_ptr[3 * t + 2]];
+            // scale the mesh
             scalePoint(&p1, g_context.objects[obj].scale);
             scalePoint(&p2, g_context.objects[obj].scale);
             scalePoint(&p3, g_context.objects[obj].scale);
+            // rotate it
             rotatePoint(&p1, g_context.objects[obj].rotationMatrix);
             rotatePoint(&p2, g_context.objects[obj].rotationMatrix);
             rotatePoint(&p3, g_context.objects[obj].rotationMatrix);
+            rotatePoint(&normalP1, g_context.objects[obj].rotationMatrix);
+            rotatePoint(&normalP2, g_context.objects[obj].rotationMatrix);
+            rotatePoint(&normalP3, g_context.objects[obj].rotationMatrix);
+            // translate it
             translatePoint(&p1, &g_context.objects[obj].origin);
             translatePoint(&p2, &g_context.objects[obj].origin);
             translatePoint(&p3, &g_context.objects[obj].origin);
-            if(g_context.objects[obj].mesh->normalTriangles_ptr){
-                vector_t ray = {};
-                COO_vectorizePoints(&p1, &g_context.origin, &ray);
-                vector_t normalVector = g_context.objects[obj].mesh->normalTriangles_ptr[t];
-                rotatePoint(&normalVector, g_context.objects[obj].rotationMatrix);
-                if(backFaceCulling(&normalVector, &ray) == EXIT_FAILURE){
-                    continue; // is facing backward
-                }
-                computeLight(&p1, &g_context.objects[obj].mesh->normalTriangles_ptr[t], &p1, 40, &intensity);
-                if(g_context.objects[obj].materialType == MT_COLOR_EACH){
-                    DRAW_addIntensity(&material_ptr[t], intensity, &color);
-                }else if(g_context.objects[obj].materialType == MT_COLOR_UNIFORM){
-                    DRAW_addIntensity(material_ptr, intensity, &color);
-                }
-            }else{
-                if(g_context.objects[obj].materialType == MT_COLOR_EACH){
-                    color = material_ptr[t];
-                }else if(g_context.objects[obj].materialType == MT_COLOR_UNIFORM){
-                    color = *material_ptr;
-                }
+            // get center and geometrical normal
+            point_t center = {
+                .x = (p1.x + p2.x + p3.x) / 3,
+                .y = (p1.y + p2.y + p3.y) / 3,
+                .z = (p1.z + p2.z + p3.z) / 3,
+            };
+            COO_vectorizePoints(&p1, &p2, &u);
+            COO_vectorizePoints(&p1, &p3, &v);
+            vector_t normal = {};
+            COO_crossProduct(&u, &v, &normal);
+            float normalLength = sqrt(COO_scalarProduct(&normal,&normal));
+            COO_lambdaProduct(&normal, normalLength, FT_DIV);
+            // ray going on the triangle
+            COO_vectorizePoints(&center, &g_context.origin, &ray);
+            if(backFaceCulling(&normal, &ray) == EXIT_FAILURE){
+                continue; // is facing backward
             }
-            fillTriangle(&p1, &p2, &p3, &color);
-            intensity = 0;
+            computeLight(&p1, &normalP1, &p1, 40, &intensityP1);
+            computeLight(&p2, &normalP2, &p2, 40, &intensityP2);
+            computeLight(&p3, &normalP3, &p3, 40, &intensityP3);
+            if(g_context.objects[obj].materialType == MT_COLOR_EACH){
+                fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, &material_ptr[t]);
+            }else if(g_context.objects[obj].materialType == MT_COLOR_UNIFORM){
+                fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, material_ptr);
+            }
+            intensityP1 = 0;
+            intensityP2 = 0;
+            intensityP3 = 0;
         }
     }
     free(g_context.zBuffer);

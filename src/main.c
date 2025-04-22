@@ -36,7 +36,8 @@ int main(int argc, char* argv[]) {
     RR_initScene(&origin, 2, 2, 1);
     // Define meshes
     mesh_t cubeMesh = {};
-    OBJ_createCubeMesh(&cubeMesh);
+    char cubePath[] = "ressources/cube.obj";
+    OBJ_readObjFile(cubePath, 0, &cubeMesh);
     if(RR_addMesh(&cubeMesh) == EXIT_FAILURE){
         printf("*-* Failed while adding mesh.\n");
         return -1;
@@ -48,13 +49,20 @@ int main(int argc, char* argv[]) {
         printf("*-* Failed while adding mesh.\n");
         return -1;
     }
-    mesh_t handMesh = {};
-    char handPath[] = "ressources/hand.obj";
-    OBJ_readObjFile(handPath, 2, &handMesh);
-    if(RR_addMesh(&handMesh) == EXIT_FAILURE){
-        printf("*-* Failed while adding mesh.\n");
-        return -1;
-    }
+    // mesh_t sphereMesh = {};
+    // char spherePath[] = "ressources/sphere.obj";
+    // OBJ_readObjFile(spherePath, 3, &sphereMesh);
+    // if(RR_addMesh(&sphereMesh) == EXIT_FAILURE){
+    //     printf("*-* Failed while adding mesh.\n");
+    //     return -1;
+    // }
+    // mesh_t handMesh = {};
+    // char handPath[] = "ressources/hand.obj";
+    // OBJ_readObjFile(handPath, 2, &handMesh);
+    // if(RR_addMesh(&handMesh) == EXIT_FAILURE){
+    //     printf("*-* Failed while adding mesh.\n");
+    //     return -1;
+    // }
     // Add lights
     point_t pos1 = {1,4,-4};
     lightSource_t light1 = {.type=LT_directional, .intensity=0.2, .carac=pos1};
@@ -65,28 +73,34 @@ int main(int argc, char* argv[]) {
     RR_addLight(&light2);
     RR_addLight(&light3);
     // Draw on the canvas
-    point_t originCube1 = {.x = 1, .y = 0, .z = 4.5};
+    point_t originCube1 = {.x = -4, .y = 0, .z = 4.5};
     rgba_t colors1 = red;
     object_t object1 = {
         .origin = originCube1, .meshId = 0, 
         .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors1, 
-        .scale = {2,2,2}, .angleRotation = {-45,45,0}
+        .scale = {1,1,1}, .angleRotation = {25,25,0}
     }; 
     if(RR_addObject(&object1) == EXIT_FAILURE){
         printf("*-* Failed while adding object.\n");
         return -1;
     }
-    // point_t originPyramid1 = {.x = -3, .y = -2, .z = 4.5};
-    // rgba_t colors2[] = {
-    //     red,red,
-    //     blue, blue,
-    //     yellow, yellow,
-    //     brown, brown,
-    //     black, black,
-    //     green, green
-    // };
-    // object_t object2 = {.origin = originPyramid1, .meshId = 1, .materialType = MT_COLOR_EACH, .material_ptr = colors2, .scale = {2,2,2}}; 
-    // if(RR_addObject(&object2) == EXIT_FAILURE){
+    point_t originPyramid1 = {.x = 0, .y = 0, .z = 4.5};
+    rgba_t colors2 = white;
+    object_t object2 = {
+        .origin = originPyramid1, .meshId = 1, 
+        .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors2, 
+        .scale = {1,1,1}, .angleRotation = {-70, 45, 0}};
+    if(RR_addObject(&object2) == EXIT_FAILURE){
+        printf("*-* Failed while adding object.\n");
+        return -1;
+    }
+    // point_t originSphere1 = {.x = 0, .y = 0, .z = 4.5};
+    // rgba_t colors4 = white;
+    // object_t object4 = {
+    //     .origin = originSphere1, .meshId = 3, 
+    //     .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors4, 
+    //     .scale = {1,1,1}, .angleRotation = {0,-10,0}};
+    // if(RR_addObject(&object4) == EXIT_FAILURE){
     //     printf("*-* Failed while adding object.\n");
     //     return -1;
     // }

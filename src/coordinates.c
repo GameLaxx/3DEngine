@@ -78,6 +78,13 @@ float COO_scalarProduct(coordinate_t* coo1_ptr, coordinate_t* coo2_ptr){
     return coo1_ptr->x * coo2_ptr->x + coo1_ptr->y * coo2_ptr->y + coo1_ptr->z * coo2_ptr->z;
 }
 
+int COO_crossProduct(vector_t* vector1_ptr, vector_t* vector2_ptr, vector_t* ret_ptr){
+    ret_ptr->x = vector1_ptr->y * vector2_ptr->z - vector1_ptr->z * vector2_ptr->y;
+    ret_ptr->y = vector1_ptr->z * vector2_ptr->x - vector1_ptr->x * vector2_ptr->z;
+    ret_ptr->z = vector1_ptr->x * vector2_ptr->y - vector1_ptr->y * vector2_ptr->x;
+    return EXIT_SUCCESS;
+}
+
 int COO_matrixVectorProduct(float matrix[9], vector_t* vector_ptr, vector_t* ret_ptr){
     ret_ptr->x = matrix[0] * vector_ptr->x +  matrix[1] * vector_ptr->y +  matrix[2] * vector_ptr->z; 
     ret_ptr->y = matrix[3] * vector_ptr->x +  matrix[4] * vector_ptr->y +  matrix[5] * vector_ptr->z; 
