@@ -174,21 +174,20 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr,
         areaWithout3 = triangleArea(&p1, &currentPoint, &p2);
         if (((areaWithout1 < 0.0f || areaWithout2 < 0.0f || areaWithout3 < 0.0f) 
             && (areaWithout1 > 0.0f || areaWithout2 > 0.0f || areaWithout3 > 0.0f))){
-            // pixel outside of the triangle
-            continue;
+            continue; // pixel outside of the triangle
         }
+        // remove sign from area
         areaWithout1 = fabsf(areaWithout1);
         areaWithout2 = fabsf(areaWithout2);
         areaWithout3 = fabsf(areaWithout3);
+        // get z value of the current point of the triangle
         interpolatedZ = (areaWithout1/totalArea) * p1_ptr->z
                         + (areaWithout2/totalArea) * p2_ptr->z
-                        + (areaWithout3/totalArea) * p3_ptr->z + 0.1; // zBuffer is calloc so if == 0 then never assigned hence + 0.1
-        // add shift to go in zbuffer because x and y can be < 0
-        if(g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] != 0.0f
-        && g_context.zBuffer[(int) ((y + g_yShift) + (x + g_xShift) * g_windowHeight)] > 1.0f / interpolatedZ){
-            continue;
-        }
+                        + (areaWithout3/totalArea) * p3_ptr->z;
         bufferIndex = (y + g_yShift) + (x + g_xShift) * g_windowHeight;
+        if(1.0f / interpolatedZ < g_context.zBuffer[bufferIndex]){
+            continue; // not the closest to the camera
+        }
         g_context.zBuffer[bufferIndex] = 1.0f / interpolatedZ;
         interpolatedIntensity = (areaWithout1/totalArea) * intensityP1
         + (areaWithout2/totalArea) * intensityP2
@@ -197,6 +196,22 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr,
         DRAW_pixel(x, y, &color);
     }
     }
+    return EXIT_SUCCESS;
+}
+
+int objectSetMatrix(object_t* object_ptr){
+    float rotateX_rad = object_ptr->angleRotation[0] * M_PI / 180;
+    float rotateY_rad = object_ptr->angleRotation[1] * M_PI / 180;
+    float rotateZ_rad = object_ptr->angleRotation[2] * M_PI / 180;
+    object_ptr->rotationMatrix[0] = cos(rotateY_rad) * cos(rotateZ_rad);
+    object_ptr->rotationMatrix[1] = cos(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) - sin(rotateZ_rad) * cos(rotateX_rad);
+    object_ptr->rotationMatrix[2] = sin(rotateZ_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
+    object_ptr->rotationMatrix[3] = cos(rotateY_rad) * sin(rotateZ_rad);
+    object_ptr->rotationMatrix[4] = sin(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * cos(rotateX_rad);
+    object_ptr->rotationMatrix[5] = - cos(rotateZ_rad) * sin(rotateX_rad) + sin(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
+    object_ptr->rotationMatrix[6] = -sin(rotateY_rad);
+    object_ptr->rotationMatrix[7] = cos(rotateY_rad) * sin(rotateX_rad);
+    object_ptr->rotationMatrix[8] = cos(rotateY_rad) * cos(rotateX_rad);
     return EXIT_SUCCESS;
 }
 //-----------------------------------------------------------------------------------------------------------------------
@@ -248,18 +263,6 @@ int RR_addObject(object_t* object_ptr){
     }
     g_context.objects[g_context.objectsCount] = *object_ptr;
     g_context.objects[g_context.objectsCount].mesh = &g_context.meshes[g_context.meshesId[object_ptr->meshId] - 1]; // because added with + 1
-    float rotateX_rad = object_ptr->angleRotation[0] * M_PI / 180;
-    float rotateY_rad = object_ptr->angleRotation[1] * M_PI / 180;
-    float rotateZ_rad = object_ptr->angleRotation[2] * M_PI / 180;
-    g_context.objects[g_context.objectsCount].rotationMatrix[0] = cos(rotateY_rad) * cos(rotateZ_rad);
-    g_context.objects[g_context.objectsCount].rotationMatrix[1] = cos(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) - sin(rotateZ_rad) * cos(rotateX_rad);
-    g_context.objects[g_context.objectsCount].rotationMatrix[2] = sin(rotateZ_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
-    g_context.objects[g_context.objectsCount].rotationMatrix[3] = cos(rotateY_rad) * sin(rotateZ_rad);
-    g_context.objects[g_context.objectsCount].rotationMatrix[4] = sin(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * cos(rotateX_rad);
-    g_context.objects[g_context.objectsCount].rotationMatrix[5] = - cos(rotateZ_rad) * sin(rotateX_rad) + sin(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
-    g_context.objects[g_context.objectsCount].rotationMatrix[6] = -sin(rotateY_rad);
-    g_context.objects[g_context.objectsCount].rotationMatrix[7] = cos(rotateY_rad) * sin(rotateX_rad);
-    g_context.objects[g_context.objectsCount].rotationMatrix[8] = cos(rotateY_rad) * cos(rotateX_rad);
     g_context.objectsCount++;
     return EXIT_SUCCESS;
 }
@@ -313,7 +316,8 @@ int RR_drawScene(){
     vector_t rayP2 = {};
     vector_t rayP3 = {};
     rgba_t* material_ptr = NULL;
-    for(int obj = 0; obj < g_context.objectsCount; obj++){
+    for(int obj = 0; obj < g_context.objectsCount; obj++){    
+        objectSetMatrix(&g_context.objects[obj]);
         material_ptr = (rgba_t*)g_context.objects[obj].material_ptr;
         for(int t = 0; t < g_context.objects[obj].mesh->trianglesCount; t++){
             p1 = g_context.objects[obj].mesh->vertices_ptr[g_context.objects[obj].mesh->indicesVertices_ptr[3 * t]];
@@ -343,7 +347,7 @@ int RR_drawScene(){
                 .x = (p1.x + p2.x + p3.x) / 3,
                 .y = (p1.y + p2.y + p3.y) / 3,
                 .z = (p1.z + p2.z + p3.z) / 3,
-            };
+            }; // TODO : compute center and geometrical normal in the mesh
             COO_vectorizePoints(&p1, &p2, &u);
             COO_vectorizePoints(&p1, &p3, &v);
             vector_t normal = {};
@@ -355,9 +359,9 @@ int RR_drawScene(){
             COO_vectorizePoints(&p1, &g_context.origin, &rayP1);
             COO_vectorizePoints(&p2, &g_context.origin, &rayP2);
             COO_vectorizePoints(&p3, &g_context.origin, &rayP3);
-            if(backFaceCulling(&normal, &rayCenter) == EXIT_FAILURE){
-                continue; // is facing backward
-            }
+            // if(backFaceCulling(&normal, &rayCenter) == EXIT_FAILURE){
+            //     continue; // is facing backward
+            // }
             computeLight(&p1, &normalP1, &rayP1, 40, &intensityP1);
             computeLight(&p2, &normalP2, &rayP2, 40, &intensityP2);
             computeLight(&p3, &normalP3, &rayP3, 40, &intensityP3);

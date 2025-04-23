@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_timer.h>
 #include <stdio.h>
 #include <time.h>
 #include "coordinates.h"
@@ -8,6 +9,8 @@
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
 SDL_Renderer* g_renderer;
+#define TARGET_FPS 60
+#define FRAME_DELAY (1000 / TARGET_FPS)
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
@@ -49,20 +52,20 @@ int main(int argc, char* argv[]) {
         printf("*-* Failed while adding mesh.\n");
         return -1;
     }
-    // mesh_t sphereMesh = {};
-    // char spherePath[] = "ressources/sphere.obj";
-    // OBJ_readObjFile(spherePath, 3, &sphereMesh);
-    // if(RR_addMesh(&sphereMesh) == EXIT_FAILURE){
-    //     printf("*-* Failed while adding mesh.\n");
-    //     return -1;
-    // }
-    // mesh_t handMesh = {};
-    // char handPath[] = "ressources/hand.obj";
-    // OBJ_readObjFile(handPath, 2, &handMesh);
-    // if(RR_addMesh(&handMesh) == EXIT_FAILURE){
-    //     printf("*-* Failed while adding mesh.\n");
-    //     return -1;
-    // }
+    mesh_t sphereMesh = {};
+    char spherePath[] = "ressources/sphere.obj";
+    OBJ_readObjFile(spherePath, 3, &sphereMesh);
+    if(RR_addMesh(&sphereMesh) == EXIT_FAILURE){
+        printf("*-* Failed while adding mesh.\n");
+        return -1;
+    }
+    mesh_t alMesh = {};
+    char handPath[] = "ressources/al_f.obj";
+    OBJ_readObjFile(handPath, 2, &alMesh);
+    if(RR_addMesh(&alMesh) == EXIT_FAILURE){
+        printf("*-* Failed while adding mesh.\n");
+        return -1;
+    }
     // Add lights
     point_t pos1 = {1,4,-4};
     lightSource_t light1 = {.type=LT_directional, .intensity=0.2, .carac=pos1};
@@ -73,17 +76,17 @@ int main(int argc, char* argv[]) {
     RR_addLight(&light2);
     RR_addLight(&light3);
     // Draw on the canvas
-    point_t originCube1 = {.x = -4, .y = 0, .z = 4.5};
-    rgba_t colors1 = red;
-    object_t object1 = {
-        .origin = originCube1, .meshId = 0, 
-        .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors1, 
-        .scale = {1,1,1}, .angleRotation = {25,25,0}
-    }; 
-    if(RR_addObject(&object1) == EXIT_FAILURE){
-        printf("*-* Failed while adding object.\n");
-        return -1;
-    }
+    // point_t originCube1 = {.x = -4, .y = 0, .z = 4.5};
+    // rgba_t colors1 = red;
+    // object_t object1 = {
+    //     .origin = originCube1, .meshId = 0, 
+    //     .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors1, 
+    //     .scale = {1,1,1}, .angleRotation = {25,25,0}
+    // }; 
+    // if(RR_addObject(&object1) == EXIT_FAILURE){
+    //     printf("*-* Failed while adding object.\n");
+    //     return -1;
+    // }
     point_t originPyramid1 = {.x = 0, .y = 0, .z = 4.5};
     rgba_t colors2 = white;
     object_t object2 = {
@@ -104,9 +107,12 @@ int main(int argc, char* argv[]) {
     //     printf("*-* Failed while adding object.\n");
     //     return -1;
     // }
-    // point_t originHand1 = {.x = -3, .y = 3, .z = 4.5};
+    // point_t originAl1 = {.x = 0, .y = 0, .z = 4.5};
     // rgba_t colors3 = white;
-    // object_t object3 = {.origin = originHand1, .meshId = 2, .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors3, .scale = {1,1,1}}; 
+    // object_t object3 = {
+    //     .origin = originAl1, .meshId = 2, 
+    //     .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors3, 
+    //     .scale = {1,1,1}, .angleRotation = {0,180,0}}; 
     // if(RR_addObject(&object3) == EXIT_FAILURE){
     //     printf("*-* Failed while adding object.\n");
     //     return -1;
@@ -120,36 +126,52 @@ int main(int argc, char* argv[]) {
     DRAW_showRenderer();
     SDL_Event e;
     int quit = 0;
+    float speed = 2.0f / TARGET_FPS; // x unit per second, n fps => x/n per frame
     while (!quit) {
+        Uint32 frameStart = SDL_GetTicks();
+        DRAW_clearRenderer();
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
                 quit = 1;
             }
+            
             if (e.type == SDL_KEYDOWN) {
-                DRAW_clearRenderer();
                 switch (e.key.keysym.sym) {
                     case SDLK_UP:
-                        g_context.origin.y += 0.1;
+                        g_context.origin.y += speed;
                         break;
                     case SDLK_DOWN:
-                        g_context.origin.y -= 0.1;
+                        g_context.origin.y -= speed;
                         break;
                     case SDLK_LEFT:
-                        g_context.origin.x -= 0.1;
+                        g_context.origin.x -= speed;
                         break;
                     case SDLK_RIGHT:
-                        g_context.origin.x += 0.1;
+                        g_context.origin.x += speed;
                         break;
                     case SDLK_s:
-                        g_context.origin.z -= 0.1;
+                        g_context.origin.z -= speed;
                         break;
                     case SDLK_z:
-                        g_context.origin.z += 0.1;
+                        g_context.origin.z += speed;
                         break;
                 }
-                RR_drawScene();
-                DRAW_showRenderer();
             }
+            
+            if (e.type == SDL_WINDOWEVENT) {
+                if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
+                    int newWidth = e.window.data1;
+                    int newHeight = e.window.data2;
+                    printf("New size window : %d x %d\n", newWidth, newHeight);
+                }
+            }
+        }
+        g_context.objects[0].angleRotation[1] += 1;
+        RR_drawScene();
+        DRAW_showRenderer();
+        Uint32 frameTime = SDL_GetTicks() - frameStart;
+        if (frameTime < FRAME_DELAY) {
+            SDL_Delay(FRAME_DELAY - frameTime);
         }
     }
 
