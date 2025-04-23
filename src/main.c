@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
 #include <stdio.h>
+#include <time.h>
 #include "draw.h"
 #include "coordinates.h"
 #include "software.h"
@@ -36,10 +37,15 @@ int main(int argc, char* argv[]) {
     // Define scene variables
     point_t origin = {.x = 0, .y = 1, .z = 0};
     SW_initScene(&origin, 2, 2, 1);
+    clock_t start = clock();
+    SW_drawScene(&black);
+    clock_t end = clock();
+    double elapsed_time = (double)(end - start) / CLOCKS_PER_SEC;
+    printf("Elapsed time : %f secondes\n", elapsed_time);
+    // start main loop
     SDL_Event e;
     int quit = 0;
     float speed = 2.0f / TARGET_FPS; // x unit per second, n fps => x/n per frame
-    SW_drawScene(&black);
     DRAW_showRenderer();
     while (!quit) {
         Uint32 frameStart = SDL_GetTicks();

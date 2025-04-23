@@ -39,7 +39,7 @@ int SW_initScene(point_t* origin, int vW, int vH, int vD){
     g_context.viewportWidth = vW;
     g_context.viewportHeight = vH;
     g_context.viewportDistance = vD;
-    g_context.renderDistance = 5;
+    g_context.renderDistance = 20;
     return EXIT_SUCCESS;
 }
 
@@ -49,13 +49,85 @@ int SW_clearScene(){
 
 int SW_drawScene(rgba_t* color_ptr){
     int xBound = 2 * g_context.renderDistance / g_context.viewportWidth;
+    int yBound = 2 * g_context.renderDistance / g_context.viewportHeight;
     int zBound = g_context.renderDistance * g_context.viewportDistance;
     vector_t translateVector = {};
     COO_linearTransformation(&g_context.origin, -1, NULL, 0, &translateVector);
+    // XZ plan
     for(int x = g_context.origin.x - xBound; x <= g_context.origin.x + xBound; x++){
         // float z = fmax(g_context.origin.z + g_context.viewportDistance, 2 * g_context.viewportDistance * abs(g_context.origin.x - abs(x)) / g_context.viewportWidth);
-        point_t p1World = {.x = x, .y = 0, .z = g_context.origin.z + 0.1};
+        point_t p1World = {.x = x, .y = 0, .z = g_context.origin.z + 0.001};
         point_t p2World = {.x = x, .y = 0, .z = g_context.origin.z + zBound};
+        translatePoint(&p1World, &translateVector);
+        translatePoint(&p2World, &translateVector);
+        point_t p1Pixel = {};
+        point_t p2Pixel = {};
+        if(point3DtoPixel(&p1World, &p1Pixel) == EXIT_FAILURE || 
+        point3DtoPixel(&p2World, &p2Pixel) == EXIT_FAILURE){
+            return EXIT_FAILURE;
+        }
+        DRAW_line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, color_ptr);
+    }
+    for(int z = g_context.origin.z + 1; z <= g_context.origin.z + zBound; z++){
+        point_t p1World = {.x = g_context.origin.x - xBound, .y = 0, .z = z};
+        point_t p2World = {.x = g_context.origin.x + xBound, .y = 0, .z = z};
+        translatePoint(&p1World, &translateVector);
+        translatePoint(&p2World, &translateVector);
+        point_t p1Pixel = {};
+        point_t p2Pixel = {};
+        if(point3DtoPixel(&p1World, &p1Pixel) == EXIT_FAILURE || 
+        point3DtoPixel(&p2World, &p2Pixel) == EXIT_FAILURE){
+            return EXIT_FAILURE;
+        }
+        DRAW_line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, color_ptr);
+    }
+    // YZ plan
+    for(int y = g_context.origin.y - yBound; y <= g_context.origin.y + yBound; y++){
+        // float z = fmax(g_context.origin.z + g_context.viewportDistance, 2 * g_context.viewportDistance * abs(g_context.origin.x - abs(x)) / g_context.viewportWidth);
+        point_t p1World = {.x = 0, .y = y, .z = g_context.origin.z + 0.001};
+        point_t p2World = {.x = 0, .y = y, .z = g_context.origin.z + zBound};
+        translatePoint(&p1World, &translateVector);
+        translatePoint(&p2World, &translateVector);
+        point_t p1Pixel = {};
+        point_t p2Pixel = {};
+        if(point3DtoPixel(&p1World, &p1Pixel) == EXIT_FAILURE || 
+        point3DtoPixel(&p2World, &p2Pixel) == EXIT_FAILURE){
+            return EXIT_FAILURE;
+        }
+        DRAW_line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, color_ptr);
+    }
+    for(int z = g_context.origin.z + 1; z <= g_context.origin.z + zBound; z++){
+        point_t p1World = {.x = 0, .y = g_context.origin.y - yBound, .z = z};
+        point_t p2World = {.x = 0, .y = g_context.origin.y + yBound, .z = z};
+        translatePoint(&p1World, &translateVector);
+        translatePoint(&p2World, &translateVector);
+        point_t p1Pixel = {};
+        point_t p2Pixel = {};
+        if(point3DtoPixel(&p1World, &p1Pixel) == EXIT_FAILURE || 
+        point3DtoPixel(&p2World, &p2Pixel) == EXIT_FAILURE){
+            return EXIT_FAILURE;
+        }
+        DRAW_line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, color_ptr);
+    }
+    // XY plan
+    for(int x = g_context.origin.x - xBound; x <= g_context.origin.x + xBound; x++){
+        // float z = fmax(g_context.origin.z + g_context.viewportDistance, 2 * g_context.viewportDistance * abs(g_context.origin.x - abs(x)) / g_context.viewportWidth);
+        point_t p1World = {.x = x, .y = g_context.origin.y - yBound, .z = 0};
+        point_t p2World = {.x = x, .y = g_context.origin.y + yBound, .z = 0};
+        translatePoint(&p1World, &translateVector);
+        translatePoint(&p2World, &translateVector);
+        point_t p1Pixel = {};
+        point_t p2Pixel = {};
+        if(point3DtoPixel(&p1World, &p1Pixel) == EXIT_FAILURE || 
+        point3DtoPixel(&p2World, &p2Pixel) == EXIT_FAILURE){
+            return EXIT_FAILURE;
+        }
+        DRAW_line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, color_ptr);
+    }
+    for(int y = g_context.origin.y - yBound; y <= g_context.origin.y + yBound; y++){
+        // float z = fmax(g_context.origin.z + g_context.viewportDistance, 2 * g_context.viewportDistance * abs(g_context.origin.x - abs(x)) / g_context.viewportWidth);
+        point_t p1World = {.x = g_context.origin.x - xBound, .y = y, .z = 0};
+        point_t p2World = {.x = g_context.origin.x + xBound, .y = y, .z = 0};
         translatePoint(&p1World, &translateVector);
         translatePoint(&p2World, &translateVector);
         point_t p1Pixel = {};
