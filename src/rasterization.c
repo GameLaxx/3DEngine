@@ -57,7 +57,7 @@ int computeNormal(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, vector_t* r
 }
 
 int backFaceCulling(vector_t* normal_ptr, vector_t* ray_ptr){
-    if(COO_scalarProduct(normal_ptr, ray_ptr) <= 0){
+    if(COO_scalarProduct(normal_ptr, ray_ptr) > 0){
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -331,7 +331,6 @@ int RR_drawScene(){
     vector_t normalP2 = {};
     vector_t normalP3 = {};
     vector_t geometricalNormal = {};
-    vector_t rayCenter = {};
     vector_t rayP1 = {};
     vector_t rayP2 = {};
     vector_t rayP3 = {};
@@ -366,8 +365,7 @@ int RR_drawScene(){
             computeCenter(&p1, &p2, &p3, &center);
             computeNormal(&p1, &p2, &p3, &geometricalNormal);
             // ray going on the triangle
-            COO_vectorizePoints(&center, &g_context.origin, &rayCenter);
-            if(backFaceCulling(&geometricalNormal, &rayCenter) == EXIT_FAILURE){
+            if(backFaceCulling(&geometricalNormal, &center) == EXIT_FAILURE){
                 continue; // is facing backward
             }
             // normal of each point
