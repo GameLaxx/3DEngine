@@ -45,7 +45,8 @@ int main(int argc, char* argv[]) {
     // start main loop
     SDL_Event e;
     int quit = 0;
-    float speed = 2.0f / TARGET_FPS; // x unit per second, n fps => x/n per frame
+    float speedTurning = 10.0f / TARGET_FPS; // x° per second, n fps => x/n per frame
+    float speedMoving = 2.0f / TARGET_FPS; // x unit per second, n fps => x/n per frame
     DRAW_showRenderer();
     while (!quit) {
         Uint32 frameStart = SDL_GetTicks();
@@ -58,22 +59,32 @@ int main(int argc, char* argv[]) {
                 DRAW_clearRenderer();
                 switch (e.key.keysym.sym) {
                     case SDLK_UP:
-                        g_context.origin.y += speed;
+                        g_context.origin.y += speedMoving;
                         break;
                     case SDLK_DOWN:
-                        g_context.origin.y -= speed;
+                        g_context.origin.y -= speedMoving;
                         break;
                     case SDLK_LEFT:
-                        g_context.origin.x -= speed;
+                        g_context.origin.x += - speedMoving * cos(g_context.angleRotation[1] * M_PI / 180);
+                        g_context.origin.z += - speedMoving * sin(g_context.angleRotation[1] * M_PI / 180);
                         break;
                     case SDLK_RIGHT:
-                        g_context.origin.x += speed;
+                    g_context.origin.x += speedMoving * cos(g_context.angleRotation[1] * M_PI / 180);
+                    g_context.origin.z += speedMoving * sin(g_context.angleRotation[1] * M_PI / 180);
                         break;
                     case SDLK_s:
-                        g_context.origin.z -= speed;
+                        g_context.origin.x += speedMoving * sin(g_context.angleRotation[1] * M_PI / 180);
+                        g_context.origin.z += - speedMoving * cos(g_context.angleRotation[1] * M_PI / 180);
                         break;
                     case SDLK_z:
-                        g_context.origin.z += speed;
+                        g_context.origin.x += -speedMoving * sin(g_context.angleRotation[1] * M_PI / 180);
+                        g_context.origin.z += speedMoving * cos(g_context.angleRotation[1] * M_PI / 180);
+                        break;
+                    case SDLK_q:
+                        g_context.angleRotation[1] += speedTurning;
+                        break;
+                    case SDLK_f:
+                        g_context.angleRotation[1] -= speedTurning;
                         break;
                 }
                 SW_drawScene(&black);

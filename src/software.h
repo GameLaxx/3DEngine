@@ -26,6 +26,7 @@ struct sceneContext_s{
     int viewportHeight;
     int viewportDistance;
     float renderDistance;
+    float angleRotation[3];
 };
 //-----------------------------------------------------------------------------------------------------------------------
 // Enums
