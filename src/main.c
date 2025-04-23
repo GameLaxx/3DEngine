@@ -76,27 +76,27 @@ int main(int argc, char* argv[]) {
     RR_addLight(&light2);
     RR_addLight(&light3);
     // Draw on the canvas
-    // point_t originCube1 = {.x = -4, .y = 0, .z = 4.5};
-    // rgba_t colors1 = red;
-    // object_t object1 = {
-    //     .origin = originCube1, .meshId = 0, 
-    //     .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors1, 
-    //     .scale = {1,1,1}, .angleRotation = {25,25,0}
-    // }; 
-    // if(RR_addObject(&object1) == EXIT_FAILURE){
-    //     printf("*-* Failed while adding object.\n");
-    //     return -1;
-    // }
-    point_t originPyramid1 = {.x = 0, .y = 0, .z = 4.5};
-    rgba_t colors2 = white;
-    object_t object2 = {
-        .origin = originPyramid1, .meshId = 1, 
-        .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors2, 
-        .scale = {1,1,1}, .angleRotation = {-70, 45, 0}};
-    if(RR_addObject(&object2) == EXIT_FAILURE){
+    point_t originCube1 = {.x = 0, .y = 0, .z = 4.5};
+    rgba_t colors1 = red;
+    object_t object1 = {
+        .origin = originCube1, .meshId = 0, 
+        .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors1, 
+        .scale = {1,1,1}, .angleRotation = {25,25,0}
+    }; 
+    if(RR_addObject(&object1) == EXIT_FAILURE){
         printf("*-* Failed while adding object.\n");
         return -1;
     }
+    // point_t originPyramid1 = {.x = 0, .y = 0, .z = 4.5};
+    // rgba_t colors2 = white;
+    // object_t object2 = {
+    //     .origin = originPyramid1, .meshId = 1, 
+    //     .materialType = MT_COLOR_UNIFORM, .material_ptr = &colors2, 
+    //     .scale = {1,1,1}, .angleRotation = {-70, 45, 0}};
+    // if(RR_addObject(&object2) == EXIT_FAILURE){
+    //     printf("*-* Failed while adding object.\n");
+    //     return -1;
+    // }
     // point_t originSphere1 = {.x = 0, .y = 0, .z = 4.5};
     // rgba_t colors4 = white;
     // object_t object4 = {

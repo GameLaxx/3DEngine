@@ -35,6 +35,27 @@ int translatePoint(point_t* point_ptr, vector_t* vector_ptr){
     return EXIT_SUCCESS;
 }
 
+int computeCenter(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, point_t* ret_ptr){
+    ret_ptr->x = (p1_ptr->x + p2_ptr->x + p3_ptr->x) / 3;
+    ret_ptr->y = (p1_ptr->y + p2_ptr->y + p3_ptr->y) / 3;
+    ret_ptr->z = (p1_ptr->z + p2_ptr->z + p3_ptr->z) / 3;
+    return EXIT_SUCCESS;
+}
+
+int computeNormal(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, vector_t* ret_ptr){
+    vector_t u = {};
+    vector_t v = {};
+    COO_vectorizePoints(p1_ptr, p2_ptr, &u);
+    COO_vectorizePoints(p1_ptr, p3_ptr, &v);
+    COO_crossProduct(&u, &v, ret_ptr);
+    float normalLength = sqrt(COO_scalarProduct(ret_ptr, ret_ptr));
+    if(normalLength == 0){
+        return EXIT_FAILURE;
+    }
+    COO_lambdaProduct(ret_ptr, normalLength, FT_DIV);
+    return EXIT_SUCCESS;
+}
+
 int backFaceCulling(vector_t* normal_ptr, vector_t* ray_ptr){
     if(COO_scalarProduct(normal_ptr, ray_ptr) <= 0){
         return EXIT_FAILURE;
@@ -304,13 +325,12 @@ int RR_drawScene(){
     point_t p1 = {};
     point_t p2 = {};
     point_t p3 = {};
-    vector_t u = {};
-    vector_t v = {};
+    point_t center = {};
     vector_t translateVector = {};
     vector_t normalP1 = {};
     vector_t normalP2 = {};
     vector_t normalP3 = {};
-    rgba_t color = {};
+    vector_t geometricalNormal = {};
     vector_t rayCenter = {};
     vector_t rayP1 = {};
     vector_t rayP2 = {};
@@ -343,33 +363,28 @@ int RR_drawScene(){
             translatePoint(&p2, &translateVector);
             translatePoint(&p3, &translateVector);
             // get center and geometrical normal
-            point_t center = {
-                .x = (p1.x + p2.x + p3.x) / 3,
-                .y = (p1.y + p2.y + p3.y) / 3,
-                .z = (p1.z + p2.z + p3.z) / 3,
-            }; // TODO : compute center and geometrical normal in the mesh
-            COO_vectorizePoints(&p1, &p2, &u);
-            COO_vectorizePoints(&p1, &p3, &v);
-            vector_t normal = {};
-            COO_crossProduct(&u, &v, &normal);
-            float normalLength = sqrt(COO_scalarProduct(&normal,&normal));
-            COO_lambdaProduct(&normal, normalLength, FT_DIV);
+            computeCenter(&p1, &p2, &p3, &center);
+            computeNormal(&p1, &p2, &p3, &geometricalNormal);
             // ray going on the triangle
             COO_vectorizePoints(&center, &g_context.origin, &rayCenter);
+            if(backFaceCulling(&geometricalNormal, &rayCenter) == EXIT_FAILURE){
+                continue; // is facing backward
+            }
+            // normal of each point
             COO_vectorizePoints(&p1, &g_context.origin, &rayP1);
             COO_vectorizePoints(&p2, &g_context.origin, &rayP2);
             COO_vectorizePoints(&p3, &g_context.origin, &rayP3);
-            // if(backFaceCulling(&normal, &rayCenter) == EXIT_FAILURE){
-            //     continue; // is facing backward
-            // }
+            // light intensity on each point
             computeLight(&p1, &normalP1, &rayP1, 40, &intensityP1);
             computeLight(&p2, &normalP2, &rayP2, 40, &intensityP2);
             computeLight(&p3, &normalP3, &rayP3, 40, &intensityP3);
+            // fill whole triangle
             if(g_context.objects[obj].materialType == MT_COLOR_EACH){
                 fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, &material_ptr[t]);
             }else if(g_context.objects[obj].materialType == MT_COLOR_UNIFORM){
                 fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, material_ptr);
             }
+            // reset intensity
             intensityP1 = 0;
             intensityP2 = 0;
             intensityP3 = 0;
