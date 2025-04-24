@@ -45,8 +45,9 @@ int main(int argc, char* argv[]) {
     // start main loop
     SDL_Event e;
     int quit = 0;
-    float speedTurning = 10.0f / TARGET_FPS; // x° per second, n fps => x/n per frame
-    float speedMoving = 2.0f / TARGET_FPS; // x unit per second, n fps => x/n per frame
+    float speedTurning = 30.0f / TARGET_FPS; // x° per second, n fps => x/n per frame
+    float speedMoving = 4.0f / TARGET_FPS; // x unit per second, n fps => x/n per frame
+    vector_t cameraSpeed = {};
     DRAW_showRenderer();
     while (!quit) {
         Uint32 frameStart = SDL_GetTicks();
@@ -57,36 +58,40 @@ int main(int argc, char* argv[]) {
             
             if (e.type == SDL_KEYDOWN) {
                 DRAW_clearRenderer();
-                switch (e.key.keysym.sym) {
-                    case SDLK_UP:
-                        g_context.origin.y += speedMoving;
-                        break;
-                    case SDLK_DOWN:
-                        g_context.origin.y -= speedMoving;
-                        break;
-                    case SDLK_LEFT:
-                        g_context.origin.x += - speedMoving * cos(g_context.angleRotation[1] * M_PI / 180);
-                        g_context.origin.z += - speedMoving * sin(g_context.angleRotation[1] * M_PI / 180);
-                        break;
-                    case SDLK_RIGHT:
-                    g_context.origin.x += speedMoving * cos(g_context.angleRotation[1] * M_PI / 180);
-                    g_context.origin.z += speedMoving * sin(g_context.angleRotation[1] * M_PI / 180);
-                        break;
-                    case SDLK_s:
-                        g_context.origin.x += speedMoving * sin(g_context.angleRotation[1] * M_PI / 180);
-                        g_context.origin.z += - speedMoving * cos(g_context.angleRotation[1] * M_PI / 180);
-                        break;
-                    case SDLK_z:
-                        g_context.origin.x += -speedMoving * sin(g_context.angleRotation[1] * M_PI / 180);
-                        g_context.origin.z += speedMoving * cos(g_context.angleRotation[1] * M_PI / 180);
-                        break;
-                    case SDLK_q:
-                        g_context.angleRotation[1] += speedTurning;
-                        break;
-                    case SDLK_f:
-                        g_context.angleRotation[1] -= speedTurning;
-                        break;
+                // clip speed
+                cameraSpeed.x = 0;
+                cameraSpeed.y = 0;
+                cameraSpeed.z = 0;
+                if(e.key.keysym.sym == SDLK_UP){
+                    cameraSpeed.y += speedMoving;
                 }
+                if(e.key.keysym.sym == SDLK_DOWN){
+                    cameraSpeed.y -= speedMoving;
+                }
+                if(e.key.keysym.sym == SDLK_LEFT){
+                    cameraSpeed.x -= speedMoving;
+                }
+                if(e.key.keysym.sym == SDLK_RIGHT){
+                    cameraSpeed.x += speedMoving;
+                }
+                if(e.key.keysym.sym == SDLK_s){
+                    cameraSpeed.z -= speedMoving;
+                }
+                if(e.key.keysym.sym == SDLK_z){
+                    cameraSpeed.z += speedMoving;
+                }
+                if(e.key.keysym.sym == SDLK_q){
+                    g_context.angleRotation[1] += speedTurning;
+                }
+                if(e.key.keysym.sym == SDLK_f){
+                    g_context.angleRotation[1] -= speedTurning;
+                }
+                // rotate and move
+                vector_t rotatedSpeed = cameraSpeed;
+                COO_rotationVectorProduct(&rotatedSpeed, -g_context.angleRotation[0], -g_context.angleRotation[1], -g_context.angleRotation[2]);
+                g_context.origin.x += rotatedSpeed.x;
+                g_context.origin.y += rotatedSpeed.y;
+                g_context.origin.z += rotatedSpeed.z;
                 SW_drawScene(&black);
                 DRAW_showRenderer();
             }
