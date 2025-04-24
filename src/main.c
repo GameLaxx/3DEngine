@@ -110,6 +110,7 @@ int main(int argc, char* argv[]) {
     float speedMoving = 4.0f / TARGET_FPS; // x unit per second, n fps => x/n per frame
     vector_t cameraMovingSpeed = {};
     vector_t cameraTurningSpeed = {};
+    point_t lastMousePos = {};
     DRAW_showRenderer();        
     const Uint8* keystates = SDL_GetKeyboardState(NULL); // get keys pressed in real time
     while (!quit) {
@@ -121,19 +122,21 @@ int main(int argc, char* argv[]) {
             
             if(e.type == SDL_MOUSEBUTTONDOWN){
                 if (e.button.button == SDL_BUTTON_LEFT) {
-                    printf("Left click pressed (%d, %d)\n", e.button.x, e.button.y);
-                }
-            }
-
-            if(e.type == SDL_MOUSEBUTTONUP){
-                if (e.button.button == SDL_BUTTON_LEFT) {
-                    printf("Left click released (%d, %d)\n", e.button.x, e.button.y);
+                    lastMousePos.x = e.button.x;
+                    lastMousePos.y = e.button.y;
                 }
             }
 
             if(e.type == SDL_MOUSEMOTION){
                 if (e.motion.state & SDL_BUTTON_LMASK) {
-                    printf("Left click moved (%d, %d)\n", e.motion.x, e.motion.y);
+                    if(fabs(e.motion.x - lastMousePos.x) <= 1 && fabs(e.motion.y - lastMousePos.y) >= 1){
+                        cameraMovingSpeed.y += speedMoving * (e.motion.y - lastMousePos.y);
+                    }else if(fabs(e.motion.x - lastMousePos.x) > 1){
+                        cameraMovingSpeed.z += speedMoving * (e.motion.y - lastMousePos.y);
+                        cameraMovingSpeed.x -= speedMoving * (e.motion.x - lastMousePos.x); // -= to go against mouse
+                    }
+                    lastMousePos.x = e.motion.x;
+                    lastMousePos.y = e.motion.y;
                 }
             }
             
