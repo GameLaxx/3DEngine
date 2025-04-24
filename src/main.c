@@ -20,9 +20,9 @@ SDL_Renderer* g_renderer;
 //-----------------------------------------------------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
     //init
-    DRAW_initSDL(1080, 1080);
+    DRAW_initSDL(840, 840);
     DRAW_invertYAxis();
-    DRAW_moveOrigin(1080 / 2, 1080 / 2);
+    DRAW_moveOrigin(g_windowWidth / 2, g_windowHeight / 2);
     DRAW_clearRenderer();
     rgba_t red = {255,0,0,255};
     rgba_t blue = {0,0,255,255};
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
                 cameraSpeed.x = 0;
                 cameraSpeed.y = 0;
                 cameraSpeed.z = 0;
-                if(e.key.keysym.sym == SDLK_UP){
+                if(e.key.keysym.sym == SDLK_UP || e.key.keysym.sym == SDLK_SPACE){
                     cameraSpeed.y += speedMoving;
                 }
                 if(e.key.keysym.sym == SDLK_DOWN){
@@ -100,7 +100,12 @@ int main(int argc, char* argv[]) {
                 if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
                     int newWidth = e.window.data1;
                     int newHeight = e.window.data2;
-                    printf("New size window : %d x %d\n", newWidth, newHeight);
+                    g_windowWidth = newHeight;
+                    g_windowHeight = newHeight;
+                    DRAW_moveOrigin(newWidth / 2, g_windowHeight / 2);
+                    DRAW_clearRenderer();
+                    SW_drawScene(&black);
+                    DRAW_showRenderer();
                 }
             }
         }
