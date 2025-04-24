@@ -14,7 +14,68 @@ SDL_Renderer* g_renderer;
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
+int updateSpeeds(const Uint8* keystates, vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr, float speedMoving, float speedTurning){
+    if (keystates[SDL_SCANCODE_UP] || keystates[SDL_SCANCODE_SPACE]) {
+        cameraMoving_ptr->y += speedMoving;
+    }
+    if (keystates[SDL_SCANCODE_DOWN]) {
+        cameraMoving_ptr->y -= speedMoving;
+    }
+    if (keystates[SDL_SCANCODE_LEFT]) {
+        cameraMoving_ptr->x -= speedMoving;
+    }
+    if (keystates[SDL_SCANCODE_RIGHT]) {
+        cameraMoving_ptr->x += speedMoving;
+    }
+    if (keystates[SDL_SCANCODE_S]) {
+        cameraMoving_ptr->z -= speedMoving;
+    }
+    if (keystates[SDL_SCANCODE_W]) {
+        cameraMoving_ptr->z += speedMoving;
+    }
+    if (keystates[SDL_SCANCODE_A]) {
+        cameraTurning_ptr->y += speedTurning;
+    }
+    if (keystates[SDL_SCANCODE_F]) {
+        cameraTurning_ptr->y -= speedTurning;
+    }
+    return EXIT_SUCCESS;
+}
 
+int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr, float speedMoving, float speedTurning, rgba_t* color_ptr){
+    DRAW_clearRenderer();
+    cameraMoving_ptr->x = fmaxf(fminf(2 * speedMoving, cameraMoving_ptr->x), -2 * speedMoving);
+    cameraMoving_ptr->y = fmaxf(fminf(2 * speedMoving, cameraMoving_ptr->y), -2 * speedMoving);
+    cameraMoving_ptr->z = fmaxf(fminf(2 * speedMoving, cameraMoving_ptr->z), -2 * speedMoving);
+    cameraTurning_ptr->y = fmaxf(fminf(2 * speedTurning, cameraTurning_ptr->y), -2 * speedTurning);
+    // rotate and move
+    vector_t rotatedSpeed = *cameraMoving_ptr;
+    COO_rotationVectorProduct(&rotatedSpeed, -g_context.angleRotation[0], -g_context.angleRotation[1], -g_context.angleRotation[2]);
+    g_context.origin.x += rotatedSpeed.x;
+    g_context.origin.y += rotatedSpeed.y;
+    g_context.origin.z += rotatedSpeed.z;
+    g_context.angleRotation[1] += cameraTurning_ptr->y;
+    SW_drawScene(color_ptr);
+    DRAW_showRenderer();
+    // clip speed
+    cameraMoving_ptr->x /= 1.05;
+    cameraMoving_ptr->y /= 1.05;
+    cameraMoving_ptr->z /= 1.05;
+    cameraTurning_ptr->y /= 1.05;
+    if(fabs(cameraMoving_ptr->x) < 0.0001){
+        cameraMoving_ptr->x = 0;
+    }
+    if(fabs(cameraMoving_ptr->y) < 0.0001){
+        cameraMoving_ptr->y = 0;
+    }
+    if(fabs(cameraMoving_ptr->y) < 0.0001){
+        cameraMoving_ptr->y = 0;
+    }
+    if(fabs(cameraTurning_ptr->y) < 0.0001){
+        cameraTurning_ptr->y = 0;
+    }
+    return EXIT_SUCCESS;
+}
 //-----------------------------------------------------------------------------------------------------------------------
 // Global Functions
 //-----------------------------------------------------------------------------------------------------------------------
@@ -47,8 +108,10 @@ int main(int argc, char* argv[]) {
     int quit = 0;
     float speedTurning = 30.0f / TARGET_FPS; // x° per second, n fps => x/n per frame
     float speedMoving = 4.0f / TARGET_FPS; // x unit per second, n fps => x/n per frame
-    vector_t cameraSpeed = {};
-    DRAW_showRenderer();
+    vector_t cameraMovingSpeed = {};
+    vector_t cameraTurningSpeed = {};
+    DRAW_showRenderer();        
+    const Uint8* keystates = SDL_GetKeyboardState(NULL); // get keys pressed in real time
     while (!quit) {
         Uint32 frameStart = SDL_GetTicks();
         while (SDL_PollEvent(&e) != 0) {
@@ -56,44 +119,22 @@ int main(int argc, char* argv[]) {
                 quit = 1;
             }
             
-            if (e.type == SDL_KEYDOWN) {
-                DRAW_clearRenderer();
-                // clip speed
-                cameraSpeed.x = 0;
-                cameraSpeed.y = 0;
-                cameraSpeed.z = 0;
-                if(e.key.keysym.sym == SDLK_UP || e.key.keysym.sym == SDLK_SPACE){
-                    cameraSpeed.y += speedMoving;
+            if(e.type == SDL_MOUSEBUTTONDOWN){
+                if (e.button.button == SDL_BUTTON_LEFT) {
+                    printf("Left click pressed (%d, %d)\n", e.button.x, e.button.y);
                 }
-                if(e.key.keysym.sym == SDLK_DOWN){
-                    cameraSpeed.y -= speedMoving;
+            }
+
+            if(e.type == SDL_MOUSEBUTTONUP){
+                if (e.button.button == SDL_BUTTON_LEFT) {
+                    printf("Left click released (%d, %d)\n", e.button.x, e.button.y);
                 }
-                if(e.key.keysym.sym == SDLK_LEFT){
-                    cameraSpeed.x -= speedMoving;
+            }
+
+            if(e.type == SDL_MOUSEMOTION){
+                if (e.motion.state & SDL_BUTTON_LMASK) {
+                    printf("Left click moved (%d, %d)\n", e.motion.x, e.motion.y);
                 }
-                if(e.key.keysym.sym == SDLK_RIGHT){
-                    cameraSpeed.x += speedMoving;
-                }
-                if(e.key.keysym.sym == SDLK_s){
-                    cameraSpeed.z -= speedMoving;
-                }
-                if(e.key.keysym.sym == SDLK_z){
-                    cameraSpeed.z += speedMoving;
-                }
-                if(e.key.keysym.sym == SDLK_q){
-                    g_context.angleRotation[1] += speedTurning;
-                }
-                if(e.key.keysym.sym == SDLK_f){
-                    g_context.angleRotation[1] -= speedTurning;
-                }
-                // rotate and move
-                vector_t rotatedSpeed = cameraSpeed;
-                COO_rotationVectorProduct(&rotatedSpeed, -g_context.angleRotation[0], -g_context.angleRotation[1], -g_context.angleRotation[2]);
-                g_context.origin.x += rotatedSpeed.x;
-                g_context.origin.y += rotatedSpeed.y;
-                g_context.origin.z += rotatedSpeed.z;
-                SW_drawScene(&black);
-                DRAW_showRenderer();
             }
             
             if (e.type == SDL_WINDOWEVENT) {
@@ -108,6 +149,12 @@ int main(int argc, char* argv[]) {
                     DRAW_showRenderer();
                 }
             }
+        }
+        updateSpeeds(keystates, &cameraMovingSpeed, &cameraTurningSpeed, speedMoving, speedTurning);
+        if(cameraMovingSpeed.x != 0 || cameraMovingSpeed.y != 0 || cameraMovingSpeed.z != 0||
+           cameraTurningSpeed.x != 0 || cameraTurningSpeed.y != 0 || cameraTurningSpeed.z != 0
+        ){
+            updateScene(&cameraMovingSpeed, &cameraTurningSpeed, speedMoving, speedTurning, &black);
         }
         Uint32 frameTime = SDL_GetTicks() - frameStart;
         if (frameTime < FRAME_DELAY) {
