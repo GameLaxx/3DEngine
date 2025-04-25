@@ -1,6 +1,7 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
+#include <dirent.h>
 #include "software.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
@@ -9,6 +10,31 @@ sceneContext_t g_sceneContext;
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
+int getAllMeshVariables(){
+    const char *dossier = "./meshes/";
+    struct dirent *ent;
+    DIR *dir = opendir(dossier);
+
+    if (dir == NULL) {
+        perror("opendir");
+        return EXIT_FAILURE;
+    }
+
+    while ((ent = readdir(dir)) != NULL) {
+        if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0 && g_sceneContext.meshesCount < MAX_MESHES) {
+            char* filePath_ptr = calloc(strlen(dossier) + strlen(ent->d_name), sizeof(char));
+            strcpy(filePath_ptr, dossier);
+            strcat(filePath_ptr, ent->d_name);
+            mesh_t currentMesh = {};
+            OBJ_readObjFile(filePath_ptr, g_sceneContext.meshesCount, &currentMesh);
+            SW_addMesh(&currentMesh);
+        }
+    }
+
+    closedir(dir);
+    return EXIT_SUCCESS;
+}
+
 int point3DtoPixel(point_t* point_ptr, point_t* ret_ptr){
     if(!ret_ptr || !point_ptr){
         return EXIT_FAILURE;
@@ -102,6 +128,10 @@ int SW_initScene(point_t* origin, int vW, int vH, int vD){
     g_sceneContext.viewportHeight = vH;
     g_sceneContext.viewportDistance = vD;
     g_sceneContext.renderDistance = 20;
+    g_sceneContext.meshesCount = 0;
+    g_sceneContext.objectsCount = 0;
+    g_sceneContext.zBuffer = NULL;
+    getAllMeshVariables();
     return EXIT_SUCCESS;
 }
 
@@ -150,5 +180,55 @@ int SW_drawScene(){
         // drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, &black);
     }
     
+    return EXIT_SUCCESS;
+}
+
+int SW_addMesh(mesh_t* mesh_ptr){
+    if(g_sceneContext.meshesCount == MAX_MESHES){
+        return EXIT_FAILURE;
+    }
+    if(mesh_ptr->id >= MAX_MESH_IDS){
+        return EXIT_FAILURE;
+    }
+    g_sceneContext.meshesId[mesh_ptr->id] = g_sceneContext.meshesCount + 1; // calloc set at 0, so if 0 then nothing has been added ==> easier to compare hence + 1
+    g_sceneContext.meshes[g_sceneContext.meshesCount] = *mesh_ptr;
+    g_sceneContext.meshesCount++;
+    return EXIT_SUCCESS;
+}
+
+int SW_addLight(lightSource_t* light){
+    if(g_sceneContext.lightsCount == MAX_LIGHTS) return EXIT_FAILURE;
+    if(light->intensity <= 0) return EXIT_FAILURE;
+    for(int i = 0; i < MAX_LIGHTS; i++){
+        if(g_sceneContext.lights[i].intensity <= 0){
+            g_sceneContext.lights[i] = *light;
+            break;
+        }
+        if(g_sceneContext.lights[i].type == LT_ambiant && light->type == LT_ambiant){
+            g_sceneContext.lights[i].intensity += light->intensity;
+            if(g_sceneContext.lights[i].intensity > 1){
+                g_sceneContext.lights[i].intensity = 1;
+            }
+            g_sceneContext.lightsCount -= 1; //compensate the fact that we did not add a light
+            break;
+        }
+    }
+    g_sceneContext.lightsCount += 1;
+    return 0;
+}
+
+int SW_addObject(object_t* object_ptr){
+    if(g_sceneContext.objectsCount == MAX_OBJECTS){
+        return EXIT_FAILURE;
+    }
+    if(object_ptr->meshId < 0 || object_ptr->meshId >= MAX_MESH_IDS){
+        return EXIT_FAILURE;
+    }
+    if(g_sceneContext.meshesId[object_ptr->meshId] == 0){
+        return EXIT_FAILURE;
+    }
+    g_sceneContext.objects[g_sceneContext.objectsCount] = *object_ptr;
+    g_sceneContext.objects[g_sceneContext.objectsCount].mesh = &g_sceneContext.meshes[g_sceneContext.meshesId[object_ptr->meshId] - 1]; // because added with + 1
+    g_sceneContext.objectsCount++;
     return EXIT_SUCCESS;
 }

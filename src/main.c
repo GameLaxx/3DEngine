@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
     // rgba_t yellow = {255,255,0,255};
     // rgba_t purple = {255,0,255,255};
     // rgba_t brown = {255,160,0,255};
-    // rgba_t light_gray = {160,160,160,255};
+    rgba_t light_gray = {160,160,160,255};
     // rgba_t dark_gray = {80,80,80,255};
     // rgba_t white = {255,255,255,255};
     // rgba_t black = {0,0,0,255};
@@ -143,7 +143,11 @@ int main(int argc, char* argv[]) {
                     }
                     lastMousePos.x = e.button.x;
                     lastMousePos.y = e.button.y;
-                    IF_clickMeshBox(lastMousePos.x, lastMousePos.y);
+                    int meshId = IF_clickMeshBox(lastMousePos.x, lastMousePos.y);
+                    if(meshId > -1){
+                        object_t object = {.meshId = meshId, .materialType = MT_COLOR_UNIFORM, .material_ptr = &light_gray, .scale = {1,1,1}};
+                        SW_addObject(&object);
+                    }
                 }
             }
 

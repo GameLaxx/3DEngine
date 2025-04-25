@@ -67,4 +67,23 @@ int SW_clearScene();
 
 int SW_drawScene();
 
+int SW_addMesh(mesh_t* mesh_ptr);
+
+/**
+ * @brief Add a light to the context.
+ * 
+ * @param light The light to add.
+ * @return int 
+ */
+int SW_addLight(lightSource_t* light);
+
+/**
+ * @brief Add an object to the context.
+ * 
+ * @param object_ptr The object to add.
+ * @return int 
+ */
+int SW_addObject(object_t* object_ptr);
+
+
 #endif /* SOFTWARE_H */

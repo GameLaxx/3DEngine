@@ -17,7 +17,7 @@ interface_t g_interface;
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
-int getAllMeshes(){
+int getAllMeshBoxes(){
     const char *dossier = "./meshes/";
     struct dirent *ent;
     DIR *dir = opendir(dossier);
@@ -52,7 +52,7 @@ int getAllMeshes(){
 int IF_initInterface(){
     g_interface.boxes_ptr = calloc(MAX_BOXES, sizeof(meshBox_t));
     g_interface.numberBoxes = 0;
-    getAllMeshes();
+    getAllMeshBoxes();
     return EXIT_SUCCESS;
 }
 
@@ -111,11 +111,10 @@ int IF_clickMeshBox(int xMouse, int yMouse){
         int checkBoxYmax = g_interface.boxes_ptr[i].y + g_interface.boxes_ptr[i].margin + g_interface.boxes_ptr[i].padding + g_interface.boxes_ptr[i].height / 10;
         if(checkBoxXmin < xMouse && xMouse < checkBoxXmax 
             && checkBoxYmin < yMouse && yMouse < checkBoxYmax){
-            printf("Clicked on %s\n", g_interface.boxes_ptr[i].name);
-            return EXIT_SUCCESS;
+            return i;
         }
     }
-    return EXIT_SUCCESS;
+    return -1;
 }
 
 int IF_hoverMeshBox(int xMouse, int yMouse){
