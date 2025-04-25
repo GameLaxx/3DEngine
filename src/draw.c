@@ -65,7 +65,6 @@ static int DRAW_rectangle(int x, int y, int width, int height, rgba_t* color_ptr
 int DRAW_initSDL(int width, int height){
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("Error while initializing SDL: %s\n", SDL_GetError());
-        printf("Error while initializing SDL: %s\n", SDL_GetError());
         return 1;
     }
     g_pixelWidth = height;
@@ -82,13 +81,11 @@ int DRAW_initSDL(int width, int height){
     );
     if (window == NULL) {
         printf("Error while creating the window: %s\n", SDL_GetError());
-        printf("Error while creating the window: %s\n", SDL_GetError());
         SDL_Quit();
         return 1;
     }
     g_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (g_renderer == NULL) {
-        printf("Error while creating the renderer: %s\n", SDL_GetError());
         printf("Error while creating the renderer: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -102,7 +99,6 @@ int DRAW_initSDL(int width, int height){
 int DRAW_showRenderer(){
     SDL_RenderPresent(g_renderer);
     return 0;
-    return 0;
 }
 
 int DRAW_clearRenderer(){
@@ -115,7 +111,6 @@ int DRAW_cleanRenderer(){
     SDL_DestroyRenderer(g_renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    return 0;
     return 0;
 }
 
