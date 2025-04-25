@@ -161,4 +161,7 @@ int DRAW_rectangleFill(int x, int y, int width, int height, rgba_t* color_ptr);
  * @return SUCCESS or FAILURE.
  */
 int DRAW_pixel(int x, int y, rgba_t* color_ptr);
-#endif
+
+int DRAW_texte(int x, int y, char* content_ptr, rgba_t* color_ptr);
+
+#endif /* DRAW_H */

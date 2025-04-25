@@ -1,7 +1,7 @@
 # Variables
 CC = gcc
 CFLAGS = -Wall -Wextra -g
-LDFLAGS = -lSDL2 -lm
+LDFLAGS = -lSDL2 -lSDL2_ttf -lm
 SRC_DIR = src
 BUILD_DIR = obj
 TEST_DIR = tests/unitary

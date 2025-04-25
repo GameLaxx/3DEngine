@@ -9,15 +9,16 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
-rgba_t interfaceColor = {36,36,36,255};
-rgba_t meshBoxColor = {88, 88, 88, 255};
-rgba_t addBoxColor = {.green = 51};
+rgba_t interfaceColor = {22,22,22,255};
+rgba_t meshBoxColor = {48, 48, 48, 255};
+rgba_t addBoxColor = {94, 176, 162, 255};
+rgba_t textColor = {212,212,212,255};
 interface_t g_interface;
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
 int getAllMeshes(){
-    const char *dossier = "./ressources/";
+    const char *dossier = "./meshes/";
     struct dirent *ent;
     DIR *dir = opendir(dossier);
 
@@ -75,7 +76,11 @@ int IF_drawInterface(){
     // draw sides
     DRAW_rectangleFill(-g_xShift, -g_yShift, (g_windowWidth - g_pixelWidth) / 2, g_windowHeight, &interfaceColor);
     DRAW_rectangleFill((g_windowWidth + g_pixelWidth) / 2 - g_xShift, -g_yShift, (g_windowWidth - g_pixelWidth) / 2,g_windowHeight, &interfaceColor);
+    // left interface
     IF_drawMeshBoxes();
+    // right interface
+    DRAW_texte((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 19 / 20 - g_yShift, "Camera", &textColor);
+    DRAW_line((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 9 / 10 - g_yShift, g_windowWidth - g_xShift - 10, g_windowHeight * 9 / 10 - g_yShift, &textColor);
     return EXIT_SUCCESS;
 }
 
@@ -87,6 +92,11 @@ int IF_drawMeshBoxes(){
             g_interface.boxes_ptr[i].x + g_interface.boxes_ptr[i].width - g_interface.boxes_ptr[i].margin - g_interface.boxes_ptr[i].padding - g_interface.boxes_ptr[i].height / 10,
             g_interface.boxes_ptr[i].y + g_interface.boxes_ptr[i].margin + g_interface.boxes_ptr[i].padding, 
             g_interface.boxes_ptr[i].height / 10, g_interface.boxes_ptr[i].height / 10, &addBoxColor);
+        DRAW_texte(
+            g_interface.boxes_ptr[i].x + g_interface.boxes_ptr[i].margin + g_interface.boxes_ptr->padding,
+            g_interface.boxes_ptr[i].y + g_interface.boxes_ptr[i].height - g_interface.boxes_ptr[i].margin - g_interface.boxes_ptr[i].padding,
+            g_interface.boxes_ptr[i].name, &textColor
+        );
     }
     return EXIT_SUCCESS;
 }

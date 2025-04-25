@@ -5,11 +5,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
 rgba_t g_backgroundColor = {.red = 100, .green = 100, .blue = 100, .alpha = 255};
 SDL_Window* window;
+TTF_Font* font;
 
 int g_windowWidth = 0;
 int g_windowHeight = 0;
@@ -89,6 +91,8 @@ int DRAW_initSDL(int width, int height){
         SDL_Quit();
         return 1;
     }
+    TTF_Init(); // init text operations
+    font = TTF_OpenFont("./style/arial.ttf", 16);
     return 0;
 }
 
@@ -103,6 +107,7 @@ int DRAW_clearRenderer(){
 }
 
 int DRAW_cleanRenderer(){
+    TTF_CloseFont(font);
     SDL_DestroyRenderer(g_renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -172,4 +177,18 @@ int DRAW_rectangleFill(int x, int y, int width, int height, rgba_t* color_ptr){
 
 int DRAW_pixel(int x, int y, rgba_t* color_ptr){
     return DRAW_rectangle(x, y, 1, 1, color_ptr, SDL_RenderFillRect);
+}
+
+int DRAW_texte(int x, int y, char* content_ptr, rgba_t* color_ptr){
+    SDL_Color textColor = {.r = color_ptr->red, .g = color_ptr->green, .b = color_ptr->blue, .a = 255};
+    SDL_Surface* textSurface = TTF_RenderText_Blended(font, content_ptr, textColor);
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(g_renderer, textSurface);
+    SDL_Rect textRect;
+    textRect.x = x + g_xShift;
+    textRect.y = g_windowHeight - (y + g_yShift);
+    textRect.w = textSurface->w;
+    textRect.h = textSurface->h;
+    SDL_RenderCopy(g_renderer, textTexture, NULL, &textRect);
+    SDL_FreeSurface(textSurface);
+    return EXIT_SUCCESS;
 }

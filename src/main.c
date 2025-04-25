@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
     DRAW_moveOrigin(g_windowWidth / 2, g_windowHeight / 2);
     DRAW_clearRenderer();
     // rgba_t red = {255,0,0,255};
-    // rgba_t blue = {0,0,255,255};
+    rgba_t blue = {0,0,255,255};
     // rgba_t green = {0,255,0,255};
     // rgba_t yellow = {255,255,0,255};
     // rgba_t purple = {255,0,255,255};
