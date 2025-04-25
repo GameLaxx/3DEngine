@@ -53,6 +53,8 @@ int SW_initScene(point_t* origin, int vW, int vH, int vD);
 
 int SW_clearScene();
 
-int SW_drawScene(rgba_t* color_ptr);
+int SW_drawScene();
+
+int SW_drawInterface();
 
 #endif /* SOFTWARE_H */

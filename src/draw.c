@@ -8,11 +8,13 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
-rgba_t g_backgroundColor = {.red = 150, .green = 150, .blue = 255, .alpha = 255};
+rgba_t g_backgroundColor = {.red = 100, .green = 100, .blue = 100, .alpha = 255};
 SDL_Window* window;
 
 int g_windowWidth = 0;
 int g_windowHeight = 0;
+int g_pixelWidth = 0;
+int g_pixelHeight = 0;
 int g_xShift = 0;
 int g_yShift = 0;
 
@@ -49,7 +51,7 @@ static int DRAW_rectangle(int x, int y, int width, int height, rgba_t* color_ptr
     DRAW_setDrawColor(color_ptr);
     int renderY = y + g_yShift;
     if(invertY){
-        renderY = g_windowHeight - renderY - height;
+        renderY = g_pixelHeight - renderY - height;
     }
     SDL_Rect rect = {x + g_xShift, renderY, width, height}; // x, y, largeur, hauteur
     return func(g_renderer, &rect);
@@ -63,6 +65,8 @@ int DRAW_initSDL(int width, int height){
         printf("Error while initializing SDL: %s\n", SDL_GetError());
         return 1;
     }
+    g_pixelWidth = height;
+    g_pixelHeight = height;
     g_windowWidth = width;
     g_windowHeight = height;
     // create the window
@@ -94,11 +98,7 @@ int DRAW_showRenderer(){
 }
 
 int DRAW_clearRenderer(){
-    DRAW_setDrawColor(&g_backgroundColor);
-    if(SDL_RenderClear(g_renderer) == -1){
-        printf("Another fail..\n");
-        return EXIT_FAILURE;
-    }
+    DRAW_rectangleFill((g_windowWidth - g_pixelWidth) / 2 - g_xShift, -g_yShift, g_pixelWidth, g_pixelHeight, &g_backgroundColor);
     return EXIT_SUCCESS;
 }
 
@@ -155,8 +155,8 @@ int DRAW_line(int x1, int y1, int x2, int y2, rgba_t* color_ptr){
     int renderY1 = y1 + g_yShift;
     int renderY2 = y2 + g_yShift;
     if(invertY){
-        renderY1 = g_windowHeight - renderY1;
-        renderY2 = g_windowHeight - renderY2;
+        renderY1 = g_pixelHeight - renderY1;
+        renderY2 = g_pixelHeight - renderY2;
     }
     SDL_RenderDrawLine(g_renderer, x1 + g_xShift, renderY1, x2  + g_xShift, renderY2); // (x1, y1) -> (x2, y2) in the current reference 
     return 0;

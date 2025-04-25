@@ -9,7 +9,7 @@
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
 SDL_Renderer* g_renderer;
-#define TARGET_FPS 60
+#define TARGET_FPS 32
 #define FRAME_DELAY (1000 / TARGET_FPS)
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
@@ -42,7 +42,8 @@ int updateSpeeds(const Uint8* keystates, vector_t* cameraMoving_ptr, vector_t* c
     return EXIT_SUCCESS;
 }
 
-int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr, float speedMoving, float speedTurning, rgba_t* color_ptr){
+int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr, 
+    float speedMoving, float speedTurning, float speedFade, float speedCeil){
     DRAW_clearRenderer();
     cameraMoving_ptr->x = fmaxf(fminf(2 * speedMoving, cameraMoving_ptr->x), -2 * speedMoving);
     cameraMoving_ptr->y = fmaxf(fminf(2 * speedMoving, cameraMoving_ptr->y), -2 * speedMoving);
@@ -55,23 +56,23 @@ int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr, float s
     g_context.origin.y += rotatedSpeed.y;
     g_context.origin.z += rotatedSpeed.z;
     g_context.angleRotation[1] += cameraTurning_ptr->y;
-    SW_drawScene(color_ptr);
+    SW_drawScene();
     DRAW_showRenderer();
     // clip speed
-    cameraMoving_ptr->x /= 1.05;
-    cameraMoving_ptr->y /= 1.05;
-    cameraMoving_ptr->z /= 1.05;
-    cameraTurning_ptr->y /= 1.05;
-    if(fabs(cameraMoving_ptr->x) < 0.0001){
+    cameraMoving_ptr->x /= speedFade;
+    cameraMoving_ptr->y /= speedFade;
+    cameraMoving_ptr->z /= speedFade;
+    cameraTurning_ptr->y /= speedFade;
+    if(fabs(cameraMoving_ptr->x) < speedCeil){
         cameraMoving_ptr->x = 0;
     }
-    if(fabs(cameraMoving_ptr->y) < 0.0001){
+    if(fabs(cameraMoving_ptr->y) < speedCeil){
         cameraMoving_ptr->y = 0;
     }
-    if(fabs(cameraMoving_ptr->y) < 0.0001){
+    if(fabs(cameraMoving_ptr->y) < speedCeil){
         cameraMoving_ptr->y = 0;
     }
-    if(fabs(cameraTurning_ptr->y) < 0.0001){
+    if(fabs(cameraTurning_ptr->y) < speedCeil){
         cameraTurning_ptr->y = 0;
     }
     return EXIT_SUCCESS;
@@ -81,7 +82,7 @@ int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr, float s
 //-----------------------------------------------------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
     //init
-    DRAW_initSDL(840, 840);
+    DRAW_initSDL(1080, 600);
     DRAW_invertYAxis();
     DRAW_moveOrigin(g_windowWidth / 2, g_windowHeight / 2);
     DRAW_clearRenderer();
@@ -99,18 +100,22 @@ int main(int argc, char* argv[]) {
     point_t origin = {.x = 0, .y = 1, .z = 0};
     SW_initScene(&origin, 2, 2, 1);
     clock_t start = clock();
-    SW_drawScene(&black);
+    SW_drawScene();
+    SW_drawInterface();
     clock_t end = clock();
     double elapsed_time = (double)(end - start) / CLOCKS_PER_SEC;
     printf("Elapsed time : %f secondes\n", elapsed_time);
-    // start main loop
-    SDL_Event e;
-    int quit = 0;
+    // define speeds
+    float speedCeil = 0.0001;
     float speedTurning = 30.0f / TARGET_FPS; // x° per second, n fps => x/n per frame
     float speedMoving = 4.0f / TARGET_FPS; // x unit per second, n fps => x/n per frame
+    float speedFade = pow(2.0f * speedMoving / speedCeil, 1.0f / TARGET_FPS); // from 2 speedMoving to 0 in n seconds
     vector_t cameraMovingSpeed = {};
     vector_t cameraTurningSpeed = {};
     point_t lastMousePos = {};
+    // start main loop
+    SDL_Event e;
+    int quit = 0;
     DRAW_showRenderer();        
     const Uint8* keystates = SDL_GetKeyboardState(NULL); // get keys pressed in real time
     while (!quit) {
@@ -144,11 +149,13 @@ int main(int argc, char* argv[]) {
                 if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
                     int newWidth = e.window.data1;
                     int newHeight = e.window.data2;
-                    g_windowWidth = newHeight;
+                    g_windowWidth = newWidth;
                     g_windowHeight = newHeight;
-                    DRAW_moveOrigin(newWidth / 2, g_windowHeight / 2);
+                    g_pixelWidth = newHeight;
+                    g_pixelHeight = newHeight;
+                    DRAW_moveOrigin(g_windowWidth / 2, g_windowHeight / 2);
                     DRAW_clearRenderer();
-                    SW_drawScene(&black);
+                    SW_drawScene();
                     DRAW_showRenderer();
                 }
             }
@@ -157,7 +164,7 @@ int main(int argc, char* argv[]) {
         if(cameraMovingSpeed.x != 0 || cameraMovingSpeed.y != 0 || cameraMovingSpeed.z != 0||
            cameraTurningSpeed.x != 0 || cameraTurningSpeed.y != 0 || cameraTurningSpeed.z != 0
         ){
-            updateScene(&cameraMovingSpeed, &cameraTurningSpeed, speedMoving, speedTurning, &black);
+            updateScene(&cameraMovingSpeed, &cameraTurningSpeed, speedMoving, speedTurning, speedFade, speedCeil);
         }
         Uint32 frameTime = SDL_GetTicks() - frameStart;
         if (frameTime < FRAME_DELAY) {

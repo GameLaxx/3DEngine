@@ -25,9 +25,9 @@ int point3DtoPixel(point_t* point_ptr, point_t* ret_ptr){
     }
 
     ret_ptr->x = (point_ptr->x * g_context.viewportDistance) / point_ptr->z *
-                 ((float)g_windowWidth / g_context.viewportWidth);
+                 ((float)g_pixelWidth / g_context.viewportWidth);
     ret_ptr->y = (point_ptr->y * g_context.viewportDistance) / point_ptr->z *
-                 ((float)g_windowHeight / g_context.viewportHeight);
+                 ((float)g_pixelHeight / g_context.viewportHeight);
     ret_ptr->z = g_context.viewportDistance;
     return EXIT_SUCCESS;
 }
@@ -116,39 +116,52 @@ int SW_clearScene(){
     return EXIT_SUCCESS;
 }
 
-int SW_drawScene(rgba_t* color_ptr){
+int SW_drawScene(){
     vector_t translateVector = {};
     COO_linearTransformation(&g_context.origin, -1, NULL, 0, &translateVector);
-    for(int x = g_context.origin.x - g_context.renderDistance; x <= g_context.origin.x + g_context.renderDistance; x++){
-        // XZ plan
-        point_t p1WorldXZ = {.x = x, .y = 0, .z = g_context.origin.z - g_context.renderDistance};
-        point_t p2WorldXZ = {.x = x, .y = 0, .z = g_context.origin.z + g_context.renderDistance};
-        drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, color_ptr);
-        // XY plan
-        point_t p1WorldXY = {.x = x, .y = g_context.origin.y - g_context.renderDistance, .z = 0};
-        point_t p2WorldXY = {.x = x, .y = g_context.origin.y + g_context.renderDistance, .z = 0};
-        drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, color_ptr);
-    }
+    rgba_t gray = {211,211,211,0};
+    rgba_t red = {.red = 255};
+    rgba_t green = {.green = 255};
     for(int z = g_context.origin.z - g_context.renderDistance; z <= g_context.origin.z + g_context.renderDistance; z++){
         // XZ
         point_t p1WorldXZ = {.x = g_context.origin.x - g_context.renderDistance, .y = 0, .z = z};
         point_t p2WorldXZ = {.x = g_context.origin.x + g_context.renderDistance, .y = 0, .z = z};
-        drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, color_ptr);
-        // YZ
-        point_t p1WorldYZ = {.x = 0, .y = g_context.origin.y - g_context.renderDistance, .z = z};
-        point_t p2WorldYZ = {.x = 0, .y = g_context.origin.y + g_context.renderDistance, .z = z};
-        drawGrid(&p1WorldYZ, &p2WorldYZ, &translateVector, color_ptr);
+        drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, &gray);
+        // // YZ
+        // point_t p1WorldYZ = {.x = 0, .y = g_context.origin.y - g_context.renderDistance, .z = z};
+        // point_t p2WorldYZ = {.x = 0, .y = g_context.origin.y + g_context.renderDistance, .z = z};
+        // drawGrid(&p1WorldYZ, &p2WorldYZ, &translateVector, &black);
     }
-    for(int y = g_context.origin.y - g_context.renderDistance; y <= g_context.origin.y + g_context.renderDistance; y++){
-        // YZ plan
-        point_t p1WorldYZ = {.x = 0, .y = y, .z = g_context.origin.z - g_context.renderDistance};
-        point_t p2WorldYZ = {.x = 0, .y = y, .z = g_context.origin.z + g_context.renderDistance};
-        drawGrid(&p1WorldYZ, &p2WorldYZ, &translateVector, color_ptr);
-        // XY plan
-        point_t p1WorldXY = {.x = g_context.origin.x - g_context.renderDistance, .y = y, .z = 0};
-        point_t p2WorldXY = {.x = g_context.origin.x + g_context.renderDistance, .y = y, .z = 0};
-        drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, color_ptr);
+    // for(int y = g_context.origin.y - g_context.renderDistance; y <= g_context.origin.y + g_context.renderDistance; y++){
+    //     // YZ plan
+    //     point_t p1WorldYZ = {.x = 0, .y = y, .z = g_context.origin.z - g_context.renderDistance};
+    //     point_t p2WorldYZ = {.x = 0, .y = y, .z = g_context.origin.z + g_context.renderDistance};
+    //     drawGrid(&p1WorldYZ, &p2WorldYZ, &translateVector, &black);
+    //     // XY plan
+    //     point_t p1WorldXY = {.x = g_context.origin.x - g_context.renderDistance, .y = y, .z = 0};
+    //     point_t p2WorldXY = {.x = g_context.origin.x + g_context.renderDistance, .y = y, .z = 0};
+    //     drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, (y == 0) ? &red : &black);
+    // }
+    int y = 0;
+    point_t p1WorldXY = {.x = g_context.origin.x - g_context.renderDistance, .y = y, .z = 0};
+    point_t p2WorldXY = {.x = g_context.origin.x + g_context.renderDistance, .y = y, .z = 0};
+    drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, (y == 0) ? &red : &gray);
+    for(int x = g_context.origin.x - g_context.renderDistance; x <= g_context.origin.x + g_context.renderDistance; x++){
+        // XZ plan
+        point_t p1WorldXZ = {.x = x, .y = 0, .z = g_context.origin.z - g_context.renderDistance};
+        point_t p2WorldXZ = {.x = x, .y = 0, .z = g_context.origin.z + g_context.renderDistance};
+        drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, (x == 0) ? &green : &gray);
+        // // XY plan
+        // point_t p1WorldXY = {.x = x, .y = g_context.origin.y - g_context.renderDistance, .z = 0};
+        // point_t p2WorldXY = {.x = x, .y = g_context.origin.y + g_context.renderDistance, .z = 0};
+        // drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, &black);
     }
     
     return EXIT_SUCCESS;
+}
+
+int SW_drawInterface(){
+    rgba_t black = {36,36,36,255};
+    DRAW_rectangleFill(-g_xShift, -g_yShift, (g_windowWidth - g_pixelWidth) / 2,g_windowHeight, &black);
+    DRAW_rectangleFill((g_windowWidth + g_pixelWidth) / 2 - g_xShift, -g_yShift, (g_windowWidth - g_pixelWidth) / 2,g_windowHeight, &black);
 }
