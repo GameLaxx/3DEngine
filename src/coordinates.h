@@ -54,6 +54,8 @@ enum COO_factorType_e{
  */
 int COO_copyCoordinates(coordinate_t* coo1_ptr, coordinate_t* ret_ptr);
 
+int COO_translatePoint(point_t* point_ptr, vector_t* vector_ptr);
+
 /**
  * @brief Apply a factor to a vector using +,-,/ or * computations. This computation is in-place.
  * 

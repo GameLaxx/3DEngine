@@ -1,14 +1,18 @@
 # Variables
 CC = gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -g -I$(SRC_DIR) -I$(RAST_DIR) -I$(SOFT_DIR)
 LDFLAGS = -lSDL2 -lSDL2_ttf -lm
 SRC_DIR = src
+RAST_DIR = $(SRC_DIR)/Rasterization
+SOFT_DIR = $(SRC_DIR)/Software
 BUILD_DIR = obj
 TEST_DIR = tests/unitary
 
 # Source files
-SRC_FILES = $(filter-out $(SRC_DIR)/main.c, $(wildcard $(SRC_DIR)/*.c))
-OBJ_FILES = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC_FILES))
+SRC_FILES = $(filter-out $(SRC_DIR)/main.c, $(wildcard $(SRC_DIR)/*.c)) \
+            $(wildcard $(RAST_DIR)/*.c) \
+            $(wildcard $(SOFT_DIR)/*.c)
+OBJ_FILES = $(patsubst %.c,$(BUILD_DIR)/%.o,$(notdir $(SRC_FILES)))
 
 # Default target
 all: main
@@ -18,7 +22,11 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 # Compiling object files (excluding main.c)
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
+$(BUILD_DIR)/%.o: $(RAST_DIR)/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
+$(BUILD_DIR)/%.o: $(SOFT_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
 
 # Main target

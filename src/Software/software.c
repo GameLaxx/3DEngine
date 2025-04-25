@@ -10,13 +10,6 @@ sceneContext_t g_context;
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
-int translatePoint(point_t* point_ptr, vector_t* vector_ptr){
-    point_ptr->x += vector_ptr->x;
-    point_ptr->y += vector_ptr->y;
-    point_ptr->z += vector_ptr->z;
-    return EXIT_SUCCESS;
-}
-
 int point3DtoPixel(point_t* point_ptr, point_t* ret_ptr){
     if(!ret_ptr || !point_ptr){
         return EXIT_FAILURE;
@@ -64,8 +57,8 @@ int drawGrid(point_t* p1World_ptr, point_t* p2World_ptr, vector_t* translateVect
     vector_t leftPlan = {.x = 0.7071, .z = 0.7071};
     vector_t topPlan = {.y = -0.7071, .z = 0.7071};
     vector_t bottomPlan = {.y = 0.7071, .z = 0.7071};
-    translatePoint(p1World_ptr, translateVector_ptr);
-    translatePoint(p2World_ptr, translateVector_ptr);
+    COO_translatePoint(p1World_ptr, translateVector_ptr);
+    COO_translatePoint(p2World_ptr, translateVector_ptr);
     COO_rotationVectorProduct(p1World_ptr, g_context.angleRotation[0], g_context.angleRotation[1], g_context.angleRotation[2]);
     COO_rotationVectorProduct(p2World_ptr, g_context.angleRotation[0], g_context.angleRotation[1], g_context.angleRotation[2]);
     // clip front plan

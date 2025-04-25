@@ -23,6 +23,13 @@ int COO_copyCoordinates(coordinate_t* coo1_ptr, coordinate_t* ret_ptr){
     return EXIT_SUCCESS;
 }
 
+int COO_translatePoint(point_t* point_ptr, vector_t* vector_ptr){
+    point_ptr->x += vector_ptr->x;
+    point_ptr->y += vector_ptr->y;
+    point_ptr->z += vector_ptr->z;
+    return EXIT_SUCCESS;
+}
+
 int COO_lambdaProduct(coordinate_t* coo_ptr, float factor, int type){
     if(factor == 0){
         return EXIT_FAILURE;
