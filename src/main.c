@@ -116,6 +116,7 @@ int main(int argc, char* argv[]) {
     // start main loop
     SDL_Event e;
     int quit = 0;
+    int sliding = 0; // allow to know if currently sliding with mouse
     DRAW_showRenderer();        
     const Uint8* keystates = SDL_GetKeyboardState(NULL); // get keys pressed in real time
     while (!quit) {
@@ -126,14 +127,22 @@ int main(int argc, char* argv[]) {
             }
             
             if(e.type == SDL_MOUSEBUTTONDOWN){
+                if(e.button.button == SDL_BUTTON_LEFT){
+                    sliding = 0;
+                }
+            }
+            if(e.type == SDL_MOUSEBUTTONDOWN){
                 if (e.button.button == SDL_BUTTON_LEFT) {
+                    if(e.button.x > (g_windowWidth - g_pixelWidth) / 2 && e.button.x < (g_windowWidth + g_pixelWidth) / 2){
+                        sliding = 1;
+                    }
                     lastMousePos.x = e.button.x;
                     lastMousePos.y = e.button.y;
                 }
             }
 
             if(e.type == SDL_MOUSEMOTION){
-                if (e.motion.state & SDL_BUTTON_LMASK) {
+                if (e.motion.state & SDL_BUTTON_LMASK && sliding) {
                     if(fabs(e.motion.x - lastMousePos.x) <= 1 && fabs(e.motion.y - lastMousePos.y) >= 1){
                         cameraMovingSpeed.y += speedMoving * (e.motion.y - lastMousePos.y);
                     }else if(fabs(e.motion.x - lastMousePos.x) > 1){
