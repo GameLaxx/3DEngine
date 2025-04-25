@@ -15,6 +15,11 @@
 
 //-----------------------------------------------------------------------------------------------------------------------
 // Typedefs
+// Macros
+//-----------------------------------------------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------------------------------
+// Typedefs
 //-----------------------------------------------------------------------------------------------------------------------
 typedef struct rgba_s rgba_t;
 typedef int (*rectangleFunction)(SDL_Renderer*, const SDL_Rect*);
@@ -92,6 +97,28 @@ int DRAW_moveOrigin(int x, int y);
  * @return int 
  */
 int DRAW_invertYAxis();
+
+/* Color functions */
+/**
+ * @brief Return the default color of the background.
+ * 
+ * @param ret_ptr The variable in which the result is stored.
+ * 
+ * @return The newly allocated color.
+ */
+int DRAW_initBackgroundColor(rgba_t* ret_ptr);
+
+/**
+ * @brief Compute the new color given an intensity.
+ * 
+ * @param color_ptr The color that will be used as a base.
+ * @param intensity The intensity (<0 completely black, 1 the initial color, >1 can lead to full white).
+ * @param ret_ptr The variable in which the result is stored.
+ * @return The newly allocated color.
+ */
+int DRAW_addIntensity(rgba_t* color_ptr, float intensity, rgba_t* ret_ptr);
+
+void DRAW_computeReflection(rgba_t* localColor_ptr, rgba_t* recursiveColor_ptr, float reflection);
 
 /* Color functions */
 /**

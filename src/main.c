@@ -121,6 +121,7 @@ int main(int argc, char* argv[]) {
     // start main loop
     SDL_Event e;
     int quit = 0;
+    float speed = 2.0f / TARGET_FPS; // x unit per second, n fps => x/n per frame
     int sliding = 0; // allow to know if currently sliding with mouse
     DRAW_showRenderer();        
     const Uint8* keystates = SDL_GetKeyboardState(NULL); // get keys pressed in real time
