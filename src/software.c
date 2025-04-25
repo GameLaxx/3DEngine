@@ -2,6 +2,7 @@
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
 #include "software.h"
+#include "interface.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
@@ -158,10 +159,4 @@ int SW_drawScene(){
     }
     
     return EXIT_SUCCESS;
-}
-
-int SW_drawInterface(){
-    rgba_t black = {36,36,36,255};
-    DRAW_rectangleFill(-g_xShift, -g_yShift, (g_windowWidth - g_pixelWidth) / 2,g_windowHeight, &black);
-    DRAW_rectangleFill((g_windowWidth + g_pixelWidth) / 2 - g_xShift, -g_yShift, (g_windowWidth - g_pixelWidth) / 2,g_windowHeight, &black);
 }

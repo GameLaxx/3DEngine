@@ -1,32 +1,38 @@
-/* software.h
- * date : 23/04/2025 (dd/mm/yy)
+/* interface.h
+ * date : 25/04/2025 (dd/mm/yy)
  * author : tboisse
 */
-#ifndef SOFTWARE_H
-#define SOFTWARE_H
+#ifndef INTERFACE_H
+#define INTERFACE_H
 //-----------------------------------------------------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
-#include "coordinates.h"
 #include "draw.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------------------------------------------------
-
+#define MAX_BOXES 10
 //-----------------------------------------------------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------------------------------------------------
-typedef struct sceneContext_s sceneContext_t;
+typedef struct meshBox_s meshBox_t;
+typedef struct interface_s interface_t;
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
 //-----------------------------------------------------------------------------------------------------------------------
-struct sceneContext_s{
-    point_t origin;
-    int viewportWidth;
-    int viewportHeight;
-    int viewportDistance;
-    float renderDistance;
-    float angleRotation[3];
+struct meshBox_s {
+    int x;
+    int y;
+    int width;
+    int height;
+    int margin;
+    int padding;
+    char* name;
+};
+
+struct interface_s{
+    meshBox_t* boxes_ptr;
+    int numberBoxes;
 };
 //-----------------------------------------------------------------------------------------------------------------------
 // Enums
@@ -35,24 +41,21 @@ struct sceneContext_s{
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
-extern sceneContext_t g_context;
+extern interface_t g_interface;
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
+int IF_initInterface();
 
-/**
- * @brief Set up the context variables.
- * 
- * @param origin Origin point of the camera.
- * @param vW Viewport width.
- * @param vH Viewport height.
- * @param vD Viewport distance from the camera.
- * @return int
- */
-int SW_initScene(point_t* origin, int vW, int vH, int vD);
+int IF_cleanInterface();
 
-int SW_clearScene();
+int IF_updateInterface();
 
-int SW_drawScene();
+int IF_drawInterface();
 
-#endif /* SOFTWARE_H */
+int IF_drawMeshBoxes();
+
+int IF_clickMeshBox(int xMouse, int yMouse);
+int IF_hoverMeshBox(int xMouse, int yMouse);
+
+#endif /* INTERFACE_H */

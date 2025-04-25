@@ -4,6 +4,7 @@
 #include <time.h>
 #include "draw.h"
 #include "coordinates.h"
+#include "interface.h"
 #include "software.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
@@ -86,25 +87,29 @@ int main(int argc, char* argv[]) {
     DRAW_invertYAxis();
     DRAW_moveOrigin(g_windowWidth / 2, g_windowHeight / 2);
     DRAW_clearRenderer();
-    rgba_t red = {255,0,0,255};
-    rgba_t blue = {0,0,255,255};
-    rgba_t green = {0,255,0,255};
-    rgba_t yellow = {255,255,0,255};
-    rgba_t purple = {255,0,255,255};
-    rgba_t brown = {255,160,0,255};
-    rgba_t light_gray = {160,160,160,255};
-    rgba_t dark_gray = {80,80,80,255};
-    rgba_t white = {255,255,255,255};
-    rgba_t black = {0,0,0,255};
+    // rgba_t red = {255,0,0,255};
+    // rgba_t blue = {0,0,255,255};
+    // rgba_t green = {0,255,0,255};
+    // rgba_t yellow = {255,255,0,255};
+    // rgba_t purple = {255,0,255,255};
+    // rgba_t brown = {255,160,0,255};
+    // rgba_t light_gray = {160,160,160,255};
+    // rgba_t dark_gray = {80,80,80,255};
+    // rgba_t white = {255,255,255,255};
+    // rgba_t black = {0,0,0,255};
     // Define scene variables
     point_t origin = {.x = 0, .y = 1, .z = 0};
     SW_initScene(&origin, 2, 2, 1);
+    IF_initInterface();
     clock_t start = clock();
     SW_drawScene();
-    SW_drawInterface();
+    IF_drawInterface();
     clock_t end = clock();
     double elapsed_time = (double)(end - start) / CLOCKS_PER_SEC;
     printf("Elapsed time : %f secondes\n", elapsed_time);
+    // define cursors
+    SDL_Cursor *arrowCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    SDL_Cursor *clickCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
     // define speeds
     float speedCeil = 0.0001;
     float speedTurning = 30.0f / TARGET_FPS; // x° per second, n fps => x/n per frame
@@ -126,7 +131,7 @@ int main(int argc, char* argv[]) {
                 quit = 1;
             }
             
-            if(e.type == SDL_MOUSEBUTTONDOWN){
+            if(e.type == SDL_MOUSEBUTTONUP){
                 if(e.button.button == SDL_BUTTON_LEFT){
                     sliding = 0;
                 }
@@ -138,6 +143,7 @@ int main(int argc, char* argv[]) {
                     }
                     lastMousePos.x = e.button.x;
                     lastMousePos.y = e.button.y;
+                    IF_clickMeshBox(lastMousePos.x, lastMousePos.y);
                 }
             }
 
@@ -152,6 +158,7 @@ int main(int argc, char* argv[]) {
                     lastMousePos.x = e.motion.x;
                     lastMousePos.y = e.motion.y;
                 }
+                SDL_SetCursor((IF_hoverMeshBox(e.motion.x, e.motion.y) == EXIT_SUCCESS) ? clickCursor : arrowCursor);
             }
             
             if (e.type == SDL_WINDOWEVENT) {
@@ -164,6 +171,8 @@ int main(int argc, char* argv[]) {
                     g_pixelHeight = newHeight;
                     DRAW_moveOrigin(g_windowWidth / 2, g_windowHeight / 2);
                     DRAW_clearRenderer();
+                    IF_updateInterface();
+                    IF_drawInterface();
                     SW_drawScene();
                     DRAW_showRenderer();
                 }
@@ -183,6 +192,7 @@ int main(int argc, char* argv[]) {
 
     DRAW_cleanRenderer();
     SW_clearScene();
+    IF_cleanInterface();
     printf("End\n");
     return 0;
 }
