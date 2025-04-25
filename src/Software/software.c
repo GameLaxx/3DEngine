@@ -2,11 +2,10 @@
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
 #include "software.h"
-#include "interface.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
-sceneContext_t g_context;
+sceneContext_t g_sceneContext;
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
@@ -18,11 +17,11 @@ int point3DtoPixel(point_t* point_ptr, point_t* ret_ptr){
         return EXIT_FAILURE;
     }
 
-    ret_ptr->x = (point_ptr->x * g_context.viewportDistance) / point_ptr->z *
-                 ((float)g_pixelWidth / g_context.viewportWidth);
-    ret_ptr->y = (point_ptr->y * g_context.viewportDistance) / point_ptr->z *
-                 ((float)g_pixelHeight / g_context.viewportHeight);
-    ret_ptr->z = g_context.viewportDistance;
+    ret_ptr->x = (point_ptr->x * g_sceneContext.viewportDistance) / point_ptr->z *
+                 ((float)g_pixelWidth / g_sceneContext.viewportWidth);
+    ret_ptr->y = (point_ptr->y * g_sceneContext.viewportDistance) / point_ptr->z *
+                 ((float)g_pixelHeight / g_sceneContext.viewportHeight);
+    ret_ptr->z = g_sceneContext.viewportDistance;
     return EXIT_SUCCESS;
 }
 
@@ -59,14 +58,14 @@ int drawGrid(point_t* p1World_ptr, point_t* p2World_ptr, vector_t* translateVect
     vector_t bottomPlan = {.y = 0.7071, .z = 0.7071};
     COO_translatePoint(p1World_ptr, translateVector_ptr);
     COO_translatePoint(p2World_ptr, translateVector_ptr);
-    COO_rotationVectorProduct(p1World_ptr, g_context.angleRotation[0], g_context.angleRotation[1], g_context.angleRotation[2]);
-    COO_rotationVectorProduct(p2World_ptr, g_context.angleRotation[0], g_context.angleRotation[1], g_context.angleRotation[2]);
+    COO_rotationVectorProduct(p1World_ptr, g_sceneContext.angleRotation[0], g_sceneContext.angleRotation[1], g_sceneContext.angleRotation[2]);
+    COO_rotationVectorProduct(p2World_ptr, g_sceneContext.angleRotation[0], g_sceneContext.angleRotation[1], g_sceneContext.angleRotation[2]);
     // clip front plan
-    if(clipLine(p1World_ptr, p2World_ptr, &frontPlan, g_context.viewportDistance) == EXIT_FAILURE){
+    if(clipLine(p1World_ptr, p2World_ptr, &frontPlan, g_sceneContext.viewportDistance) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
     // clip back plan
-    if(clipLine(p1World_ptr, p2World_ptr, &backPlan, -g_context.renderDistance) == EXIT_FAILURE){
+    if(clipLine(p1World_ptr, p2World_ptr, &backPlan, -g_sceneContext.renderDistance) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
     // clip left plan
@@ -98,11 +97,11 @@ int drawGrid(point_t* p1World_ptr, point_t* p2World_ptr, vector_t* translateVect
 // Global Functions
 //-----------------------------------------------------------------------------------------------------------------------
 int SW_initScene(point_t* origin, int vW, int vH, int vD){
-    g_context.origin = *origin;
-    g_context.viewportWidth = vW;
-    g_context.viewportHeight = vH;
-    g_context.viewportDistance = vD;
-    g_context.renderDistance = 20;
+    g_sceneContext.origin = *origin;
+    g_sceneContext.viewportWidth = vW;
+    g_sceneContext.viewportHeight = vH;
+    g_sceneContext.viewportDistance = vD;
+    g_sceneContext.renderDistance = 20;
     return EXIT_SUCCESS;
 }
 
@@ -112,42 +111,42 @@ int SW_clearScene(){
 
 int SW_drawScene(){
     vector_t translateVector = {};
-    COO_linearTransformation(&g_context.origin, -1, NULL, 0, &translateVector);
+    COO_linearTransformation(&g_sceneContext.origin, -1, NULL, 0, &translateVector);
     rgba_t gray = {211,211,211,0};
     rgba_t red = {.red = 255};
     rgba_t green = {.green = 255};
-    for(int z = g_context.origin.z - g_context.renderDistance; z <= g_context.origin.z + g_context.renderDistance; z++){
+    for(int z = g_sceneContext.origin.z - g_sceneContext.renderDistance; z <= g_sceneContext.origin.z + g_sceneContext.renderDistance; z++){
         // XZ
-        point_t p1WorldXZ = {.x = g_context.origin.x - g_context.renderDistance, .y = 0, .z = z};
-        point_t p2WorldXZ = {.x = g_context.origin.x + g_context.renderDistance, .y = 0, .z = z};
+        point_t p1WorldXZ = {.x = g_sceneContext.origin.x - g_sceneContext.renderDistance, .y = 0, .z = z};
+        point_t p2WorldXZ = {.x = g_sceneContext.origin.x + g_sceneContext.renderDistance, .y = 0, .z = z};
         drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, &gray);
         // // YZ
-        // point_t p1WorldYZ = {.x = 0, .y = g_context.origin.y - g_context.renderDistance, .z = z};
-        // point_t p2WorldYZ = {.x = 0, .y = g_context.origin.y + g_context.renderDistance, .z = z};
+        // point_t p1WorldYZ = {.x = 0, .y = g_sceneContext.origin.y - g_sceneContext.renderDistance, .z = z};
+        // point_t p2WorldYZ = {.x = 0, .y = g_sceneContext.origin.y + g_sceneContext.renderDistance, .z = z};
         // drawGrid(&p1WorldYZ, &p2WorldYZ, &translateVector, &black);
     }
-    // for(int y = g_context.origin.y - g_context.renderDistance; y <= g_context.origin.y + g_context.renderDistance; y++){
+    // for(int y = g_sceneContext.origin.y - g_sceneContext.renderDistance; y <= g_sceneContext.origin.y + g_sceneContext.renderDistance; y++){
     //     // YZ plan
-    //     point_t p1WorldYZ = {.x = 0, .y = y, .z = g_context.origin.z - g_context.renderDistance};
-    //     point_t p2WorldYZ = {.x = 0, .y = y, .z = g_context.origin.z + g_context.renderDistance};
+    //     point_t p1WorldYZ = {.x = 0, .y = y, .z = g_sceneContext.origin.z - g_sceneContext.renderDistance};
+    //     point_t p2WorldYZ = {.x = 0, .y = y, .z = g_sceneContext.origin.z + g_sceneContext.renderDistance};
     //     drawGrid(&p1WorldYZ, &p2WorldYZ, &translateVector, &black);
     //     // XY plan
-    //     point_t p1WorldXY = {.x = g_context.origin.x - g_context.renderDistance, .y = y, .z = 0};
-    //     point_t p2WorldXY = {.x = g_context.origin.x + g_context.renderDistance, .y = y, .z = 0};
+    //     point_t p1WorldXY = {.x = g_sceneContext.origin.x - g_sceneContext.renderDistance, .y = y, .z = 0};
+    //     point_t p2WorldXY = {.x = g_sceneContext.origin.x + g_sceneContext.renderDistance, .y = y, .z = 0};
     //     drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, (y == 0) ? &red : &black);
     // }
     int y = 0;
-    point_t p1WorldXY = {.x = g_context.origin.x - g_context.renderDistance, .y = y, .z = 0};
-    point_t p2WorldXY = {.x = g_context.origin.x + g_context.renderDistance, .y = y, .z = 0};
+    point_t p1WorldXY = {.x = g_sceneContext.origin.x - g_sceneContext.renderDistance, .y = y, .z = 0};
+    point_t p2WorldXY = {.x = g_sceneContext.origin.x + g_sceneContext.renderDistance, .y = y, .z = 0};
     drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, (y == 0) ? &red : &gray);
-    for(int x = g_context.origin.x - g_context.renderDistance; x <= g_context.origin.x + g_context.renderDistance; x++){
+    for(int x = g_sceneContext.origin.x - g_sceneContext.renderDistance; x <= g_sceneContext.origin.x + g_sceneContext.renderDistance; x++){
         // XZ plan
-        point_t p1WorldXZ = {.x = x, .y = 0, .z = g_context.origin.z - g_context.renderDistance};
-        point_t p2WorldXZ = {.x = x, .y = 0, .z = g_context.origin.z + g_context.renderDistance};
+        point_t p1WorldXZ = {.x = x, .y = 0, .z = g_sceneContext.origin.z - g_sceneContext.renderDistance};
+        point_t p2WorldXZ = {.x = x, .y = 0, .z = g_sceneContext.origin.z + g_sceneContext.renderDistance};
         drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, (x == 0) ? &green : &gray);
         // // XY plan
-        // point_t p1WorldXY = {.x = x, .y = g_context.origin.y - g_context.renderDistance, .z = 0};
-        // point_t p2WorldXY = {.x = x, .y = g_context.origin.y + g_context.renderDistance, .z = 0};
+        // point_t p1WorldXY = {.x = x, .y = g_sceneContext.origin.y - g_sceneContext.renderDistance, .z = 0};
+        // point_t p2WorldXY = {.x = x, .y = g_sceneContext.origin.y + g_sceneContext.renderDistance, .z = 0};
         // drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, &black);
     }
     

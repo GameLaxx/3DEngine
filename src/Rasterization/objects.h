@@ -17,9 +17,16 @@
 //-----------------------------------------------------------------------------------------------------------------------
 typedef struct mesh_s mesh_t;
 typedef struct object_s object_t;
+typedef struct lightSource_s lightSource_t;
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
 //-----------------------------------------------------------------------------------------------------------------------
+struct lightSource_s{
+    int type;
+    float intensity;
+    point_t carac; //<< could be position or direction
+};
+
 struct mesh_s {
     int verticesCount;
     int trianglesCount;
@@ -48,6 +55,11 @@ enum materialType_e{
     MT_COLOR_UNIFORM = 0,
     MT_COLOR_EACH,
     MT_BITMAP
+};
+enum lightType_e{
+    LT_ambiant = 0,
+    LT_point,
+    LT_directional
 };
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables

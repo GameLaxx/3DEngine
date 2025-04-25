@@ -19,7 +19,7 @@ int updateSpeeds(const Uint8* keystates, vector_t* cameraMoving_ptr, vector_t* c
     if (keystates[SDL_SCANCODE_UP] || keystates[SDL_SCANCODE_SPACE]) {
         cameraMoving_ptr->y += speedMoving;
     }
-    if (keystates[SDL_SCANCODE_DOWN]) {
+    if (keystates[SDL_SCANCODE_DOWN] || keystates[SDL_SCANCODE_LSHIFT]) {
         cameraMoving_ptr->y -= speedMoving;
     }
     if (keystates[SDL_SCANCODE_LEFT]) {
@@ -52,11 +52,11 @@ int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr,
     cameraTurning_ptr->y = fmaxf(fminf(2 * speedTurning, cameraTurning_ptr->y), -2 * speedTurning);
     // rotate and move
     vector_t rotatedSpeed = *cameraMoving_ptr;
-    COO_rotationVectorProduct(&rotatedSpeed, -g_context.angleRotation[0], -g_context.angleRotation[1], -g_context.angleRotation[2]);
-    g_context.origin.x += rotatedSpeed.x;
-    g_context.origin.y += rotatedSpeed.y;
-    g_context.origin.z += rotatedSpeed.z;
-    g_context.angleRotation[1] += cameraTurning_ptr->y;
+    COO_rotationVectorProduct(&rotatedSpeed, -g_sceneContext.angleRotation[0], -g_sceneContext.angleRotation[1], -g_sceneContext.angleRotation[2]);
+    g_sceneContext.origin.x += rotatedSpeed.x;
+    g_sceneContext.origin.y += rotatedSpeed.y;
+    g_sceneContext.origin.z += rotatedSpeed.z;
+    g_sceneContext.angleRotation[1] += cameraTurning_ptr->y;
     SW_drawScene();
     DRAW_showRenderer();
     // clip speed
