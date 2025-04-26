@@ -82,7 +82,7 @@ int RR_initScene(point_t* origin_ptr, int viewportWidth, int viewportHeight, int
 
 int RR_clearScene();
 
-int RR_renderObjects(renderContext_t* context_ptr);
+int RR_renderObjects(renderContext_t* context_ptr, int* indexBuffer_ptr);
 
 int RR_renderGrids(renderContext_t* context_ptr);
 

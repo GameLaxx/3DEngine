@@ -196,7 +196,7 @@ float triangleArea(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr){
 
 int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, 
     float intensityP1, float intensityP2, float intensityP3,
-    rgba_t* color_ptr, renderContext_t* context_ptr){
+    rgba_t* color_ptr, renderContext_t* context_ptr, int* indexBuffer_ptr, int index){
     point_t p1 = {};
     point_t p2 = {};
     point_t p3 = {};
@@ -222,7 +222,8 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr,
     rgba_t color = {};
     for (int y = minYs; y <= maxYs; y++) {
     for (int x = minXs; x <= maxXs; x++) {
-        if (x < -g_xShift || y < -g_yShift || x >= g_windowWidth - g_xShift || y >= g_windowHeight - g_yShift) {
+        if (x < (g_windowWidth - g_pixelWidth) / 2 - g_xShift || x >= (g_windowWidth + g_pixelWidth)/2 - g_xShift ||
+            y < -g_yShift || y >= g_pixelHeight - g_yShift ) {
             continue;
         }
         point_t currentPoint = {.x = x + 0.5, .y = y + 0.5, .z = 0};
@@ -241,9 +242,12 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr,
         interpolatedZ = (areaWithout1/totalArea) * p1_ptr->z
                         + (areaWithout2/totalArea) * p2_ptr->z
                         + (areaWithout3/totalArea) * p3_ptr->z;
-        bufferIndex = (y + g_yShift) + (x + g_xShift) * g_windowHeight;
+        bufferIndex = (y + g_yShift) + (x + g_xShift - (g_windowWidth - g_pixelWidth) / 2) * g_pixelHeight;
         if(1.0f / interpolatedZ < context_ptr->zBuffer[bufferIndex]){
             continue; // not the closest to the camera
+        }
+        if(indexBuffer_ptr){
+            indexBuffer_ptr[bufferIndex] = index;
         }
         context_ptr->zBuffer[bufferIndex] = 1.0f / interpolatedZ;
         interpolatedIntensity = (areaWithout1/totalArea) * intensityP1
@@ -408,8 +412,8 @@ int RR_clearScene(renderContext_t* context_ptr){
     return EXIT_SUCCESS;
 }
 
-int RR_renderObjects(renderContext_t* context_ptr){
-    context_ptr->zBuffer = calloc(g_windowHeight * g_windowWidth, sizeof(float));
+int RR_renderObjects(renderContext_t* context_ptr, int* indexBuffer_ptr){
+    context_ptr->zBuffer = calloc(g_pixelHeight * g_pixelWidth, sizeof(float));
     float intensityP1 = 0;
     float intensityP2 = 0;
     float intensityP3 = 0;
@@ -470,9 +474,9 @@ int RR_renderObjects(renderContext_t* context_ptr){
             computeLight(context_ptr, &p3, &normalP3, &rayP3, 40, &intensityP3);
             // fill whole triangle
             if(context_ptr->objects[obj].materialType == MT_COLOR_EACH){
-                fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, &material_ptr[t], context_ptr);
+                fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, &material_ptr[t], context_ptr, indexBuffer_ptr, obj);
             }else if(context_ptr->objects[obj].materialType == MT_COLOR_UNIFORM){
-                fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, material_ptr, context_ptr);
+                fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, material_ptr, context_ptr, indexBuffer_ptr, obj);
             }
             // reset intensity
             intensityP1 = 0;

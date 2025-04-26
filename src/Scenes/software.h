@@ -26,6 +26,7 @@ struct sceneContext_s{
     renderContext_t* context_ptr;
     point_t* cameraPos_ptr;
     float cameraRotation[3];
+    int* indexBuffer_ptr;
 };
 //-----------------------------------------------------------------------------------------------------------------------
 // Enums
