@@ -107,12 +107,13 @@ int point3DtoPixel(point_t* point_ptr, renderContext_t* context_ptr, point_t* re
     }
 
     ret_ptr->x = (point_ptr->x * context_ptr->viewportDistance) / point_ptr->z *
-                 ((float)g_windowWidth / context_ptr->viewportWidth);
+                 ((float)g_pixelWidth / context_ptr->viewportWidth);
     ret_ptr->y = (point_ptr->y * context_ptr->viewportDistance) / point_ptr->z *
-                 ((float)g_windowHeight / context_ptr->viewportHeight);
+                 ((float)g_pixelHeight / context_ptr->viewportHeight);
     ret_ptr->z = context_ptr->viewportDistance;
     return EXIT_SUCCESS;
 }
+
 
 int computeLight(renderContext_t* context_ptr, point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* leavingLightVector_ptr, int specular, float* intensity){
     // leavingLightVector is the ray of light leaving the object and going to the camera. Named V.
@@ -320,7 +321,7 @@ int drawGrid(point_t* p1World_ptr, point_t* p2World_ptr, vector_t* translateVect
     point3DtoPixel(p2World_ptr, context_ptr, &p2Pixel) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
-    DRAW_line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, color_ptr);
+    DRAW_line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, color_ptr); // TODO : replace draw line by draw each pixel with zbuffer
     return EXIT_SUCCESS;
 }
 //-----------------------------------------------------------------------------------------------------------------------

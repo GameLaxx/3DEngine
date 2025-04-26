@@ -22,6 +22,7 @@ int SW_initScene(point_t* origin_ptr, int viewportWidth, int viewportHeight, int
 }
 
 int SW_cleanScene(){
+    RR_clearScene(g_sceneContext.context_ptr);
     free(g_sceneContext.context_ptr);
     free(g_sceneContext.cameraPos_ptr);
     return EXIT_SUCCESS;

@@ -6,6 +6,7 @@
 #include "coordinates.h"
 #include "interface.h"
 #include "Scenes/software.h"
+#include "RenderTools/objects.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
@@ -59,6 +60,7 @@ int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr,
     renderContext_ptr->origin.z += rotatedSpeed.z;
     renderContext_ptr->angleRotation[1] += cameraTurning_ptr->y;
     RR_renderGrids(g_sceneContext.context_ptr);
+    RR_renderObjects(g_sceneContext.context_ptr);
     DRAW_showRenderer();
     // clip speed
     cameraMoving_ptr->x /= speedFade;
@@ -88,22 +90,24 @@ int main(int argc, char* argv[]) {
     DRAW_invertYAxis();
     DRAW_moveOrigin(g_windowWidth / 2, g_windowHeight / 2);
     DRAW_clearRenderer();
-    // rgba_t red = {255,0,0,255};
     rgba_t blue = {0,0,255,255};
-    // rgba_t green = {0,255,0,255};
-    // rgba_t yellow = {255,255,0,255};
-    // rgba_t purple = {255,0,255,255};
-    // rgba_t brown = {255,160,0,255};
     rgba_t light_gray = {160,160,160,255};
-    // rgba_t dark_gray = {80,80,80,255};
     // rgba_t white = {255,255,255,255};
     // rgba_t black = {0,0,0,255};
-    // Define scene variables
+    // Init interface scene
     point_t origin = {.x = 0, .y = 1, .z = 0};
     SW_initScene(&origin, 2, 2, 1, 20);
     IF_initInterface();
+    // Add lights
+    point_t pos1 = {1,4,-4};
+    lightSource_t light1 = {.type=LT_directional, .intensity=0.3, .carac=pos1};
+    lightSource_t light2 = {.type=LT_ambiant, .intensity=0.7};
+    RR_addLight(&light1, g_sceneContext.context_ptr);
+    RR_addLight(&light2, g_sceneContext.context_ptr);
+    // Initial render
     clock_t start = clock();
     RR_renderGrids(g_sceneContext.context_ptr);
+    RR_renderObjects(g_sceneContext.context_ptr);
     IF_drawInterface();
     clock_t end = clock();
     double elapsed_time = (double)(end - start) / CLOCKS_PER_SEC;
@@ -148,6 +152,7 @@ int main(int argc, char* argv[]) {
                     if(meshId > -1){
                         object_t object = {.meshId = meshId, .materialType = MT_COLOR_UNIFORM, .material_ptr = &light_gray, .scale = {1,1,1}};
                         RR_addObject(&object, g_sceneContext.context_ptr);
+                        RR_renderObjects(g_sceneContext.context_ptr);
                     }
                 }
             }
@@ -179,6 +184,7 @@ int main(int argc, char* argv[]) {
                     IF_updateInterface();
                     IF_drawInterface();
                     RR_renderGrids(g_sceneContext.context_ptr);
+                    RR_renderObjects(g_sceneContext.context_ptr);
                     DRAW_showRenderer();
                 }
             }
