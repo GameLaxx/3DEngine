@@ -37,10 +37,10 @@ int getAllMeshVariables(renderContext_t* context_ptr){
     return EXIT_SUCCESS;
 }
 
-int objectSetMatrix(object_t* object_ptr){
-    float rotateX_rad = object_ptr->angleRotation[0] * M_PI / 180;
-    float rotateY_rad = object_ptr->angleRotation[1] * M_PI / 180;
-    float rotateZ_rad = object_ptr->angleRotation[2] * M_PI / 180;
+int objectSetMatrix(object_t* object_ptr, renderContext_t* context_ptr){
+    float rotateX_rad = (object_ptr->angleRotation[0] + context_ptr->angleRotation[0]) * M_PI / 180;
+    float rotateY_rad = (object_ptr->angleRotation[1] + context_ptr->angleRotation[1]) * M_PI / 180;
+    float rotateZ_rad = (object_ptr->angleRotation[2] + context_ptr->angleRotation[2]) * M_PI / 180;
     object_ptr->rotationMatrix[0] = cos(rotateY_rad) * cos(rotateZ_rad);
     object_ptr->rotationMatrix[1] = cos(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) - sin(rotateZ_rad) * cos(rotateX_rad);
     object_ptr->rotationMatrix[2] = sin(rotateZ_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
@@ -427,7 +427,7 @@ int RR_renderObjects(renderContext_t* context_ptr){
     vector_t rayP3 = {};
     rgba_t* material_ptr = NULL;
     for(int obj = 0; obj < context_ptr->objectsCount; obj++){    
-        objectSetMatrix(&context_ptr->objects[obj]);
+        objectSetMatrix(&context_ptr->objects[obj], context_ptr);
         material_ptr = (rgba_t*)context_ptr->objects[obj].material_ptr;
         for(int t = 0; t < context_ptr->objects[obj].mesh->trianglesCount; t++){
             p1 = context_ptr->objects[obj].mesh->vertices_ptr[context_ptr->objects[obj].mesh->indicesVertices_ptr[3 * t]];
@@ -437,6 +437,7 @@ int RR_renderObjects(renderContext_t* context_ptr){
             normalP2 = context_ptr->objects[obj].mesh->normals_ptr[context_ptr->objects[obj].mesh->indicesNormals_ptr[3 * t + 1]];
             normalP3 = context_ptr->objects[obj].mesh->normals_ptr[context_ptr->objects[obj].mesh->indicesNormals_ptr[3 * t + 2]];
             COO_vectorizePoints(&context_ptr->origin, &context_ptr->objects[obj].origin, &translateVector);
+            COO_rotationVectorProduct(&translateVector, context_ptr->angleRotation[0], context_ptr->angleRotation[1], context_ptr->angleRotation[2]);
             // scale the mesh
             scalePoint(&p1, context_ptr->objects[obj].scale);
             scalePoint(&p2, context_ptr->objects[obj].scale);
