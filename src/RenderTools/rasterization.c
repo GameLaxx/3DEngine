@@ -430,6 +430,12 @@ int RR_renderObjects(renderContext_t* context_ptr, int* indexBuffer_ptr){
     vector_t rayP2 = {};
     vector_t rayP3 = {};
     rgba_t* material_ptr = NULL;
+    // reset index buffer
+    if(indexBuffer_ptr){
+        for(int i = 0; i < g_pixelHeight * g_pixelWidth; i++){
+            indexBuffer_ptr[i] = -1;
+        }
+    }
     for(int obj = 0; obj < context_ptr->objectsCount; obj++){    
         objectSetMatrix(&context_ptr->objects[obj], context_ptr);
         material_ptr = (rgba_t*)context_ptr->objects[obj].material_ptr;

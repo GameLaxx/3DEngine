@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
 #include "draw.h"
+#include "RenderTools/objects.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------------------------------------------------
@@ -51,11 +52,15 @@ int IF_cleanInterface();
 
 int IF_updateInterface();
 
-int IF_drawInterface();
+int IF_renderInterfaceLeft();
+int IF_renderInterfaceRight();
+int IF_renderInterface();
 
 int IF_drawMeshBoxes();
 
 int IF_clickMeshBox(int xMouse, int yMouse);
 int IF_hoverMeshBox(int xMouse, int yMouse);
+
+int IF_renderInterfaceObject(object_t* object_ptr);
 
 #endif /* INTERFACE_H */

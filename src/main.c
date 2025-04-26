@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
     clock_t start = clock();
     RR_renderGrids(g_sceneContext.context_ptr);
     RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
-    IF_drawInterface();
+    IF_renderInterface();
     clock_t end = clock();
     double elapsed_time = (double)(end - start) / CLOCKS_PER_SEC;
     printf("Elapsed time : %f secondes\n", elapsed_time);
@@ -141,8 +141,12 @@ int main(int argc, char* argv[]) {
                     sliding = 0;
                     if(e.button.x == lastMousePos.x && e.button.y == lastMousePos.y && 
                         lastMousePos.x > (g_windowWidth - g_pixelWidth) / 2 && lastMousePos.x < (g_windowWidth + g_pixelWidth) / 2){
-                        int bufferIndex = e.button.y + (e.button.x - (g_windowWidth - g_pixelWidth) / 2) * g_pixelHeight;
-                        printf("Clicked on : %i\n", g_sceneContext.indexBuffer_ptr[bufferIndex]);
+                        int bufferIndex = (g_pixelHeight - e.button.y) + (e.button.x - (g_windowWidth - g_pixelWidth) / 2) * g_pixelHeight;
+                        int objectIndex = g_sceneContext.indexBuffer_ptr[bufferIndex];
+                        if(objectIndex != -1){
+                            IF_renderInterfaceRight();
+                            IF_renderInterfaceObject(&g_sceneContext.context_ptr->objects[objectIndex]);
+                        }
                     }
                 }
             }
@@ -187,7 +191,7 @@ int main(int argc, char* argv[]) {
                     DRAW_moveOrigin(g_windowWidth / 2, g_windowHeight / 2);
                     DRAW_clearRenderer();
                     IF_updateInterface();
-                    IF_drawInterface();
+                    IF_renderInterface();
                     RR_renderGrids(g_sceneContext.context_ptr);
                     RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
                     DRAW_showRenderer();

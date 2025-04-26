@@ -72,18 +72,6 @@ int IF_updateInterface(){
     return EXIT_SUCCESS;
 }
 
-int IF_drawInterface(){
-    // draw sides
-    DRAW_rectangleFill(-g_xShift, -g_yShift, (g_windowWidth - g_pixelWidth) / 2, g_windowHeight, &interfaceColor);
-    DRAW_rectangleFill((g_windowWidth + g_pixelWidth) / 2 - g_xShift, -g_yShift, (g_windowWidth - g_pixelWidth) / 2,g_windowHeight, &interfaceColor);
-    // left interface
-    IF_drawMeshBoxes();
-    // right interface
-    DRAW_texte((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 19 / 20 - g_yShift, "Camera", &textColor);
-    DRAW_line((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 9 / 10 - g_yShift, g_windowWidth - g_xShift - 10, g_windowHeight * 9 / 10 - g_yShift, &textColor);
-    return EXIT_SUCCESS;
-}
-
 int IF_drawMeshBoxes(){
     for(int i = 0; i < g_interface.numberBoxes; i++){
         DRAW_rectangleFill(g_interface.boxes_ptr[i].x + g_interface.boxes_ptr[i].margin, g_interface.boxes_ptr[i].y + g_interface.boxes_ptr[i].margin, 
@@ -98,6 +86,25 @@ int IF_drawMeshBoxes(){
             g_interface.boxes_ptr[i].name, &textColor
         );
     }
+    return EXIT_SUCCESS;
+}
+
+int IF_renderInterfaceLeft(){
+    DRAW_rectangleFill(-g_xShift, -g_yShift, (g_windowWidth - g_pixelWidth) / 2, g_windowHeight, &interfaceColor);
+    IF_drawMeshBoxes();
+    return EXIT_SUCCESS;
+}
+
+int IF_renderInterfaceRight(){
+    DRAW_rectangleFill((g_windowWidth + g_pixelWidth) / 2 - g_xShift, -g_yShift, (g_windowWidth - g_pixelWidth) / 2,g_windowHeight, &interfaceColor);
+    DRAW_texte((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 19 / 20 - g_yShift, "Camera", &textColor);
+    DRAW_line((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 9 / 10 - g_yShift, g_windowWidth - g_xShift - 10, g_windowHeight * 9 / 10 - g_yShift, &textColor);
+    return EXIT_SUCCESS;
+}
+
+int IF_renderInterface(){
+    IF_renderInterfaceLeft();
+    IF_renderInterfaceRight();
     return EXIT_SUCCESS;
 }
 
@@ -131,4 +138,10 @@ int IF_hoverMeshBox(int xMouse, int yMouse){
         }
     }
     return EXIT_FAILURE;
+}
+
+int IF_renderInterfaceObject(object_t* object_ptr){
+    DRAW_texte((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 17 / 20 - g_yShift, g_interface.boxes_ptr[object_ptr->meshId].name, &textColor);
+    DRAW_texte((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 16 / 20 - g_yShift, "Position", &textColor);
+    return EXIT_SUCCESS;
 }
