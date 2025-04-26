@@ -7,10 +7,26 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
-rasterizationContext_t g_rastContext;
+
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
+int objectSetMatrix(object_t* object_ptr){
+    float rotateX_rad = object_ptr->angleRotation[0] * M_PI / 180;
+    float rotateY_rad = object_ptr->angleRotation[1] * M_PI / 180;
+    float rotateZ_rad = object_ptr->angleRotation[2] * M_PI / 180;
+    object_ptr->rotationMatrix[0] = cos(rotateY_rad) * cos(rotateZ_rad);
+    object_ptr->rotationMatrix[1] = cos(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) - sin(rotateZ_rad) * cos(rotateX_rad);
+    object_ptr->rotationMatrix[2] = sin(rotateZ_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
+    object_ptr->rotationMatrix[3] = cos(rotateY_rad) * sin(rotateZ_rad);
+    object_ptr->rotationMatrix[4] = sin(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * cos(rotateX_rad);
+    object_ptr->rotationMatrix[5] = - cos(rotateZ_rad) * sin(rotateX_rad) + sin(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
+    object_ptr->rotationMatrix[6] = -sin(rotateY_rad);
+    object_ptr->rotationMatrix[7] = cos(rotateY_rad) * sin(rotateX_rad);
+    object_ptr->rotationMatrix[8] = cos(rotateY_rad) * cos(rotateX_rad);
+    return EXIT_SUCCESS;
+}
+
 int scalePoint(point_t* point_ptr, float scale_ptr[3]){
     point_ptr->x *= scale_ptr[0];
     point_ptr->y *= scale_ptr[1];
@@ -56,7 +72,7 @@ int backFaceCulling(vector_t* normal_ptr, vector_t* ray_ptr){
     return EXIT_SUCCESS;
 }
 
-int point3DtoPixel_r(point_t* point_ptr, point_t* ret_ptr){
+int point3DtoPixel(point_t* point_ptr, renderContext_t* context_ptr, point_t* ret_ptr){
     if(!ret_ptr || !point_ptr){
         return EXIT_FAILURE;
     }
@@ -64,52 +80,52 @@ int point3DtoPixel_r(point_t* point_ptr, point_t* ret_ptr){
         return EXIT_FAILURE;
     }
 
-    ret_ptr->x = (point_ptr->x * g_rastContext.viewportDistance) / point_ptr->z *
-                 ((float)g_windowWidth / g_rastContext.viewportWidth);
-    ret_ptr->y = (point_ptr->y * g_rastContext.viewportDistance) / point_ptr->z *
-                 ((float)g_windowHeight / g_rastContext.viewportHeight);
-    ret_ptr->z = g_rastContext.viewportDistance;
+    ret_ptr->x = (point_ptr->x * context_ptr->viewportDistance) / point_ptr->z *
+                 ((float)g_windowWidth / context_ptr->viewportWidth);
+    ret_ptr->y = (point_ptr->y * context_ptr->viewportDistance) / point_ptr->z *
+                 ((float)g_windowHeight / context_ptr->viewportHeight);
+    ret_ptr->z = context_ptr->viewportDistance;
     return EXIT_SUCCESS;
 }
 
-int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* leavingLightVector_ptr, int specular, float* intensity){
+int computeLight(renderContext_t* context_ptr, point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* leavingLightVector_ptr, int specular, float* intensity){
     // leavingLightVector is the ray of light leaving the object and going to the camera. Named V.
     // commingLightVector is the ray of light leaving the object and going to the source. Named L.
     // normal vector is a unitary vector.
     for(int i = 0; i < MAX_LIGHTS; i++){
-        if(g_rastContext.lights[i].intensity <= 0) continue;
+        if(context_ptr->lights[i].intensity <= 0) continue;
         // ambiant light just add intensity
-        if(g_rastContext.lights[i].type == LT_ambiant){
-            *intensity += g_rastContext.lights[i].intensity;
+        if(context_ptr->lights[i].type == LT_ambiant){
+            *intensity += context_ptr->lights[i].intensity;
             continue;
         }
         // get direction of light
         vector_t commingLightVector = {}; 
-        if(g_rastContext.lights[i].type == LT_directional){
-            if(COO_copyCoordinates(&g_rastContext.lights[i].carac, &commingLightVector) == EXIT_FAILURE){ //! I think its in the wrond direction
+        if(context_ptr->lights[i].type == LT_directional){
+            if(COO_copyCoordinates(&context_ptr->lights[i].carac, &commingLightVector) == EXIT_FAILURE){ //! I think its in the wrond direction
                 printf("*-* Error : Problem occured while getting carac of light %i.\n", i);
                 return EXIT_FAILURE;
             }
-        }else if(g_rastContext.lights[i].type == LT_point){
-            if(COO_vectorizePoints(pointOnObject_ptr, &g_rastContext.lights[i].carac, &commingLightVector) == EXIT_FAILURE){
+        }else if(context_ptr->lights[i].type == LT_point){
+            if(COO_vectorizePoints(pointOnObject_ptr, &context_ptr->lights[i].carac, &commingLightVector) == EXIT_FAILURE){
                 printf("*-* Error : Problem occured while getting carac of light %i.\n", i);
                 return EXIT_FAILURE;
             }
         }else{                
-            printf("*-* Warning : Unknwon type of light %i : type %i.\n", i, g_rastContext.lights[i].type);
+            printf("*-* Warning : Unknwon type of light %i : type %i.\n", i, context_ptr->lights[i].type);
             continue;
         }
         // get for point if shadow or not
         // float tmin = 0.000001;
-        // float tmax = (g_rastContext.lights[i].type == LT_directional) ? TMAX_ALL : TMAX_POINT;
+        // float tmax = (context_ptr->lights[i].type == LT_directional) ? TMAX_ALL : TMAX_POINT;
         // object_t* closestObject_ptr = NULL;
         // float closestValue = tmax + 1;
         // float currentValue = tmax + 1;
         
         // for(int i = 0; i < MAX_OBJECTS; i++){
-        //     currentValue = OBJ_intersectObject(pointOnObject_ptr, &commingLightVector, &g_rastContext.objects[i], tmin, tmax);
+        //     currentValue = OBJ_intersectObject(pointOnObject_ptr, &commingLightVector, &context_ptr->objects[i], tmin, tmax);
         //     if(currentValue < closestValue && currentValue > tmin && currentValue < tmax){
-        //         closestObject_ptr = &g_rastContext.objects[i];
+        //         closestObject_ptr = &context_ptr->objects[i];
         //         closestValue = currentValue;
         //     }
         // }
@@ -127,7 +143,7 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
         //------------- Specular reflection
         // Check if object is matte or shiny
         if(specular <= 0){
-            *intensity += g_rastContext.lights[i].intensity * coeff;
+            *intensity += context_ptr->lights[i].intensity * coeff;
             continue;
         }
         vector_t reflectionVector = {};
@@ -142,7 +158,7 @@ int computeLight(point_t* pointOnObject_ptr, vector_t* normal_ptr, vector_t* lea
             coeff += pow(angleReflectionLight, specular);
         }
         // add to intensity
-        *intensity += g_rastContext.lights[i].intensity * coeff;
+        *intensity += context_ptr->lights[i].intensity * coeff;
     }
     return EXIT_SUCCESS;
 }
@@ -153,13 +169,13 @@ float triangleArea(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr){
 
 int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr, 
     float intensityP1, float intensityP2, float intensityP3,
-    rgba_t* color_ptr){
+    rgba_t* color_ptr, renderContext_t* context_ptr){
     point_t p1 = {};
     point_t p2 = {};
     point_t p3 = {};
-    if(point3DtoPixel_r(p1_ptr, &p1) == EXIT_FAILURE || 
-       point3DtoPixel_r(p2_ptr, &p2) == EXIT_FAILURE ||
-       point3DtoPixel_r(p3_ptr, &p3) == EXIT_FAILURE){
+    if(point3DtoPixel(p1_ptr, context_ptr, &p1) == EXIT_FAILURE || 
+       point3DtoPixel(p2_ptr, context_ptr, &p2) == EXIT_FAILURE ||
+       point3DtoPixel(p3_ptr, context_ptr, &p3) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
     float totalArea = fabsf(triangleArea(&p1, &p2, &p3));
@@ -199,10 +215,10 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr,
                         + (areaWithout2/totalArea) * p2_ptr->z
                         + (areaWithout3/totalArea) * p3_ptr->z;
         bufferIndex = (y + g_yShift) + (x + g_xShift) * g_windowHeight;
-        if(1.0f / interpolatedZ < g_rastContext.zBuffer[bufferIndex]){
+        if(1.0f / interpolatedZ < context_ptr->zBuffer[bufferIndex]){
             continue; // not the closest to the camera
         }
-        g_rastContext.zBuffer[bufferIndex] = 1.0f / interpolatedZ;
+        context_ptr->zBuffer[bufferIndex] = 1.0f / interpolatedZ;
         interpolatedIntensity = (areaWithout1/totalArea) * intensityP1
         + (areaWithout2/totalArea) * intensityP2
         + (areaWithout3/totalArea) * intensityP3;
@@ -213,105 +229,158 @@ int fillTriangle(point_t* p1_ptr, point_t* p2_ptr, point_t* p3_ptr,
     return EXIT_SUCCESS;
 }
 
-int objectSetMatrix(object_t* object_ptr){
-    float rotateX_rad = object_ptr->angleRotation[0] * M_PI / 180;
-    float rotateY_rad = object_ptr->angleRotation[1] * M_PI / 180;
-    float rotateZ_rad = object_ptr->angleRotation[2] * M_PI / 180;
-    object_ptr->rotationMatrix[0] = cos(rotateY_rad) * cos(rotateZ_rad);
-    object_ptr->rotationMatrix[1] = cos(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) - sin(rotateZ_rad) * cos(rotateX_rad);
-    object_ptr->rotationMatrix[2] = sin(rotateZ_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
-    object_ptr->rotationMatrix[3] = cos(rotateY_rad) * sin(rotateZ_rad);
-    object_ptr->rotationMatrix[4] = sin(rotateZ_rad) * sin(rotateY_rad) * sin(rotateX_rad) + cos(rotateZ_rad) * cos(rotateX_rad);
-    object_ptr->rotationMatrix[5] = - cos(rotateZ_rad) * sin(rotateX_rad) + sin(rotateZ_rad) * sin(rotateY_rad) * cos(rotateX_rad);
-    object_ptr->rotationMatrix[6] = -sin(rotateY_rad);
-    object_ptr->rotationMatrix[7] = cos(rotateY_rad) * sin(rotateX_rad);
-    object_ptr->rotationMatrix[8] = cos(rotateY_rad) * cos(rotateX_rad);
+int clipLine(point_t* p1_ptr, point_t* p2_ptr, vector_t* plane_ptr, float offset){
+    float d1 = COO_scalarProduct(p1_ptr, plane_ptr) - offset;
+    float d2 = COO_scalarProduct(p2_ptr, plane_ptr) - offset;
+    if(d1 < 0 && d2 < 0){
+        return EXIT_FAILURE;
+    }
+    if(d1 >= 0 && d2 >= 0){
+        return EXIT_SUCCESS;
+    }
+    float t = d1 / (d1 - d2); // d1 != d2 because conditions above
+    point_t intersection = {};
+    COO_linearTransformation(p1_ptr, 1 - t, p2_ptr, t, &intersection);
+    if(d1 >= 0){ // p2 is behind the plane
+        p2_ptr->x = intersection.x;
+        p2_ptr->y = intersection.y;
+        p2_ptr->z = intersection.z;
+    }else{
+        p1_ptr->x = intersection.x;
+        p1_ptr->y = intersection.y;
+        p1_ptr->z = intersection.z;
+    }
+    return EXIT_SUCCESS;
+}
+
+int drawGrid(point_t* p1World_ptr, point_t* p2World_ptr, vector_t* translateVector_ptr, rgba_t* color_ptr, renderContext_t* context_ptr){
+    vector_t frontPlan = {.z = 1};
+    vector_t backPlan = {.z = -1};
+    vector_t rightPlan = {.x = -0.7071, .z = 0.7071};
+    vector_t leftPlan = {.x = 0.7071, .z = 0.7071};
+    vector_t topPlan = {.y = -0.7071, .z = 0.7071};
+    vector_t bottomPlan = {.y = 0.7071, .z = 0.7071};
+    COO_translatePoint(p1World_ptr, translateVector_ptr);
+    COO_translatePoint(p2World_ptr, translateVector_ptr);
+    COO_rotationVectorProduct(p1World_ptr, context_ptr->angleRotation[0], context_ptr->angleRotation[1], context_ptr->angleRotation[2]);
+    COO_rotationVectorProduct(p2World_ptr, context_ptr->angleRotation[0], context_ptr->angleRotation[1], context_ptr->angleRotation[2]);
+    // clip front plan
+    if(clipLine(p1World_ptr, p2World_ptr, &frontPlan, context_ptr->viewportDistance) == EXIT_FAILURE){
+        return EXIT_FAILURE;
+    }
+    // clip back plan
+    if(clipLine(p1World_ptr, p2World_ptr, &backPlan, -context_ptr->renderDistance) == EXIT_FAILURE){
+        return EXIT_FAILURE;
+    }
+    // clip left plan
+    if(clipLine(p1World_ptr, p2World_ptr, &leftPlan, 0) == EXIT_FAILURE){
+        return EXIT_FAILURE;
+    }
+    // clip right plan
+    if(clipLine(p1World_ptr, p2World_ptr, &rightPlan, 0) == EXIT_FAILURE){
+        return EXIT_FAILURE;
+    }
+    // clip top plan
+    if(clipLine(p1World_ptr, p2World_ptr, &topPlan, 0) == EXIT_FAILURE){
+        return EXIT_FAILURE;
+    }
+    // clip bottom plan
+    if(clipLine(p1World_ptr, p2World_ptr, &bottomPlan, 0) == EXIT_FAILURE){
+        return EXIT_FAILURE;
+    }
+    point_t p1Pixel = {};
+    point_t p2Pixel = {};
+    if(point3DtoPixel(p1World_ptr, &p1Pixel) == EXIT_FAILURE || 
+    point3DtoPixel(p2World_ptr, &p2Pixel) == EXIT_FAILURE){
+        return EXIT_FAILURE;
+    }
+    DRAW_line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, color_ptr);
     return EXIT_SUCCESS;
 }
 //-----------------------------------------------------------------------------------------------------------------------
 // Global Functions
 //-----------------------------------------------------------------------------------------------------------------------
-int RR_addMesh(mesh_t* mesh_ptr){
-    if(g_rastContext.meshesCount == MAX_MESHES){
+int RR_addMesh(mesh_t* mesh_ptr, renderContext_t* context_ptr){
+    if(context_ptr->meshesCount == MAX_MESHES){
         return EXIT_FAILURE;
     }
     if(mesh_ptr->id >= MAX_MESH_IDS){
         return EXIT_FAILURE;
     }
-    g_rastContext.meshesId[mesh_ptr->id] = g_rastContext.meshesCount + 1; // calloc set at 0, so if 0 then nothing has been added ==> easier to compare hence + 1
-    g_rastContext.meshes[g_rastContext.meshesCount] = *mesh_ptr;
-    g_rastContext.meshesCount++;
+    context_ptr->meshesId[mesh_ptr->id] = context_ptr->meshesCount + 1; // calloc set at 0, so if 0 then nothing has been added ==> easier to compare hence + 1
+    context_ptr->meshes[context_ptr->meshesCount] = *mesh_ptr;
+    context_ptr->meshesCount++;
     return EXIT_SUCCESS;
 }
 
-int RR_addLight(lightSource_t* light){
-    if(g_rastContext.lightsCount == MAX_LIGHTS) return EXIT_FAILURE;
+int RR_addLight(lightSource_t* light, renderContext_t* context_ptr){
+    if(context_ptr->lightsCount == MAX_LIGHTS) return EXIT_FAILURE;
     if(light->intensity <= 0) return EXIT_FAILURE;
     for(int i = 0; i < MAX_LIGHTS; i++){
-        if(g_rastContext.lights[i].intensity <= 0){
-            g_rastContext.lights[i] = *light;
+        if(context_ptr->lights[i].intensity <= 0){
+            context_ptr->lights[i] = *light;
             break;
         }
-        if(g_rastContext.lights[i].type == LT_ambiant && light->type == LT_ambiant){
-            g_rastContext.lights[i].intensity += light->intensity;
-            if(g_rastContext.lights[i].intensity > 1){
-                g_rastContext.lights[i].intensity = 1;
+        if(context_ptr->lights[i].type == LT_ambiant && light->type == LT_ambiant){
+            context_ptr->lights[i].intensity += light->intensity;
+            if(context_ptr->lights[i].intensity > 1){
+                context_ptr->lights[i].intensity = 1;
             }
-            g_rastContext.lightsCount -= 1; //compensate the fact that we did not add a light
+            context_ptr->lightsCount -= 1; // compensate the fact that we did not add a light
             break;
         }
     }
-    g_rastContext.lightsCount += 1;
+    context_ptr->lightsCount += 1;
     return 0;
 }
 
-int RR_addObject(object_t* object_ptr){
-    if(g_rastContext.objectsCount == MAX_OBJECTS){
+int RR_addObject(object_t* object_ptr, renderContext_t* context_ptr){
+    if(context_ptr->objectsCount == MAX_OBJECTS){
         return EXIT_FAILURE;
     }
     if(object_ptr->meshId < 0 || object_ptr->meshId >= MAX_MESH_IDS){
         return EXIT_FAILURE;
     }
-    if(g_rastContext.meshesId[object_ptr->meshId] == 0){
+    if(context_ptr->meshesId[object_ptr->meshId] == 0){
         return EXIT_FAILURE;
     }
-    g_rastContext.objects[g_rastContext.objectsCount] = *object_ptr;
-    g_rastContext.objects[g_rastContext.objectsCount].mesh = &g_rastContext.meshes[g_rastContext.meshesId[object_ptr->meshId] - 1]; // because added with + 1
-    g_rastContext.objectsCount++;
+    context_ptr->objects[context_ptr->objectsCount] = *object_ptr;
+    context_ptr->objects[context_ptr->objectsCount].mesh = &context_ptr->meshes[context_ptr->meshesId[object_ptr->meshId] - 1]; // because added with + 1
+    context_ptr->objectsCount++;
     return EXIT_SUCCESS;
 }
 
-int RR_initScene(point_t* origin, int vW, int vH, int vD){
-    g_rastContext.origin = *origin;
-    g_rastContext.viewportWidth = vW;
-    g_rastContext.viewportHeight = vH;
-    g_rastContext.viewportDistance = vD;
-    g_rastContext.meshesCount = 0;
-    g_rastContext.objectsCount = 0;
-    g_rastContext.zBuffer = NULL;
+int RR_initScene(point_t* origin, int vW, int vH, int vD, renderContext_t* context_ptr){
+    context_ptr->origin = *origin;
+    context_ptr->viewportWidth = vW;
+    context_ptr->viewportHeight = vH;
+    context_ptr->viewportDistance = vD;
+    context_ptr->meshesCount = 0;
+    context_ptr->objectsCount = 0;
+    context_ptr->zBuffer = NULL;
     return EXIT_SUCCESS;
 }
 
-int RR_clearScene(){
-    for(int i = 0; i < g_rastContext.meshesCount; i++){
-        if(g_rastContext.meshes[i].vertices_ptr){
-            free(g_rastContext.meshes[i].vertices_ptr);
+int RR_clearScene(renderContext_t* context_ptr){
+    for(int i = 0; i < context_ptr->meshesCount; i++){
+        if(context_ptr->meshes[i].vertices_ptr){
+            free(context_ptr->meshes[i].vertices_ptr);
         }
-        if(g_rastContext.meshes[i].indicesVertices_ptr){
-            free(g_rastContext.meshes[i].indicesVertices_ptr);
+        if(context_ptr->meshes[i].indicesVertices_ptr){
+            free(context_ptr->meshes[i].indicesVertices_ptr);
         }
-        if(g_rastContext.meshes[i].normals_ptr){
-            free(g_rastContext.meshes[i].normals_ptr);
+        if(context_ptr->meshes[i].normals_ptr){
+            free(context_ptr->meshes[i].normals_ptr);
         }
-        if(g_rastContext.meshes[i].indicesNormals_ptr){
-            free(g_rastContext.meshes[i].indicesNormals_ptr);
+        if(context_ptr->meshes[i].indicesNormals_ptr){
+            free(context_ptr->meshes[i].indicesNormals_ptr);
         }
     }
     return EXIT_SUCCESS;
 }
 
-int RR_drawScene(){
-    g_rastContext.zBuffer = calloc(g_windowHeight * g_windowWidth, sizeof(float));
+int RR_renderObjects(renderContext_t* context_ptr){
+    context_ptr->zBuffer = calloc(g_windowHeight * g_windowWidth, sizeof(float));
     float intensityP1 = 0;
     float intensityP2 = 0;
     float intensityP3 = 0;
@@ -328,28 +397,28 @@ int RR_drawScene(){
     vector_t rayP2 = {};
     vector_t rayP3 = {};
     rgba_t* material_ptr = NULL;
-    for(int obj = 0; obj < g_rastContext.objectsCount; obj++){    
-        objectSetMatrix(&g_rastContext.objects[obj]);
-        material_ptr = (rgba_t*)g_rastContext.objects[obj].material_ptr;
-        for(int t = 0; t < g_rastContext.objects[obj].mesh->trianglesCount; t++){
-            p1 = g_rastContext.objects[obj].mesh->vertices_ptr[g_rastContext.objects[obj].mesh->indicesVertices_ptr[3 * t]];
-            p2 = g_rastContext.objects[obj].mesh->vertices_ptr[g_rastContext.objects[obj].mesh->indicesVertices_ptr[3 * t + 1]];
-            p3 = g_rastContext.objects[obj].mesh->vertices_ptr[g_rastContext.objects[obj].mesh->indicesVertices_ptr[3 * t + 2]];
-            normalP1 = g_rastContext.objects[obj].mesh->normals_ptr[g_rastContext.objects[obj].mesh->indicesNormals_ptr[3 * t]];
-            normalP2 = g_rastContext.objects[obj].mesh->normals_ptr[g_rastContext.objects[obj].mesh->indicesNormals_ptr[3 * t + 1]];
-            normalP3 = g_rastContext.objects[obj].mesh->normals_ptr[g_rastContext.objects[obj].mesh->indicesNormals_ptr[3 * t + 2]];
-            COO_vectorizePoints(&g_rastContext.origin, &g_rastContext.objects[obj].origin, &translateVector);
+    for(int obj = 0; obj < context_ptr->objectsCount; obj++){    
+        objectSetMatrix(&context_ptr->objects[obj]);
+        material_ptr = (rgba_t*)context_ptr->objects[obj].material_ptr;
+        for(int t = 0; t < context_ptr->objects[obj].mesh->trianglesCount; t++){
+            p1 = context_ptr->objects[obj].mesh->vertices_ptr[context_ptr->objects[obj].mesh->indicesVertices_ptr[3 * t]];
+            p2 = context_ptr->objects[obj].mesh->vertices_ptr[context_ptr->objects[obj].mesh->indicesVertices_ptr[3 * t + 1]];
+            p3 = context_ptr->objects[obj].mesh->vertices_ptr[context_ptr->objects[obj].mesh->indicesVertices_ptr[3 * t + 2]];
+            normalP1 = context_ptr->objects[obj].mesh->normals_ptr[context_ptr->objects[obj].mesh->indicesNormals_ptr[3 * t]];
+            normalP2 = context_ptr->objects[obj].mesh->normals_ptr[context_ptr->objects[obj].mesh->indicesNormals_ptr[3 * t + 1]];
+            normalP3 = context_ptr->objects[obj].mesh->normals_ptr[context_ptr->objects[obj].mesh->indicesNormals_ptr[3 * t + 2]];
+            COO_vectorizePoints(&context_ptr->origin, &context_ptr->objects[obj].origin, &translateVector);
             // scale the mesh
-            scalePoint(&p1, g_rastContext.objects[obj].scale);
-            scalePoint(&p2, g_rastContext.objects[obj].scale);
-            scalePoint(&p3, g_rastContext.objects[obj].scale);
+            scalePoint(&p1, context_ptr->objects[obj].scale);
+            scalePoint(&p2, context_ptr->objects[obj].scale);
+            scalePoint(&p3, context_ptr->objects[obj].scale);
             // rotate it
-            rotatePoint(&p1, g_rastContext.objects[obj].rotationMatrix);
-            rotatePoint(&p2, g_rastContext.objects[obj].rotationMatrix);
-            rotatePoint(&p3, g_rastContext.objects[obj].rotationMatrix);
-            rotatePoint(&normalP1, g_rastContext.objects[obj].rotationMatrix);
-            rotatePoint(&normalP2, g_rastContext.objects[obj].rotationMatrix);
-            rotatePoint(&normalP3, g_rastContext.objects[obj].rotationMatrix);
+            rotatePoint(&p1, context_ptr->objects[obj].rotationMatrix);
+            rotatePoint(&p2, context_ptr->objects[obj].rotationMatrix);
+            rotatePoint(&p3, context_ptr->objects[obj].rotationMatrix);
+            rotatePoint(&normalP1, context_ptr->objects[obj].rotationMatrix);
+            rotatePoint(&normalP2, context_ptr->objects[obj].rotationMatrix);
+            rotatePoint(&normalP3, context_ptr->objects[obj].rotationMatrix);
             // translate it
             COO_translatePoint(&p1, &translateVector);
             COO_translatePoint(&p2, &translateVector);
@@ -362,18 +431,18 @@ int RR_drawScene(){
                 continue; // is facing backward
             }
             // normal of each point
-            COO_vectorizePoints(&p1, &g_rastContext.origin, &rayP1);
-            COO_vectorizePoints(&p2, &g_rastContext.origin, &rayP2);
-            COO_vectorizePoints(&p3, &g_rastContext.origin, &rayP3);
+            COO_vectorizePoints(&p1, &context_ptr->origin, &rayP1);
+            COO_vectorizePoints(&p2, &context_ptr->origin, &rayP2);
+            COO_vectorizePoints(&p3, &context_ptr->origin, &rayP3);
             // light intensity on each point
-            computeLight(&p1, &normalP1, &rayP1, 40, &intensityP1);
-            computeLight(&p2, &normalP2, &rayP2, 40, &intensityP2);
-            computeLight(&p3, &normalP3, &rayP3, 40, &intensityP3);
+            computeLight(context_ptr, &p1, &normalP1, &rayP1, 40, &intensityP1);
+            computeLight(context_ptr, &p2, &normalP2, &rayP2, 40, &intensityP2);
+            computeLight(context_ptr, &p3, &normalP3, &rayP3, 40, &intensityP3);
             // fill whole triangle
-            if(g_rastContext.objects[obj].materialType == MT_COLOR_EACH){
-                fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, &material_ptr[t]);
-            }else if(g_rastContext.objects[obj].materialType == MT_COLOR_UNIFORM){
-                fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, material_ptr);
+            if(context_ptr->objects[obj].materialType == MT_COLOR_EACH){
+                fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, &material_ptr[t], context_ptr);
+            }else if(context_ptr->objects[obj].materialType == MT_COLOR_UNIFORM){
+                fillTriangle(&p1, &p2, &p3, intensityP1, intensityP2, intensityP3, material_ptr, context_ptr);
             }
             // reset intensity
             intensityP1 = 0;
@@ -381,7 +450,51 @@ int RR_drawScene(){
             intensityP3 = 0;
         }
     }
-    free(g_rastContext.zBuffer);
-    g_rastContext.zBuffer = NULL;
+    free(context_ptr->zBuffer);
+    context_ptr->zBuffer = NULL;
+    return EXIT_SUCCESS;
+}
+
+int RR_renderGrids(renderContext_t* context_ptr){
+    vector_t translateVector = {};
+    COO_linearTransformation(&context_ptr->origin, -1, NULL, 0, &translateVector);
+    rgba_t gray = {211,211,211,0};
+    rgba_t red = {.red = 255};
+    rgba_t green = {.green = 255};
+    for(int z = context_ptr->origin.z - context_ptr->renderDistance; z <= context_ptr->origin.z + context_ptr->renderDistance; z++){
+        // XZ
+        point_t p1WorldXZ = {.x = context_ptr->origin.x - context_ptr->renderDistance, .y = 0, .z = z};
+        point_t p2WorldXZ = {.x = context_ptr->origin.x + context_ptr->renderDistance, .y = 0, .z = z};
+        drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, &gray, context_ptr);
+        // // YZ
+        // point_t p1WorldYZ = {.x = 0, .y = context_ptr->origin.y - context_ptr->renderDistance, .z = z};
+        // point_t p2WorldYZ = {.x = 0, .y = context_ptr->origin.y + context_ptr->renderDistance, .z = z};
+        // drawGrid(&p1WorldYZ, &p2WorldYZ, &translateVector, &black, context_ptr);
+    }
+    // for(int y = context_ptr->origin.y - context_ptr->renderDistance; y <= context_ptr->origin.y + context_ptr->renderDistance; y++){
+    //     // YZ plan
+    //     point_t p1WorldYZ = {.x = 0, .y = y, .z = context_ptr->origin.z - context_ptr->renderDistance};
+    //     point_t p2WorldYZ = {.x = 0, .y = y, .z = context_ptr->origin.z + context_ptr->renderDistance};
+    //     drawGrid(&p1WorldYZ, &p2WorldYZ, &translateVector, &black, context_ptr);
+    //     // XY plan
+    //     point_t p1WorldXY = {.x = context_ptr->origin.x - context_ptr->renderDistance, .y = y, .z = 0};
+    //     point_t p2WorldXY = {.x = context_ptr->origin.x + context_ptr->renderDistance, .y = y, .z = 0};
+    //     drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, (y == 0) ? &red : &black, context_ptr);
+    // }
+    int y = 0;
+    point_t p1WorldXY = {.x = context_ptr->origin.x - context_ptr->renderDistance, .y = y, .z = 0};
+    point_t p2WorldXY = {.x = context_ptr->origin.x + context_ptr->renderDistance, .y = y, .z = 0};
+    drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, (y == 0) ? &red : &gray, context_ptr);
+    for(int x = context_ptr->origin.x - context_ptr->renderDistance; x <= context_ptr->origin.x + context_ptr->renderDistance; x++){
+        // XZ plan
+        point_t p1WorldXZ = {.x = x, .y = 0, .z = context_ptr->origin.z - context_ptr->renderDistance};
+        point_t p2WorldXZ = {.x = x, .y = 0, .z = context_ptr->origin.z + context_ptr->renderDistance};
+        drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, (x == 0) ? &green : &gray, context_ptr);
+        // // XY plan
+        // point_t p1WorldXY = {.x = x, .y = context_ptr->origin.y - context_ptr->renderDistance, .z = 0};
+        // point_t p2WorldXY = {.x = x, .y = context_ptr->origin.y + context_ptr->renderDistance, .z = 0};
+        // drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, &black, context_ptr);
+    }
+    
     return EXIT_SUCCESS;
 }

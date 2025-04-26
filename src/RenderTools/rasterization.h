@@ -20,15 +20,17 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------------------------------------------------
-typedef struct rasterizationContext_s rasterizationContext_t;
+typedef struct renderContext_s renderContext_t;
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
 //-----------------------------------------------------------------------------------------------------------------------
-struct rasterizationContext_s{
+struct renderContext_s{
     point_t origin;
     int viewportWidth;
     int viewportHeight;
     int viewportDistance;
+    float renderDistance;
+    float angleRotation[3];
     int meshesCount;
     int objectsCount;
     int lightsCount;
@@ -45,12 +47,11 @@ struct rasterizationContext_s{
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
-extern rasterizationContext_t g_rastContext;
+
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
-
-int RR_addMesh(mesh_t* mesh_ptr);
+int RR_addMesh(mesh_t* mesh_ptr, renderContext_t* context_ptr);
 
 /**
  * @brief Add a light to the context.
@@ -58,7 +59,7 @@ int RR_addMesh(mesh_t* mesh_ptr);
  * @param light The light to add.
  * @return int 
  */
-int RR_addLight(lightSource_t* light);
+int RR_addLight(lightSource_t* light, renderContext_t* context_ptr);
 
 /**
  * @brief Add an object to the context.
@@ -66,7 +67,7 @@ int RR_addLight(lightSource_t* light);
  * @param object_ptr The object to add.
  * @return int 
  */
-int RR_addObject(object_t* object_ptr);
+int RR_addObject(object_t* object_ptr, renderContext_t* context_ptr);
 
 /**
  * @brief Set up the context variables.
@@ -77,10 +78,12 @@ int RR_addObject(object_t* object_ptr);
  * @param vD Viewport distance from the camera.
  * @return int
  */
-int RR_initScene(point_t* origin, int vW, int vH, int vD);
+int RR_initScene(point_t* origin, int vW, int vH, int vD, renderContext_t* context_ptr);
 
 int RR_clearScene();
 
-int RR_drawScene();
+int RR_renderObjects(renderContext_t* context_ptr);
+
+int RR_renderGrids(renderContext_t* context_ptr);
 
 #endif /* RASTERIZATION_H */
