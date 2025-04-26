@@ -5,7 +5,7 @@
 #include "draw.h"
 #include "coordinates.h"
 #include "interface.h"
-#include "software.h"
+#include "Scenes/software.h"
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
@@ -45,6 +45,7 @@ int updateSpeeds(const Uint8* keystates, vector_t* cameraMoving_ptr, vector_t* c
 
 int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr, 
     float speedMoving, float speedTurning, float speedFade, float speedCeil){
+    renderContext_t* renderContext_ptr = g_sceneContext.context_ptr;
     DRAW_clearRenderer();
     cameraMoving_ptr->x = fmaxf(fminf(2 * speedMoving, cameraMoving_ptr->x), -2 * speedMoving);
     cameraMoving_ptr->y = fmaxf(fminf(2 * speedMoving, cameraMoving_ptr->y), -2 * speedMoving);
@@ -52,12 +53,12 @@ int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr,
     cameraTurning_ptr->y = fmaxf(fminf(2 * speedTurning, cameraTurning_ptr->y), -2 * speedTurning);
     // rotate and move
     vector_t rotatedSpeed = *cameraMoving_ptr;
-    COO_rotationVectorProduct(&rotatedSpeed, -g_sceneContext.angleRotation[0], -g_sceneContext.angleRotation[1], -g_sceneContext.angleRotation[2]);
-    g_sceneContext.origin.x += rotatedSpeed.x;
-    g_sceneContext.origin.y += rotatedSpeed.y;
-    g_sceneContext.origin.z += rotatedSpeed.z;
-    g_sceneContext.angleRotation[1] += cameraTurning_ptr->y;
-    SW_drawScene();
+    COO_rotationVectorProduct(&rotatedSpeed, -renderContext_ptr->angleRotation[0], -renderContext_ptr->angleRotation[1], -renderContext_ptr->angleRotation[2]);
+    renderContext_ptr->origin.x += rotatedSpeed.x;
+    renderContext_ptr->origin.y += rotatedSpeed.y;
+    renderContext_ptr->origin.z += rotatedSpeed.z;
+    renderContext_ptr->angleRotation[1] += cameraTurning_ptr->y;
+    RR_renderGrids(g_sceneContext.context_ptr);
     DRAW_showRenderer();
     // clip speed
     cameraMoving_ptr->x /= speedFade;
@@ -99,10 +100,10 @@ int main(int argc, char* argv[]) {
     // rgba_t black = {0,0,0,255};
     // Define scene variables
     point_t origin = {.x = 0, .y = 1, .z = 0};
-    SW_initScene(&origin, 2, 2, 1);
+    SW_initScene(&origin, 2, 2, 1, 20);
     IF_initInterface();
     clock_t start = clock();
-    SW_drawScene();
+    RR_renderGrids(g_sceneContext.context_ptr);
     IF_drawInterface();
     clock_t end = clock();
     double elapsed_time = (double)(end - start) / CLOCKS_PER_SEC;
@@ -146,7 +147,7 @@ int main(int argc, char* argv[]) {
                     int meshId = IF_clickMeshBox(lastMousePos.x, lastMousePos.y);
                     if(meshId > -1){
                         object_t object = {.meshId = meshId, .materialType = MT_COLOR_UNIFORM, .material_ptr = &light_gray, .scale = {1,1,1}};
-                        SW_addObject(&object);
+                        RR_addObject(&object, g_sceneContext.context_ptr);
                     }
                 }
             }
@@ -177,7 +178,7 @@ int main(int argc, char* argv[]) {
                     DRAW_clearRenderer();
                     IF_updateInterface();
                     IF_drawInterface();
-                    SW_drawScene();
+                    RR_renderGrids(g_sceneContext.context_ptr);
                     DRAW_showRenderer();
                 }
             }
@@ -195,7 +196,7 @@ int main(int argc, char* argv[]) {
     }
 
     DRAW_cleanRenderer();
-    SW_clearScene();
+    SW_cleanScene();
     IF_cleanInterface();
     printf("End\n");
     return 0;

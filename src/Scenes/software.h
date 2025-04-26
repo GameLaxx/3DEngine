@@ -39,4 +39,8 @@ extern sceneContext_t g_sceneContext;
 // Functions
 //-----------------------------------------------------------------------------------------------------------------------
 
+int SW_initScene(point_t* origin_ptr, int viewportWidth, int viewportHeight, int viewportDistance, int renderDistance);
+
+int SW_cleanScene();
+
 #endif /* SOFTWARE_H */

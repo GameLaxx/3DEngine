@@ -1,6 +1,7 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------------------------------------------------
+#include <dirent.h>
 #include <math.h>
 #include "rasterization.h"
 #include "draw.h"
@@ -11,6 +12,31 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // Local Functions
 //-----------------------------------------------------------------------------------------------------------------------
+int getAllMeshVariables(renderContext_t* context_ptr){
+    const char *dossier = "./meshes/";
+    struct dirent *ent;
+    DIR *dir = opendir(dossier);
+
+    if (dir == NULL) {
+        perror("opendir");
+        return EXIT_FAILURE;
+    }
+
+    while ((ent = readdir(dir)) != NULL) {
+        if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0 && context_ptr->meshesCount < MAX_MESHES) {
+            char* filePath_ptr = calloc(strlen(dossier) + strlen(ent->d_name), sizeof(char));
+            strcpy(filePath_ptr, dossier);
+            strcat(filePath_ptr, ent->d_name);
+            mesh_t currentMesh = {};
+            OBJ_readObjFile(filePath_ptr, context_ptr->meshesCount, &currentMesh);
+            RR_addMesh(&currentMesh, context_ptr);
+        }
+    }
+
+    closedir(dir);
+    return EXIT_SUCCESS;
+}
+
 int objectSetMatrix(object_t* object_ptr){
     float rotateX_rad = object_ptr->angleRotation[0] * M_PI / 180;
     float rotateY_rad = object_ptr->angleRotation[1] * M_PI / 180;
@@ -290,8 +316,8 @@ int drawGrid(point_t* p1World_ptr, point_t* p2World_ptr, vector_t* translateVect
     }
     point_t p1Pixel = {};
     point_t p2Pixel = {};
-    if(point3DtoPixel(p1World_ptr, &p1Pixel) == EXIT_FAILURE || 
-    point3DtoPixel(p2World_ptr, &p2Pixel) == EXIT_FAILURE){
+    if(point3DtoPixel(p1World_ptr, context_ptr, &p1Pixel) == EXIT_FAILURE || 
+    point3DtoPixel(p2World_ptr, context_ptr, &p2Pixel) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
     DRAW_line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, color_ptr);
@@ -350,14 +376,16 @@ int RR_addObject(object_t* object_ptr, renderContext_t* context_ptr){
     return EXIT_SUCCESS;
 }
 
-int RR_initScene(point_t* origin, int vW, int vH, int vD, renderContext_t* context_ptr){
-    context_ptr->origin = *origin;
-    context_ptr->viewportWidth = vW;
-    context_ptr->viewportHeight = vH;
-    context_ptr->viewportDistance = vD;
+int RR_initScene(point_t* origin_ptr, int viewportWidth, int viewportHeight, int viewportDistance, int renderDistance, renderContext_t* context_ptr){
+    context_ptr->origin = *origin_ptr;
+    context_ptr->viewportWidth = viewportWidth;
+    context_ptr->viewportHeight = viewportHeight;
+    context_ptr->viewportDistance = viewportDistance;
+    context_ptr->renderDistance = renderDistance;
     context_ptr->meshesCount = 0;
     context_ptr->objectsCount = 0;
     context_ptr->zBuffer = NULL;
+    getAllMeshVariables(context_ptr);
     return EXIT_SUCCESS;
 }
 

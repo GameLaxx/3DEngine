@@ -78,7 +78,7 @@ int RR_addObject(object_t* object_ptr, renderContext_t* context_ptr);
  * @param vD Viewport distance from the camera.
  * @return int
  */
-int RR_initScene(point_t* origin, int vW, int vH, int vD, renderContext_t* context_ptr);
+int RR_initScene(point_t* origin_ptr, int viewportWidth, int viewportHeight, int viewportDistance, int renderDistance, renderContext_t* context_ptr);
 
 int RR_clearScene();
 
