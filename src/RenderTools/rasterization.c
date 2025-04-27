@@ -409,6 +409,9 @@ int RR_clearScene(renderContext_t* context_ptr){
             free(context_ptr->meshes[i].indicesNormals_ptr);
         }
     }
+    if(context_ptr->zBuffer){
+        free(context_ptr->zBuffer);
+    }
     return EXIT_SUCCESS;
 }
 
