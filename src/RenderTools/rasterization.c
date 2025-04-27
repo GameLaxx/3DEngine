@@ -413,7 +413,6 @@ int RR_clearScene(renderContext_t* context_ptr){
 }
 
 int RR_renderObjects(renderContext_t* context_ptr, int* indexBuffer_ptr){
-    context_ptr->zBuffer = calloc(g_pixelHeight * g_pixelWidth, sizeof(float));
     float intensityP1 = 0;
     float intensityP2 = 0;
     float intensityP3 = 0;
@@ -430,10 +429,15 @@ int RR_renderObjects(renderContext_t* context_ptr, int* indexBuffer_ptr){
     vector_t rayP2 = {};
     vector_t rayP3 = {};
     rgba_t* material_ptr = NULL;
-    // reset index buffer
+    // reset buffers
     if(indexBuffer_ptr){
         for(int i = 0; i < g_pixelHeight * g_pixelWidth; i++){
             indexBuffer_ptr[i] = -1;
+        }
+    }
+    if(context_ptr->zBuffer){
+        for(int i = 0; i < g_pixelHeight * g_pixelWidth; i++){
+            context_ptr->zBuffer[i] = 0;
         }
     }
     for(int obj = 0; obj < context_ptr->objectsCount; obj++){    
@@ -490,8 +494,6 @@ int RR_renderObjects(renderContext_t* context_ptr, int* indexBuffer_ptr){
             intensityP3 = 0;
         }
     }
-    free(context_ptr->zBuffer);
-    context_ptr->zBuffer = NULL;
     return EXIT_SUCCESS;
 }
 

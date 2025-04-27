@@ -31,3 +31,9 @@ int SW_cleanScene(){
     free(g_sceneContext.cameraPos_ptr);
     return EXIT_SUCCESS;
 }
+
+int SW_updateContext(){
+    g_sceneContext.indexBuffer_ptr = realloc(g_sceneContext.indexBuffer_ptr, sizeof(int) * g_pixelHeight * g_pixelWidth);
+    g_sceneContext.context_ptr->zBuffer = realloc(g_sceneContext.context_ptr->zBuffer, sizeof(float) * g_pixelHeight * g_pixelWidth);
+    return EXIT_SUCCESS;
+}

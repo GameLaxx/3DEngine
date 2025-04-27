@@ -192,6 +192,7 @@ int main(int argc, char* argv[]) {
                     DRAW_clearRenderer();
                     IF_updateInterface();
                     IF_renderInterface();
+                    SW_updateContext();
                     RR_renderGrids(g_sceneContext.context_ptr);
                     RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
                     DRAW_showRenderer();

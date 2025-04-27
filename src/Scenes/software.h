@@ -44,4 +44,6 @@ int SW_initScene(point_t* origin_ptr, int viewportWidth, int viewportHeight, int
 
 int SW_cleanScene();
 
+int SW_updateContext();
+
 #endif /* SOFTWARE_H */
