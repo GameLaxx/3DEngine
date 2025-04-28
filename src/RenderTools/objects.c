@@ -125,14 +125,10 @@ int OBJ_readObjFile(char* filePath_ptr, int mesh_id, mesh_t* ret_ptr){
     for(int i = 0; i < ret_ptr->trianglesCount; i++){
         vector_t u = {};
         vector_t v = {};
-        // COO_vectorizePoints(&ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i]], 
-        //     &ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i + 1]], &u);
-        // COO_vectorizePoints(&ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i]], 
-        //     &ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i + 2]], &v);
-            COO_vectorizePoints(&ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i + 1]], 
-                &ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i]], &u);
-            COO_vectorizePoints(&ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i + 2]], 
-                &ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i]], &v);
+        COO_vectorizePoints(&ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i + 1]], 
+            &ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i]], &u);
+        COO_vectorizePoints(&ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i + 2]], 
+            &ret_ptr->vertices_ptr[ret_ptr->indicesVertices_ptr[3 * i]], &v);
         COO_crossProduct(&u, &v, &ret_ptr->normals_ptr[i]);
         float normalLength = sqrt(COO_scalarProduct(&ret_ptr->normals_ptr[i],&ret_ptr->normals_ptr[i]));
         COO_lambdaProduct(&ret_ptr->normals_ptr[i], normalLength, FT_DIV);

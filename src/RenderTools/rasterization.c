@@ -506,40 +506,25 @@ int RR_renderGrids(renderContext_t* context_ptr){
     rgba_t gray = {211,211,211,0};
     rgba_t red = {.red = 255};
     rgba_t green = {.green = 255};
-    for(int z = context_ptr->origin.z - context_ptr->renderDistance; z <= context_ptr->origin.z + context_ptr->renderDistance; z++){
-        // XZ
-        point_t p1WorldXZ = {.x = context_ptr->origin.x - context_ptr->renderDistance, .y = 0, .z = z};
-        point_t p2WorldXZ = {.x = context_ptr->origin.x + context_ptr->renderDistance, .y = 0, .z = z};
-        drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, &gray, context_ptr);
-        // // YZ
-        // point_t p1WorldYZ = {.x = 0, .y = context_ptr->origin.y - context_ptr->renderDistance, .z = z};
-        // point_t p2WorldYZ = {.x = 0, .y = context_ptr->origin.y + context_ptr->renderDistance, .z = z};
-        // drawGrid(&p1WorldYZ, &p2WorldYZ, &translateVector, &black, context_ptr);
-    }
-    // for(int y = context_ptr->origin.y - context_ptr->renderDistance; y <= context_ptr->origin.y + context_ptr->renderDistance; y++){
-    //     // YZ plan
-    //     point_t p1WorldYZ = {.x = 0, .y = y, .z = context_ptr->origin.z - context_ptr->renderDistance};
-    //     point_t p2WorldYZ = {.x = 0, .y = y, .z = context_ptr->origin.z + context_ptr->renderDistance};
-    //     drawGrid(&p1WorldYZ, &p2WorldYZ, &translateVector, &black, context_ptr);
-    //     // XY plan
-    //     point_t p1WorldXY = {.x = context_ptr->origin.x - context_ptr->renderDistance, .y = y, .z = 0};
-    //     point_t p2WorldXY = {.x = context_ptr->origin.x + context_ptr->renderDistance, .y = y, .z = 0};
-    //     drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, (y == 0) ? &red : &black, context_ptr);
-    // }
-    int y = 0;
-    point_t p1WorldXY = {.x = context_ptr->origin.x - context_ptr->renderDistance, .y = y, .z = 0};
-    point_t p2WorldXY = {.x = context_ptr->origin.x + context_ptr->renderDistance, .y = y, .z = 0};
-    drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, (y == 0) ? &red : &gray, context_ptr);
-    for(int x = context_ptr->origin.x - context_ptr->renderDistance; x <= context_ptr->origin.x + context_ptr->renderDistance; x++){
-        // XZ plan
-        point_t p1WorldXZ = {.x = x, .y = 0, .z = context_ptr->origin.z - context_ptr->renderDistance};
-        point_t p2WorldXZ = {.x = x, .y = 0, .z = context_ptr->origin.z + context_ptr->renderDistance};
-        drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, (x == 0) ? &green : &gray, context_ptr);
-        // // XY plan
-        // point_t p1WorldXY = {.x = x, .y = context_ptr->origin.y - context_ptr->renderDistance, .z = 0};
-        // point_t p2WorldXY = {.x = x, .y = context_ptr->origin.y + context_ptr->renderDistance, .z = 0};
-        // drawGrid(&p1WorldXY, &p2WorldXY, &translateVector, &black, context_ptr);
-    }
     
+    for(int offset = - context_ptr->renderDistance; offset <= context_ptr->renderDistance; offset++){
+        // XZ
+        int x = context_ptr->origin.x + offset;
+        int z = context_ptr->origin.z + offset;
+        point_t p1WorldZ = {.x = context_ptr->origin.x - context_ptr->renderDistance, .y = 0, .z = z};
+        point_t p2WorldZ = {.x = context_ptr->origin.x + context_ptr->renderDistance, .y = 0, .z = z};
+        point_t p1WorldX = {.x = x, .y = 0, .z = context_ptr->origin.z - context_ptr->renderDistance};
+        point_t p2WorldX = {.x = x, .y = 0, .z = context_ptr->origin.z + context_ptr->renderDistance};
+        drawGrid(&p1WorldX, &p2WorldX, &translateVector, (x == 0) ? &green : &gray, context_ptr);
+        drawGrid(&p1WorldZ, &p2WorldZ, &translateVector, (z == 0) ? &red : &gray, context_ptr);
+    }
+    // for(int z = context_ptr->origin.z - context_ptr->renderDistance; z <= context_ptr->origin.z + context_ptr->renderDistance; z++){
+    //     printf("Z2 : %i\n", z);
+    //     point_t p1WorldXZ = {.x = context_ptr->origin.x - context_ptr->renderDistance, .y = 0, .z = z};
+    //     point_t p2WorldXZ = {.x = context_ptr->origin.x + context_ptr->renderDistance, .y = 0, .z = z};
+    //     drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, (z == 0) ? &red : &gray, context_ptr);
+    // }
+    
+
     return EXIT_SUCCESS;
 }

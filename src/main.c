@@ -73,8 +73,8 @@ int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr,
     if(fabs(cameraMoving_ptr->y) < speedCeil){
         cameraMoving_ptr->y = 0;
     }
-    if(fabs(cameraMoving_ptr->y) < speedCeil){
-        cameraMoving_ptr->y = 0;
+    if(fabs(cameraMoving_ptr->z) < speedCeil){
+        cameraMoving_ptr->z = 0;
     }
     if(fabs(cameraTurning_ptr->y) < speedCeil){
         cameraTurning_ptr->y = 0;
@@ -150,6 +150,7 @@ int main(int argc, char* argv[]) {
                             currentObject_ptr = &g_sceneContext.context_ptr->objects[objectIndex];
                             IF_renderInterfaceRight();
                             IF_renderInterfaceObject(currentObject_ptr);
+                            DRAW_showRenderer();
                         }
                     }
                 }
@@ -168,6 +169,7 @@ int main(int argc, char* argv[]) {
                             object_t object = {.meshId = meshId, .materialType = MT_COLOR_UNIFORM, .material_ptr = &light_gray, .scale = {1,1,1}};
                             RR_addObject(&object, g_sceneContext.context_ptr);
                             RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
+                            updateScene(&cameraMovingSpeed, &cameraTurningSpeed, speedMoving, speedTurning, speedFade, speedCeil);
                         }
                     }
                     if(e.button.x > (g_windowWidth + g_pixelWidth) / 2){
@@ -204,6 +206,7 @@ int main(int argc, char* argv[]) {
                 if(locked && e.key.keysym.sym == SDLK_BACKSPACE){
                     IF_deleteTextBox(currentObject_ptr);
                     IF_updateTextBox();
+                    updateScene(&cameraMovingSpeed, &cameraTurningSpeed, speedMoving, speedTurning, speedFade, speedCeil);
                 }
                 if(locked && e.key.keysym.sym == SDLK_RETURN){
                     locked = 0;
@@ -234,6 +237,7 @@ int main(int argc, char* argv[]) {
                 if(locked){
                     IF_writeTextBox(e.text.text[0], currentObject_ptr); // of length 1 so we extract the only char
                     IF_updateTextBox();
+                    updateScene(&cameraMovingSpeed, &cameraTurningSpeed, speedMoving, speedTurning, speedFade, speedCeil);
                 }
             }
         }
