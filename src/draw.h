@@ -161,6 +161,8 @@ int DRAW_rectangleFill(int x, int y, int width, int height, rgba_t* color_ptr);
  */
 int DRAW_pixel(int x, int y, rgba_t* color_ptr);
 
-int DRAW_texte(int x, int y, char* content_ptr, rgba_t* color_ptr);
+int DRAW_text(int x, int y, char* content_ptr, rgba_t* color_ptr);
+
+int DRAW_textBox(int x, int y, int width, int height, char* content_ptr, rgba_t* boxColor_ptr, rgba_t* textColor_ptr);
 
 #endif /* DRAW_H */

@@ -115,6 +115,7 @@ int main(int argc, char* argv[]) {
     // define cursors
     SDL_Cursor *arrowCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     SDL_Cursor *clickCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+    SDL_Cursor *textCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
     // define speeds
     float speedCeil = 0.0001;
     float speedTurning = 30.0f / TARGET_FPS; // x° per second, n fps => x/n per frame
@@ -127,8 +128,10 @@ int main(int argc, char* argv[]) {
     SDL_Event e;
     int quit = 0;
     int sliding = 0; // allow to know if currently sliding with mouse
-    DRAW_showRenderer();        
+    int locked = 0; // stop moving while typing
+    object_t* currentObject_ptr = NULL; // allow to keep last clicked object
     const Uint8* keystates = SDL_GetKeyboardState(NULL); // get keys pressed in real time
+    DRAW_showRenderer();        
     while (!quit) {
         Uint32 frameStart = SDL_GetTicks();
         while (SDL_PollEvent(&e) != 0) {
@@ -144,28 +147,38 @@ int main(int argc, char* argv[]) {
                         int bufferIndex = (g_pixelHeight - e.button.y) + (e.button.x - (g_windowWidth - g_pixelWidth) / 2) * g_pixelHeight;
                         int objectIndex = g_sceneContext.indexBuffer_ptr[bufferIndex];
                         if(objectIndex != -1){
+                            currentObject_ptr = &g_sceneContext.context_ptr->objects[objectIndex];
                             IF_renderInterfaceRight();
-                            IF_renderInterfaceObject(&g_sceneContext.context_ptr->objects[objectIndex]);
+                            IF_renderInterfaceObject(currentObject_ptr);
+                        }else{
+                            currentObject_ptr = NULL;
                         }
                     }
                 }
             }
             if(e.type == SDL_MOUSEBUTTONDOWN){
                 if (e.button.button == SDL_BUTTON_LEFT) {
+                    locked = 0; // reset locked flag
                     if(e.button.x > (g_windowWidth - g_pixelWidth) / 2 && e.button.x < (g_windowWidth + g_pixelWidth) / 2){
                         sliding = 1;
                     }
                     lastMousePos.x = e.button.x;
                     lastMousePos.y = e.button.y;
-                    int meshId = IF_clickMeshBox(lastMousePos.x, lastMousePos.y);
-                    if(meshId > -1){
-                        object_t object = {.meshId = meshId, .materialType = MT_COLOR_UNIFORM, .material_ptr = &light_gray, .scale = {1,1,1}};
-                        RR_addObject(&object, g_sceneContext.context_ptr);
-                        RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
+                    if(e.button.x < (g_windowWidth - g_pixelWidth) / 2){
+                        int meshId = IF_clickMeshBox(lastMousePos.x, lastMousePos.y);
+                        if(meshId > -1){
+                            object_t object = {.meshId = meshId, .materialType = MT_COLOR_UNIFORM, .material_ptr = &light_gray, .scale = {1,1,1}};
+                            RR_addObject(&object, g_sceneContext.context_ptr);
+                            RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
+                        }
+                    }
+                    if(e.button.x > (g_windowWidth + g_pixelWidth) / 2){
+                        if(IF_clickTextBox(lastMousePos.x, lastMousePos.y) == EXIT_SUCCESS){
+                            locked = 1; // set locked flag
+                        }
                     }
                 }
             }
-
             if(e.type == SDL_MOUSEMOTION){
                 if (e.motion.state & SDL_BUTTON_LMASK && sliding) {
                     if(fabs(e.motion.x - lastMousePos.x) <= 1 && fabs(e.motion.y - lastMousePos.y) >= 1){
@@ -177,7 +190,25 @@ int main(int argc, char* argv[]) {
                     lastMousePos.x = e.motion.x;
                     lastMousePos.y = e.motion.y;
                 }
-                SDL_SetCursor((IF_hoverMeshBox(e.motion.x, e.motion.y) == EXIT_SUCCESS) ? clickCursor : arrowCursor);
+                if(e.motion.x < (g_windowWidth - g_pixelWidth) / 2){
+                    SDL_SetCursor((IF_hoverMeshBox(e.motion.x, e.motion.y) == EXIT_SUCCESS) ? clickCursor : arrowCursor);
+                }
+                if(e.motion.x > (g_windowWidth + g_pixelWidth) / 2){
+                    SDL_SetCursor((IF_hoverTextBox(e.motion.x, e.motion.y) == EXIT_SUCCESS) ? textCursor : arrowCursor);
+                }
+            }
+
+            if(e.type == SDL_KEYDOWN){
+                if(e.key.keysym.sym == SDLK_ESCAPE){
+                    IF_renderInterfaceObject(NULL);
+                }
+                if(locked && e.key.keysym.sym == SDLK_BACKSPACE){
+                    IF_deleteTextBox();
+                    IF_updateTextBox();
+                }
+                if(locked && e.key.keysym.sym == SDLK_RETURN){
+                    locked = 0;
+                }
             }
             
             if (e.type == SDL_WINDOWEVENT) {
@@ -198,8 +229,17 @@ int main(int argc, char* argv[]) {
                     DRAW_showRenderer();
                 }
             }
+
+            if(e.type == SDL_TEXTINPUT){
+                if(locked){
+                    IF_writeTextBox(e.text.text[0]); // of length 1 so we extract the only char
+                    IF_updateTextBox();
+                }
+            }
         }
-        updateSpeeds(keystates, &cameraMovingSpeed, &cameraTurningSpeed, speedMoving, speedTurning);
+        if(!locked){
+            updateSpeeds(keystates, &cameraMovingSpeed, &cameraTurningSpeed, speedMoving, speedTurning);
+        }
         if(cameraMovingSpeed.x != 0 || cameraMovingSpeed.y != 0 || cameraMovingSpeed.z != 0||
            cameraTurningSpeed.x != 0 || cameraTurningSpeed.y != 0 || cameraTurningSpeed.z != 0
         ){

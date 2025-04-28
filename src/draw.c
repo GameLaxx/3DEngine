@@ -179,16 +179,24 @@ int DRAW_pixel(int x, int y, rgba_t* color_ptr){
     return DRAW_rectangle(x, y, 1, 1, color_ptr, SDL_RenderFillRect);
 }
 
-int DRAW_texte(int x, int y, char* content_ptr, rgba_t* color_ptr){
+int DRAW_text(int x, int y, char* content_ptr, rgba_t* color_ptr){
     SDL_Color textColor = {.r = color_ptr->red, .g = color_ptr->green, .b = color_ptr->blue, .a = 255};
     SDL_Surface* textSurface = TTF_RenderText_Blended(font, content_ptr, textColor);
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(g_renderer, textSurface);
     SDL_Rect textRect;
     textRect.x = x + g_xShift;
-    textRect.y = g_windowHeight - (y + g_yShift);
+    textRect.y = g_pixelHeight - (y + g_yShift); //! Small issue : y of the text box is the top of the box instead of the bottom
     textRect.w = textSurface->w;
     textRect.h = textSurface->h;
     SDL_RenderCopy(g_renderer, textTexture, NULL, &textRect);
     SDL_FreeSurface(textSurface);
+    return EXIT_SUCCESS;
+}
+
+int DRAW_textBox(int x, int y, int width, int height, char* content_ptr, rgba_t* boxColor_ptr, rgba_t* textColor_ptr){
+    DRAW_rectangleFill(x, y, width, height, boxColor_ptr);
+    if(strlen(content_ptr) > 0){
+        DRAW_text(x + width / 2, y + 3 * height/4, content_ptr, textColor_ptr); // TODO : to align the text : get the width of the text
+    }
     return EXIT_SUCCESS;
 }

@@ -13,10 +13,12 @@
 // Macros
 //-----------------------------------------------------------------------------------------------------------------------
 #define MAX_BOXES 10
+#define MAX_CHARS 256
 //-----------------------------------------------------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------------------------------------------------
 typedef struct meshBox_s meshBox_t;
+typedef struct textBox_s textBox_t;
 typedef struct interface_s interface_t;
 //-----------------------------------------------------------------------------------------------------------------------
 // Structures
@@ -31,9 +33,21 @@ struct meshBox_s {
     char* name;
 };
 
+struct textBox_s {
+    int x;
+    int y;
+    int width;
+    int height;
+    char content_ptr[MAX_CHARS];
+    int length;
+    int active;
+};
+
 struct interface_s{
-    meshBox_t* boxes_ptr;
-    int numberBoxes;
+    meshBox_t* meshBoxes_ptr;
+    textBox_t* textBoxes_ptr;
+    int numberMeshBoxes;
+    int numberTextBoxes;
 };
 //-----------------------------------------------------------------------------------------------------------------------
 // Enums
@@ -62,5 +76,10 @@ int IF_clickMeshBox(int xMouse, int yMouse);
 int IF_hoverMeshBox(int xMouse, int yMouse);
 
 int IF_renderInterfaceObject(object_t* object_ptr);
+int IF_clickTextBox(int xMouse, int yMouse);
+int IF_hoverTextBox(int xMouse, int yMouse);
+int IF_updateTextBox();
+int IF_writeTextBox(char c);
+int IF_deleteTextBox();
 
 #endif /* INTERFACE_H */
