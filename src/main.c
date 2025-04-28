@@ -59,8 +59,8 @@ int updateScene(vector_t* cameraMoving_ptr, vector_t* cameraTurning_ptr,
     renderContext_ptr->origin.y += rotatedSpeed.y;
     renderContext_ptr->origin.z += rotatedSpeed.z;
     renderContext_ptr->angleRotation[1] += cameraTurning_ptr->y;
-    RR_renderGrids(g_sceneContext.context_ptr);
     RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
+    RR_renderGrids(g_sceneContext.context_ptr);
     DRAW_showRenderer();
     // clip speed
     cameraMoving_ptr->x /= speedFade;
@@ -106,8 +106,8 @@ int main(int argc, char* argv[]) {
     RR_addLight(&light2, g_sceneContext.context_ptr);
     // Initial render
     clock_t start = clock();
-    RR_renderGrids(g_sceneContext.context_ptr);
     RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
+    RR_renderGrids(g_sceneContext.context_ptr);
     IF_renderInterface();
     clock_t end = clock();
     double elapsed_time = (double)(end - start) / CLOCKS_PER_SEC;
@@ -169,6 +169,7 @@ int main(int argc, char* argv[]) {
                             object_t object = {.meshId = meshId, .materialType = MT_COLOR_UNIFORM, .material_ptr = &light_gray, .scale = {1,1,1}};
                             RR_addObject(&object, g_sceneContext.context_ptr);
                             RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
+                            RR_renderGrids(g_sceneContext.context_ptr);
                             updateScene(&cameraMovingSpeed, &cameraTurningSpeed, speedMoving, speedTurning, speedFade, speedCeil);
                         }
                     }
@@ -227,8 +228,8 @@ int main(int argc, char* argv[]) {
                     IF_renderInterface();
                     IF_renderInterfaceObject(currentObject_ptr);
                     SW_updateContext();
-                    RR_renderGrids(g_sceneContext.context_ptr);
                     RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
+                    RR_renderGrids(g_sceneContext.context_ptr);
                     DRAW_showRenderer();
                 }
             }

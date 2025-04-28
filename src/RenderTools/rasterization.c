@@ -284,7 +284,7 @@ int clipLine(point_t* p1_ptr, point_t* p2_ptr, vector_t* plane_ptr, float offset
     return EXIT_SUCCESS;
 }
 
-int drawGrid(point_t* p1World_ptr, point_t* p2World_ptr, vector_t* translateVector_ptr, rgba_t* color_ptr, renderContext_t* context_ptr){
+int drawLine(point_t* p1World_ptr, point_t* p2World_ptr, vector_t* translateVector_ptr, rgba_t* color_ptr, renderContext_t* context_ptr){
     vector_t frontPlan = {.z = 1};
     vector_t backPlan = {.z = -1};
     vector_t rightPlan = {.x = -0.7071, .z = 0.7071};
@@ -325,7 +325,40 @@ int drawGrid(point_t* p1World_ptr, point_t* p2World_ptr, vector_t* translateVect
     point3DtoPixel(p2World_ptr, context_ptr, &p2Pixel) == EXIT_FAILURE){
         return EXIT_FAILURE;
     }
-    DRAW_line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, color_ptr); // TODO : replace draw line by draw each pixel with zbuffer
+    if(p1Pixel.x == p2Pixel.x && p1Pixel.y == p2Pixel.y){
+        return EXIT_FAILURE; // no line because same point
+    }
+    // Bresenham algorithm (case where p1 != p2 for sure)
+    int x1 = p1Pixel.x;
+    int y1 = p1Pixel.y;
+    int x2 = p2Pixel.x;
+    int y2 = p2Pixel.y;
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    int sx = (x1 < x2) ? 1 : -1;
+    int sy = (y1 < y2) ? 1 : -1;
+    int err = dx - dy;
+    while (1) {
+        float distanceP1 = (p1Pixel.x == p2Pixel.x) ? (y1 - p2Pixel.y) / (p1Pixel.y - p2Pixel.y) : (x1 - p2Pixel.x) / (p1Pixel.x - p2Pixel.x);
+        float interpolatedZ = distanceP1 * p1World_ptr->z + (1 - distanceP1) * p2World_ptr->z;
+        int bufferIndex = (y1 + g_yShift) + (x1 + g_xShift - (g_windowWidth - g_pixelWidth) / 2) * g_pixelHeight;
+        if(1.0f / interpolatedZ >= context_ptr->zBuffer[bufferIndex]){
+            context_ptr->zBuffer[bufferIndex] = 1.0f / interpolatedZ;
+            DRAW_pixel(x1, y1, color_ptr);
+        }
+        if (x1 == x2 && y1 == y2)
+            break;
+
+        int e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x1 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y1 += sy;
+        }
+    }
     return EXIT_SUCCESS;
 }
 //-----------------------------------------------------------------------------------------------------------------------
@@ -515,16 +548,8 @@ int RR_renderGrids(renderContext_t* context_ptr){
         point_t p2WorldZ = {.x = context_ptr->origin.x + context_ptr->renderDistance, .y = 0, .z = z};
         point_t p1WorldX = {.x = x, .y = 0, .z = context_ptr->origin.z - context_ptr->renderDistance};
         point_t p2WorldX = {.x = x, .y = 0, .z = context_ptr->origin.z + context_ptr->renderDistance};
-        drawGrid(&p1WorldX, &p2WorldX, &translateVector, (x == 0) ? &green : &gray, context_ptr);
-        drawGrid(&p1WorldZ, &p2WorldZ, &translateVector, (z == 0) ? &red : &gray, context_ptr);
+        drawLine(&p1WorldX, &p2WorldX, &translateVector, (x == 0) ? &green : &gray, context_ptr);
+        drawLine(&p1WorldZ, &p2WorldZ, &translateVector, (z == 0) ? &red : &gray, context_ptr);
     }
-    // for(int z = context_ptr->origin.z - context_ptr->renderDistance; z <= context_ptr->origin.z + context_ptr->renderDistance; z++){
-    //     printf("Z2 : %i\n", z);
-    //     point_t p1WorldXZ = {.x = context_ptr->origin.x - context_ptr->renderDistance, .y = 0, .z = z};
-    //     point_t p2WorldXZ = {.x = context_ptr->origin.x + context_ptr->renderDistance, .y = 0, .z = z};
-    //     drawGrid(&p1WorldXZ, &p2WorldXZ, &translateVector, (z == 0) ? &red : &gray, context_ptr);
-    // }
-    
-
     return EXIT_SUCCESS;
 }
