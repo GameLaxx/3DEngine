@@ -58,6 +58,21 @@ static int DRAW_rectangle(int x, int y, int width, int height, rgba_t* color_ptr
     SDL_Rect rect = {x + g_xShift, renderY, width, height}; // x, y, largeur, hauteur
     return func(g_renderer, &rect);
 }
+
+
+int drawTextCentered(int x, int y, int width, int height, char* content_ptr, rgba_t* color_ptr){
+    SDL_Color textColor = {.r = color_ptr->red, .g = color_ptr->green, .b = color_ptr->blue, .a = 255};
+    SDL_Surface* textSurface = TTF_RenderText_Blended(font, content_ptr, textColor);
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(g_renderer, textSurface);
+    SDL_Rect textRect;
+    textRect.x = x + width / 2 - textSurface->w / 2 + g_xShift;
+    textRect.y = g_pixelHeight - (y + height / 2 + g_yShift) - textSurface->h / 2;
+    textRect.w = textSurface->w;
+    textRect.h = textSurface->h;
+    SDL_RenderCopy(g_renderer, textTexture, NULL, &textRect);
+    SDL_FreeSurface(textSurface);
+    return EXIT_SUCCESS;
+}
 //-----------------------------------------------------------------------------------------------------------------------
 // Global Functions
 //-----------------------------------------------------------------------------------------------------------------------
@@ -196,7 +211,7 @@ int DRAW_text(int x, int y, char* content_ptr, rgba_t* color_ptr){
 int DRAW_textBox(int x, int y, int width, int height, char* content_ptr, rgba_t* boxColor_ptr, rgba_t* textColor_ptr){
     DRAW_rectangleFill(x, y, width, height, boxColor_ptr);
     if(strlen(content_ptr) > 0){
-        DRAW_text(x + width / 2, y + 3 * height/4, content_ptr, textColor_ptr); // TODO : to align the text : get the width of the text
+        drawTextCentered(x, y, width, height, content_ptr, textColor_ptr); // TODO : to align the text : get the width of the text
     }
     return EXIT_SUCCESS;
 }
