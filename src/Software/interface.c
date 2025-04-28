@@ -311,7 +311,7 @@ int IF_updateTextBox(){
 }
 
 int IF_writeTextBox(char c, object_t* object_ptr){
-    if(c != '.' && (c < '0' || c > '9')){
+    if(c != '.' && c != '-' && (c < '0' || c > '9')){
         return EXIT_FAILURE;
     }
     for(int i = 0; i < g_interface.numberTextBoxes; i++){
@@ -322,6 +322,9 @@ int IF_writeTextBox(char c, object_t* object_ptr){
             return EXIT_FAILURE;
         }
         if(c == '.' && g_interface.textBoxes_ptr[i].textType == TT_FLOAT){
+            return EXIT_FAILURE;
+        }
+        if(c == '-' && g_interface.textBoxes_ptr[i].length != 0){
             return EXIT_FAILURE;
         }
         if(c == '.'){

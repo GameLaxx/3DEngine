@@ -150,8 +150,6 @@ int main(int argc, char* argv[]) {
                             currentObject_ptr = &g_sceneContext.context_ptr->objects[objectIndex];
                             IF_renderInterfaceRight();
                             IF_renderInterfaceObject(currentObject_ptr);
-                        }else{
-                            currentObject_ptr = NULL;
                         }
                     }
                 }
@@ -200,7 +198,8 @@ int main(int argc, char* argv[]) {
 
             if(e.type == SDL_KEYDOWN){
                 if(e.key.keysym.sym == SDLK_ESCAPE){
-                    IF_renderInterfaceObject(NULL);
+                    currentObject_ptr = NULL;
+                    IF_renderInterfaceObject(currentObject_ptr);
                 }
                 if(locked && e.key.keysym.sym == SDLK_BACKSPACE){
                     IF_deleteTextBox(currentObject_ptr);

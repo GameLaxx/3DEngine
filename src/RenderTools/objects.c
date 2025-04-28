@@ -121,7 +121,6 @@ int OBJ_readObjFile(char* filePath_ptr, int mesh_id, mesh_t* ret_ptr){
     if(currentNormalsCount != 0){ // vn in file means we can return mesh 
         return EXIT_SUCCESS;
     }
-    printf("Building..\n");
     //-------------------------- build normals
     for(int i = 0; i < ret_ptr->trianglesCount; i++){
         vector_t u = {};
