@@ -208,7 +208,7 @@ int IF_renderInterfaceObject(object_t* object_ptr){
     }
     if(!g_interface.textBoxes_ptr){
         g_interface.textBoxes_ptr = calloc(9, sizeof(textBox_t));
-        g_interface.numberTextBoxes = 3;
+        g_interface.numberTextBoxes = 9;
         initTextBox(&g_interface.textBoxes_ptr[0], 
             (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 15 / 20 - g_yShift + 1, 
             (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->origin.x);
@@ -218,19 +218,25 @@ int IF_renderInterfaceObject(object_t* object_ptr){
         initTextBox(&g_interface.textBoxes_ptr[2], 
             (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 13 / 20 - g_yShift + 1, 
             (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->origin.z);
+        initTextBox(&g_interface.textBoxes_ptr[3], 
+            (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 12 / 20 - g_yShift + 1, 
+            (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->angleRotation[0]);
+        initTextBox(&g_interface.textBoxes_ptr[4], 
+            (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 11 / 20 - g_yShift + 1, 
+            (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->angleRotation[1]);
+        initTextBox(&g_interface.textBoxes_ptr[5], 
+            (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 10 / 20 - g_yShift + 1, 
+            (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->angleRotation[2]);
+        initTextBox(&g_interface.textBoxes_ptr[6], 
+            (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 9 / 20 - g_yShift + 1, 
+            (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->scale[0]);
+        initTextBox(&g_interface.textBoxes_ptr[7], 
+            (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 8 / 20 - g_yShift + 1, 
+            (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->scale[1]);
+        initTextBox(&g_interface.textBoxes_ptr[8], 
+            (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 7 / 20 - g_yShift + 1, 
+            (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->scale[2]);
     }
-    char xRotBuffer[40];
-    char yRotBuffer[40];
-    char zRotBuffer[40];
-    sprintf(xRotBuffer, "%.2f", object_ptr->angleRotation[0]);
-    sprintf(yRotBuffer, "%.2f", object_ptr->angleRotation[1]);
-    sprintf(zRotBuffer, "%.2f", object_ptr->angleRotation[2]);
-    char xScaleBuffer[40];
-    char yScaleBuffer[40];
-    char zScaleBuffer[40];
-    sprintf(xScaleBuffer, "%.2f", object_ptr->scale[0]);
-    sprintf(yScaleBuffer, "%.2f", object_ptr->scale[1]);
-    sprintf(zScaleBuffer, "%.2f", object_ptr->scale[2]);
     DRAW_rectangleFill((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 5, 5 - g_yShift, (g_windowWidth - g_pixelWidth) / 2 - 10, g_windowHeight * 17 / 20 + 5, &meshBoxColor);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 17 / 20 - g_yShift, g_interface.meshBoxes_ptr[object_ptr->meshId].name, &textColor);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 16 / 20 - g_yShift - g_windowHeight / 80, "Position : ", &textColor);
@@ -242,18 +248,18 @@ int IF_renderInterfaceObject(object_t* object_ptr){
     renderTextBox(&g_interface.textBoxes_ptr[2]);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 13 / 20 - g_yShift - g_windowHeight / 80, "Rotation : ", &textColor);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 100, g_windowHeight * 13 / 20 - g_yShift - g_windowHeight / 80, "X", &textColor);
-    DRAW_text((3 * g_windowWidth + g_pixelWidth) / 4 - g_xShift + 50, g_windowHeight * 13 / 20 - g_yShift, xRotBuffer, &textColor);
+    renderTextBox(&g_interface.textBoxes_ptr[3]);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 100, g_windowHeight * 12 / 20 - g_yShift - g_windowHeight / 80, "Y", &textColor);
-    DRAW_text((3 * g_windowWidth + g_pixelWidth) / 4 - g_xShift + 50, g_windowHeight * 12 / 20 - g_yShift, yRotBuffer, &textColor);
+    renderTextBox(&g_interface.textBoxes_ptr[4]);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 100, g_windowHeight * 11 / 20 - g_yShift - g_windowHeight / 80, "Z", &textColor);
-    DRAW_text((3 * g_windowWidth + g_pixelWidth) / 4 - g_xShift + 50, g_windowHeight * 11 / 20 - g_yShift, zRotBuffer, &textColor);
+    renderTextBox(&g_interface.textBoxes_ptr[5]);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 10 / 20 - g_yShift - g_windowHeight / 80, "Scale : ", &textColor);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 100, g_windowHeight * 10 / 20 - g_yShift - g_windowHeight / 80, "X", &textColor);
-    DRAW_text((3 * g_windowWidth + g_pixelWidth) / 4 - g_xShift + 50, g_windowHeight * 10 / 20 - g_yShift, xScaleBuffer, &textColor);
+    renderTextBox(&g_interface.textBoxes_ptr[6]);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 100, g_windowHeight * 9 / 20 - g_yShift - g_windowHeight / 80, "Y", &textColor);
-    DRAW_text((3 * g_windowWidth + g_pixelWidth) / 4 - g_xShift + 50, g_windowHeight * 9 / 20 - g_yShift, yScaleBuffer, &textColor);
+    renderTextBox(&g_interface.textBoxes_ptr[7]);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 100, g_windowHeight * 8 / 20 - g_yShift - g_windowHeight / 80, "Z", &textColor);
-    DRAW_text((3 * g_windowWidth + g_pixelWidth) / 4 - g_xShift + 50, g_windowHeight * 8 / 20 - g_yShift, zScaleBuffer, &textColor);
+    renderTextBox(&g_interface.textBoxes_ptr[8]);
     return EXIT_SUCCESS;
 }
 
