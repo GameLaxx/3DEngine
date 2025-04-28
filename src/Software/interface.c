@@ -53,6 +53,49 @@ int renderTextBox(textBox_t* box_ptr){
     DRAW_textBox(box_ptr->x, box_ptr->y, box_ptr->width, box_ptr->height, box_ptr->content_ptr, &textBoxColor, &textColor);
     return EXIT_SUCCESS;
 }
+
+int initTextBox(textBox_t* box_ptr, int x, int y, int width, int height, float content){
+    box_ptr->x = x;
+    box_ptr->y = y;
+    box_ptr->width = width;
+    box_ptr->height = height;
+    box_ptr->active = 0;
+    box_ptr->textType = TT_FLOAT;
+    sprintf(box_ptr->content_ptr, "%.2f", content);
+    box_ptr->length = strlen(box_ptr->content_ptr);
+    return EXIT_SUCCESS;
+}
+
+int updateObjectWithTextBox(int boxIndex, object_t* object_ptr){
+    if(boxIndex == 0){
+        object_ptr->origin.x = atof(g_interface.textBoxes_ptr[boxIndex].content_ptr);
+    }
+    if(boxIndex == 1){
+        object_ptr->origin.y = atof(g_interface.textBoxes_ptr[boxIndex].content_ptr);
+    }
+    if(boxIndex == 2){
+        object_ptr->origin.z = atof(g_interface.textBoxes_ptr[boxIndex].content_ptr);
+    }
+    if(boxIndex == 3){
+        object_ptr->angleRotation[0] = atof(g_interface.textBoxes_ptr[boxIndex].content_ptr);
+    }
+    if(boxIndex == 4){
+        object_ptr->angleRotation[1] = atof(g_interface.textBoxes_ptr[boxIndex].content_ptr);
+    }
+    if(boxIndex == 5){
+        object_ptr->angleRotation[2] = atof(g_interface.textBoxes_ptr[boxIndex].content_ptr);
+    }
+    if(boxIndex == 6){
+        object_ptr->scale[0] = atof(g_interface.textBoxes_ptr[boxIndex].content_ptr);
+    }
+    if(boxIndex == 7){
+        object_ptr->scale[1] = atof(g_interface.textBoxes_ptr[boxIndex].content_ptr);
+    }
+    if(boxIndex == 8){
+        object_ptr->scale[2] = atof(g_interface.textBoxes_ptr[boxIndex].content_ptr);
+    }
+    return EXIT_SUCCESS;
+}
 //-----------------------------------------------------------------------------------------------------------------------
 // Global Functions
 //-----------------------------------------------------------------------------------------------------------------------
@@ -163,17 +206,19 @@ int IF_renderInterfaceObject(object_t* object_ptr){
         IF_renderInterfaceRight();
         return EXIT_SUCCESS;
     }
-    g_interface.textBoxes_ptr = calloc(9, sizeof(textBox_t));
-    g_interface.numberTextBoxes = 1;
-    g_interface.textBoxes_ptr[0].x = (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120;
-    g_interface.textBoxes_ptr[0].y = g_windowHeight * 15 / 20 - g_yShift + 1;
-    g_interface.textBoxes_ptr[0].width = (g_windowWidth - g_pixelWidth) / 2 - 130;
-    g_interface.textBoxes_ptr[0].height = g_windowHeight / 20 - 2;
-    g_interface.textBoxes_ptr[0].active = 0;
-    sprintf(g_interface.textBoxes_ptr[0].content_ptr, "%.2f", object_ptr->origin.x);
-    g_interface.textBoxes_ptr[0].length = strlen(g_interface.textBoxes_ptr[0].content_ptr);
-    sprintf(g_interface.textBoxes_ptr[1].content_ptr, "%.2f", object_ptr->origin.y);
-    sprintf(g_interface.textBoxes_ptr[2].content_ptr, "%.2f", object_ptr->origin.z);
+    if(!g_interface.textBoxes_ptr){
+        g_interface.textBoxes_ptr = calloc(9, sizeof(textBox_t));
+        g_interface.numberTextBoxes = 3;
+        initTextBox(&g_interface.textBoxes_ptr[0], 
+            (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 15 / 20 - g_yShift + 1, 
+            (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->origin.x);
+        initTextBox(&g_interface.textBoxes_ptr[1], 
+            (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 14 / 20 - g_yShift + 1, 
+            (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->origin.y);
+        initTextBox(&g_interface.textBoxes_ptr[2], 
+            (g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 13 / 20 - g_yShift + 1, 
+            (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, object_ptr->origin.z);
+    }
     char xRotBuffer[40];
     char yRotBuffer[40];
     char zRotBuffer[40];
@@ -192,13 +237,9 @@ int IF_renderInterfaceObject(object_t* object_ptr){
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 100, g_windowHeight * 16 / 20 - g_yShift - g_windowHeight / 80, "X", &textColor);
     renderTextBox(&g_interface.textBoxes_ptr[0]);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 100, g_windowHeight * 15 / 20 - g_yShift - g_windowHeight / 80, "Y", &textColor);
-    DRAW_textBox((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 14 / 20 - g_yShift + 1,
-                 (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, g_interface.textBoxes_ptr[1].content_ptr, 
-                 &textBoxColor, &textColor);
+    renderTextBox(&g_interface.textBoxes_ptr[1]);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 100, g_windowHeight * 14 / 20 - g_yShift - g_windowHeight / 80, "Z", &textColor);
-    DRAW_textBox((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 120, g_windowHeight * 13 / 20 - g_yShift + 1,
-                 (g_windowWidth - g_pixelWidth) / 2 - 130, g_windowHeight / 20 - 2, g_interface.textBoxes_ptr[2].content_ptr, 
-                 &textBoxColor, &textColor);
+    renderTextBox(&g_interface.textBoxes_ptr[2]);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 10, g_windowHeight * 13 / 20 - g_yShift - g_windowHeight / 80, "Rotation : ", &textColor);
     DRAW_text((g_windowWidth + g_pixelWidth) / 2 - g_xShift + 100, g_windowHeight * 13 / 20 - g_yShift - g_windowHeight / 80, "X", &textColor);
     DRAW_text((3 * g_windowWidth + g_pixelWidth) / 4 - g_xShift + 50, g_windowHeight * 13 / 20 - g_yShift, xRotBuffer, &textColor);
@@ -263,7 +304,10 @@ int IF_updateTextBox(){
     return EXIT_FAILURE;
 }
 
-int IF_writeTextBox(char c){
+int IF_writeTextBox(char c, object_t* object_ptr){
+    if(c != '.' && (c < '0' || c > '9')){
+        return EXIT_FAILURE;
+    }
     for(int i = 0; i < g_interface.numberTextBoxes; i++){
         if(!g_interface.textBoxes_ptr[i].active){
             continue;
@@ -271,24 +315,35 @@ int IF_writeTextBox(char c){
         if(g_interface.textBoxes_ptr[i].length >= MAX_CHARS - 1){
             return EXIT_FAILURE;
         }
+        if(c == '.' && g_interface.textBoxes_ptr[i].textType == TT_FLOAT){
+            return EXIT_FAILURE;
+        }
+        if(c == '.'){
+            g_interface.textBoxes_ptr[i].textType = TT_FLOAT;
+        }
         g_interface.textBoxes_ptr[i].content_ptr[g_interface.textBoxes_ptr[i].length] = c;
         g_interface.textBoxes_ptr[i].content_ptr[g_interface.textBoxes_ptr[i].length + 1] = '\0';
         g_interface.textBoxes_ptr[i].length++;
+        updateObjectWithTextBox(i, object_ptr);
         return EXIT_SUCCESS;
     }
     return EXIT_FAILURE;
 }
 
-int IF_deleteTextBox(){
+int IF_deleteTextBox(object_t* object_ptr){
     for(int i = 0; i < g_interface.numberTextBoxes; i++){
         if(!g_interface.textBoxes_ptr[i].active){
             continue;
         }
-        if(g_interface.textBoxes_ptr[i].length >= MAX_CHARS - 1){
+        if(g_interface.textBoxes_ptr[i].length < 1){
             return EXIT_FAILURE;
+        }
+        if(g_interface.textBoxes_ptr[i].content_ptr[g_interface.textBoxes_ptr[i].length - 1] == '.'){
+            g_interface.textBoxes_ptr[i].textType = TT_INT;
         }
         g_interface.textBoxes_ptr[i].content_ptr[g_interface.textBoxes_ptr[i].length - 1] = '\0';
         g_interface.textBoxes_ptr[i].length--;
+        updateObjectWithTextBox(i, object_ptr);
         return EXIT_SUCCESS;
     }
     return EXIT_FAILURE;

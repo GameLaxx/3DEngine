@@ -41,6 +41,7 @@ struct textBox_s {
     char content_ptr[MAX_CHARS];
     int length;
     int active;
+    int textType;
 };
 
 struct interface_s{
@@ -52,7 +53,11 @@ struct interface_s{
 //-----------------------------------------------------------------------------------------------------------------------
 // Enums
 //-----------------------------------------------------------------------------------------------------------------------
-
+enum textType_e{
+    TT_NOTEXT = 0,
+    TT_INT,
+    TT_FLOAT
+};
 //-----------------------------------------------------------------------------------------------------------------------
 // Variables
 //-----------------------------------------------------------------------------------------------------------------------
@@ -79,7 +84,7 @@ int IF_renderInterfaceObject(object_t* object_ptr);
 int IF_clickTextBox(int xMouse, int yMouse);
 int IF_hoverTextBox(int xMouse, int yMouse);
 int IF_updateTextBox();
-int IF_writeTextBox(char c);
-int IF_deleteTextBox();
+int IF_writeTextBox(char c, object_t* object_ptr);
+int IF_deleteTextBox(object_t* object_ptr);
 
 #endif /* INTERFACE_H */

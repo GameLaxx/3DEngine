@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
                     IF_renderInterfaceObject(NULL);
                 }
                 if(locked && e.key.keysym.sym == SDLK_BACKSPACE){
-                    IF_deleteTextBox();
+                    IF_deleteTextBox(currentObject_ptr);
                     IF_updateTextBox();
                 }
                 if(locked && e.key.keysym.sym == SDLK_RETURN){
@@ -223,6 +223,7 @@ int main(int argc, char* argv[]) {
                     DRAW_clearRenderer();
                     IF_updateInterface();
                     IF_renderInterface();
+                    IF_renderInterfaceObject(currentObject_ptr);
                     SW_updateContext();
                     RR_renderGrids(g_sceneContext.context_ptr);
                     RR_renderObjects(g_sceneContext.context_ptr, g_sceneContext.indexBuffer_ptr);
@@ -232,7 +233,7 @@ int main(int argc, char* argv[]) {
 
             if(e.type == SDL_TEXTINPUT){
                 if(locked){
-                    IF_writeTextBox(e.text.text[0]); // of length 1 so we extract the only char
+                    IF_writeTextBox(e.text.text[0], currentObject_ptr); // of length 1 so we extract the only char
                     IF_updateTextBox();
                 }
             }
